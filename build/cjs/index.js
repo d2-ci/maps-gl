@@ -9,7 +9,7 @@ var _layerTypes = _interopRequireDefault(require("./layers/layerTypes"));
 var _controlTypes = _interopRequireDefault(require("./controls/controlTypes"));
 var _earthengine = _interopRequireDefault(require("./earthengine"));
 var _labels = require("./utils/labels");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 /**
  *  Wrapper around MapLibre GL JS for DHIS2 Maps
  */

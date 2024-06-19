@@ -12,7 +12,7 @@ var _Measure = _interopRequireDefault(require("./Measure"));
 var _FitBounds = _interopRequireDefault(require("./FitBounds"));
 var _Fullscreen = _interopRequireDefault(require("./Fullscreen"));
 require("./Controls.css");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 var _default = exports.default = {
   zoom: _Navigation.default,
   attribution: _Attribution.default,
