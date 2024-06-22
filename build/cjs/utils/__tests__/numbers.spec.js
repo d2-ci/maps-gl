@@ -14,6 +14,18 @@ describe('numbers', () => {
     expect((0, _numbers.getPrecision)(8.312321312)).toBe(2);
     expect((0, _numbers.getPrecision)(0.312321312)).toBe(3);
   });
+  it('Should format number', () => {
+    expect((0, _numbers.setPrecision)(542.312321312)).toBe(542);
+    expect((0, _numbers.setPrecision)(78.312321312)).toBe(78.3);
+    expect((0, _numbers.setPrecision)(8.312321312)).toBe(8.31);
+    expect((0, _numbers.setPrecision)(0.312321312)).toBe(0.312);
+    expect((0, _numbers.setPrecision)(0.12345, 0)).toBe(0);
+    expect((0, _numbers.setPrecision)(0.12345, 1)).toBe(0.1);
+    expect((0, _numbers.setPrecision)(0.12345, 2)).toBe(0.12);
+    expect((0, _numbers.setPrecision)(0.12345, 3)).toBe(0.123);
+    expect((0, _numbers.setPrecision)(0.12345, 4)).toBe(0.1234); // ???
+    expect((0, _numbers.setPrecision)(0.12345, 5)).toBe(0.12345);
+  });
   it('Should convert km to miles', () => {
     expect((0, _numbers.kmToMiles)(1)).toBe(0.621371192);
   });

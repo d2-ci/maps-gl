@@ -12,6 +12,18 @@ describe('numbers', () => {
     expect(getPrecision(8.312321312)).toBe(2);
     expect(getPrecision(0.312321312)).toBe(3);
   });
+  it('Should format number', () => {
+    expect(setPrecision(542.312321312)).toBe(542);
+    expect(setPrecision(78.312321312)).toBe(78.3);
+    expect(setPrecision(8.312321312)).toBe(8.31);
+    expect(setPrecision(0.312321312)).toBe(0.312);
+    expect(setPrecision(0.12345, 0)).toBe(0);
+    expect(setPrecision(0.12345, 1)).toBe(0.1);
+    expect(setPrecision(0.12345, 2)).toBe(0.12);
+    expect(setPrecision(0.12345, 3)).toBe(0.123);
+    expect(setPrecision(0.12345, 4)).toBe(0.1234); // ???
+    expect(setPrecision(0.12345, 5)).toBe(0.12345);
+  });
   it('Should convert km to miles', () => {
     expect(kmToMiles(1)).toBe(0.621371192);
   });
