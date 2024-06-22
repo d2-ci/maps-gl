@@ -185,8 +185,8 @@ const applyCloudMask = (collection, cloudScore) => {
   const {
     datasetId,
     band,
-    clearTreshold
+    clearThreshold
   } = cloudScore;
-  return collection.linkCollection(_browser.default.ImageCollection(datasetId), [band]).map(img => img.updateMask(img.select(band).gte(clearTreshold)));
+  return collection.linkCollection(_browser.default.ImageCollection(datasetId), [band]).map(img => img.updateMask(img.select(band).gte(clearThreshold)));
 };
 exports.applyCloudMask = applyCloudMask;

@@ -19,6 +19,7 @@ const DEFAULT_FEATURE_STYLE = {
   pointRadius: 5
 };
 const DEFAULT_TILE_SCALE = 1;
+const DEFAULT_MASK_VALUE = 0;
 class EarthEngineWorker {
   constructor(options = {}) {
     this.options = options;
@@ -118,9 +119,9 @@ class EarthEngineWorker {
     // Run methods on image
     eeImage = applyMethods(eeImage, methods);
 
-    // Only keep pixels above min value
+    // Use mask operator (e.g. mask out values below a certain threshold)
     if (maskOperator && eeImage[maskOperator]) {
-      eeImage = eeImage.updateMask(eeImage[maskOperator](style?.min || 0));
+      eeImage = eeImage.updateMask(eeImage[maskOperator](style?.min || DEFAULT_MASK_VALUE));
     }
     this.eeImage = eeImage;
     return eeImage;
