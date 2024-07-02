@@ -4,7 +4,7 @@ function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 import { expose } from 'comlink';
-import ee from '@google/earthengine/build/browser.js'; // this is a patched version of the ee module
+import ee from './ee_api_js_worker'; // https://github.com/google/earthengine-api/pull/173
 import { getInfo, getScale, hasClasses, combineReducers, getClassifiedImage, getHistogramStatistics, getFeatureCollectionProperties, applyFilter, applyMethods, applyCloudMask } from './ee_worker_utils';
 import { getBufferGeometry } from '../utils/buffers';
 const IMAGE = 'Image';

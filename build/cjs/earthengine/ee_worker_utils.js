@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.hasClasses = exports.getScale = exports.getInfo = exports.getHistogramStatistics = exports.getFeatureCollectionProperties = exports.getClassifiedImage = exports.combineReducers = exports.applyMethods = exports.applyFilter = exports.applyCloudMask = void 0;
-var _browser = _interopRequireDefault(require("@google/earthengine/build/browser.js"));
+var _ee_api_js_worker = _interopRequireDefault(require("./ee_api_js_worker"));
 var _numbers = require("../utils/numbers");
 var _this = void 0;
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
@@ -12,7 +12,7 @@ function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbol
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } // this is a patched version of the ee module
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 const classAggregation = ['percentage', 'hectares', 'acres'];
 const hasClasses = type => classAggregation.includes(type);
 
@@ -36,7 +36,7 @@ const createReducer = (eeReducer, type, unweighted) => {
 
 // Combine multiple aggregation types/reducers
 // https://developers.google.com/earth-engine/guides/reducers_intro
-const combineReducers = (types, unweighted) => types.reduce((r, t, i) => i === 0 ? createReducer(r, t, unweighted) : r.combine(createReducer(_browser.default.Reducer, t, unweighted), '', true), _browser.default.Reducer);
+const combineReducers = (types, unweighted) => types.reduce((r, t, i) => i === 0 ? createReducer(r, t, unweighted) : r.combine(createReducer(_ee_api_js_worker.default.Reducer, t, unweighted), '', true), _ee_api_js_worker.default.Reducer);
 
 // Returns the linear scale in meters of the units of this projection
 exports.combineReducers = combineReducers;
@@ -150,8 +150,8 @@ const applyFilter = function (collection) {
   let filter = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
   let filtered = collection;
   filter.forEach(f => {
-    if (_browser.default.Filter[f.type]) {
-      filtered = filtered.filter(_browser.default.Filter[f.type].apply(_this, f.arguments));
+    if (_ee_api_js_worker.default.Filter[f.type]) {
+      filtered = filtered.filter(_ee_api_js_worker.default.Filter[f.type].apply(_this, f.arguments));
     }
   });
   return filtered;
@@ -187,6 +187,6 @@ const applyCloudMask = (collection, cloudScore) => {
     band,
     clearThreshold
   } = cloudScore;
-  return collection.linkCollection(_browser.default.ImageCollection(datasetId), [band]).map(img => img.updateMask(img.select(band).gte(clearThreshold)));
+  return collection.linkCollection(_ee_api_js_worker.default.ImageCollection(datasetId), [band]).map(img => img.updateMask(img.select(band).gte(clearThreshold)));
 };
 exports.applyCloudMask = applyCloudMask;

@@ -1,7 +1,7 @@
 "use strict";
 
 var _comlink = require("comlink");
-var _browser = _interopRequireDefault(require("@google/earthengine/build/browser.js"));
+var _ee_api_js_worker = _interopRequireDefault(require("./ee_api_js_worker"));
 var _ee_worker_utils = require("./ee_worker_utils");
 var _buffers = require("../utils/buffers");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
@@ -9,7 +9,7 @@ function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbol
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } // this is a patched version of the ee module
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } // https://github.com/google/earthengine-api/pull/173
 const IMAGE = 'Image';
 const IMAGE_COLLECTION = 'ImageCollection';
 const FEATURE_COLLECTION = 'FeatureCollection';
@@ -49,7 +49,7 @@ class EarthEngineWorker {
       buffer
     } = this.options;
     if (Array.isArray(data) && !this.eeFeatureCollection) {
-      this.eeFeatureCollection = _browser.default.FeatureCollection(data.map(feature => _objectSpread(_objectSpread({}, feature), {}, {
+      this.eeFeatureCollection = _ee_api_js_worker.default.FeatureCollection(data.map(feature => _objectSpread(_objectSpread({}, feature), {}, {
         id: feature.properties.id,
         // EE requires id to be string, MapLibre integer
         // Translate points to buffer polygons
@@ -80,11 +80,11 @@ class EarthEngineWorker {
     let eeImage;
     if (format === IMAGE) {
       // Single image
-      eeImage = _browser.default.Image(datasetId);
+      eeImage = _ee_api_js_worker.default.Image(datasetId);
       this.eeScale = (0, _ee_worker_utils.getScale)(eeImage);
     } else {
       // Image collection
-      let collection = _browser.default.ImageCollection(datasetId);
+      let collection = _ee_api_js_worker.default.ImageCollection(datasetId);
 
       // Scale is lost when creating a mosaic below
       this.eeScale = (0, _ee_worker_utils.getScale)(collection.first());
@@ -104,7 +104,7 @@ class EarthEngineWorker {
         eeImage = collection.mosaic();
       } else {
         // There should only be one image after applying the filters
-        eeImage = _browser.default.Image(collection.first());
+        eeImage = _ee_api_js_worker.default.Image(collection.first());
       }
     }
 
@@ -116,7 +116,7 @@ class EarthEngineWorker {
         this.eeImageBands = eeImage;
 
         // Combine multiple bands (e.g. age groups)
-        eeImage = eeImage.reduce(_browser.default.Reducer[bandReducer]());
+        eeImage = eeImage.reduce(_ee_api_js_worker.default.Reducer[bandReducer]());
       }
     }
 
@@ -143,7 +143,7 @@ class EarthEngineWorker {
     return new Promise((resolve, reject) => {
       switch (format) {
         case FEATURE_COLLECTION:
-          let dataset = _browser.default.FeatureCollection(datasetId);
+          let dataset = _ee_api_js_worker.default.FeatureCollection(datasetId);
           dataset = (0, _ee_worker_utils.applyFilter)(dataset, filter).draw(_objectSpread(_objectSpread({}, DEFAULT_FEATURE_STYLE), style));
           if (data) {
             dataset = dataset.clipToCollection(this.getFeatureCollection());
@@ -174,22 +174,22 @@ class EarthEngineWorker {
       lat
     } = lnglat;
     const eeImage = await this.getImage();
-    const point = _browser.default.Geometry.Point(lng, lat);
-    const reducer = _browser.default.Reducer.mean();
+    const point = _ee_api_js_worker.default.Geometry.Point(lng, lat);
+    const reducer = _ee_api_js_worker.default.Reducer.mean();
     return (0, _ee_worker_utils.getInfo)(eeImage.reduceRegion(reducer, point, 1));
   }
 
   // Returns available periods for an image collection
   getPeriods(eeId) {
-    const imageCollection = _browser.default.ImageCollection(eeId).distinct('system:time_start').sort('system:time_start', false);
-    const featureCollection = _browser.default.FeatureCollection(imageCollection).select(['system:time_start', 'system:time_end', 'year'], null, false);
+    const imageCollection = _ee_api_js_worker.default.ImageCollection(eeId).distinct('system:time_start').sort('system:time_start', false);
+    const featureCollection = _ee_api_js_worker.default.FeatureCollection(imageCollection).select(['system:time_start', 'system:time_end', 'year'], null, false);
     return (0, _ee_worker_utils.getInfo)(featureCollection);
   }
 
   // Returns min and max timestamp for an image collection
   getTimeRange(eeId) {
-    const collection = _browser.default.ImageCollection(eeId);
-    const range = collection.reduceColumns(_browser.default.Reducer.minMax(), ['system:time_start']);
+    const collection = _ee_api_js_worker.default.ImageCollection(eeId);
+    const range = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
     return (0, _ee_worker_utils.getInfo)(range);
   }
 
@@ -217,17 +217,17 @@ class EarthEngineWorker {
           datasetId,
           filter
         } = this.options;
-        let dataset = _browser.default.FeatureCollection(datasetId);
+        let dataset = _ee_api_js_worker.default.FeatureCollection(datasetId);
         dataset = (0, _ee_worker_utils.applyFilter)(dataset, filter);
         const aggFeatures = collection.map(feature => {
-          feature = _browser.default.Feature(feature);
+          feature = _ee_api_js_worker.default.Feature(feature);
           const count = dataset.filterBounds(feature.geometry()).size();
           return feature.set('count', count);
         }).select(['count'], null, false);
         return (0, _ee_worker_utils.getInfo)(aggFeatures).then(_ee_worker_utils.getFeatureCollectionProperties);
       } else if (useHistogram) {
         // Used for landcover
-        const reducer = _browser.default.Reducer.frequencyHistogram();
+        const reducer = _ee_api_js_worker.default.Reducer.frequencyHistogram();
         const scaleValue = await (0, _ee_worker_utils.getInfo)(scale);
         return (0, _ee_worker_utils.getInfo)(image.reduceRegions({
           collection,
@@ -267,9 +267,9 @@ class EarthEngineWorker {
 
 // Service Worker not supported in Safari
 _defineProperty(EarthEngineWorker, "setAuthToken", getAuthToken => new Promise((resolve, reject) => {
-  if (_browser.default.data.getAuthToken()) {
+  if (_ee_api_js_worker.default.data.getAuthToken()) {
     // Already authenticated
-    _browser.default.initialize(null, null, resolve, reject);
+    _ee_api_js_worker.default.initialize(null, null, resolve, reject);
   } else {
     getAuthToken().then(token => {
       const {
@@ -280,8 +280,8 @@ _defineProperty(EarthEngineWorker, "setAuthToken", getAuthToken => new Promise((
       } = token;
       const extraScopes = null;
       const updateAuthLibrary = false;
-      _browser.default.data.setAuthToken(client_id, tokenType, access_token, expires_in, extraScopes, () => _browser.default.initialize(null, null, resolve, reject), updateAuthLibrary);
-      _browser.default.data.setAuthTokenRefresher(async (authArgs, callback) => callback(_objectSpread(_objectSpread({}, await getAuthToken()), {}, {
+      _ee_api_js_worker.default.data.setAuthToken(client_id, tokenType, access_token, expires_in, extraScopes, () => _ee_api_js_worker.default.initialize(null, null, resolve, reject), updateAuthLibrary);
+      _ee_api_js_worker.default.data.setAuthTokenRefresher(async (authArgs, callback) => callback(_objectSpread(_objectSpread({}, await getAuthToken()), {}, {
         state: authArgs.scope
       })));
     }).catch(reject);
