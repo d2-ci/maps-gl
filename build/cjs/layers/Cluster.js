@@ -194,5 +194,4 @@ class Cluster extends _Layer.default {
     this.spider = null;
   }
 }
-var _default = Cluster;
-exports.default = _default;
+var _default = exports.default = Cluster;

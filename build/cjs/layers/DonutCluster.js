@@ -183,5 +183,4 @@ class DonutCluster extends _Cluster.default {
     }
   }
 }
-var _default = DonutCluster;
-exports.default = _default;
+var _default = exports.default = DonutCluster;

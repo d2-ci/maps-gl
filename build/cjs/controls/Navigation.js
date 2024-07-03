@@ -21,5 +21,4 @@ class Navigation extends _maplibreGl.NavigationControl {
     super(_objectSpread(_objectSpread({}, defaultOptions), options));
   }
 }
-var _default = Navigation;
-exports.default = _default;
+var _default = exports.default = Navigation;

@@ -14,13 +14,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  *  Wrapper around MapLibre GL JS for DHIS2 Maps
  */
 
-const layerTypes = Object.keys(_layerTypes.default);
-exports.layerTypes = layerTypes;
-const controlTypes = Object.keys(_controlTypes.default);
-exports.controlTypes = controlTypes;
-const loadEarthEngineWorker = _earthengine.default;
-exports.loadEarthEngineWorker = loadEarthEngineWorker;
-const poleOfInaccessibility = _labels.getLabelPosition;
-exports.poleOfInaccessibility = poleOfInaccessibility;
-var _default = _Map.default;
-exports.default = _default;
+const layerTypes = exports.layerTypes = Object.keys(_layerTypes.default);
+const controlTypes = exports.controlTypes = Object.keys(_controlTypes.default);
+const loadEarthEngineWorker = exports.loadEarthEngineWorker = _earthengine.default;
+const poleOfInaccessibility = exports.poleOfInaccessibility = _labels.getLabelPosition;
+var _default = exports.default = _Map.default;

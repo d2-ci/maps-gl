@@ -79,5 +79,4 @@ class Boundary extends _Layer.default {
     }
   }
 }
-var _default = Boundary;
-exports.default = _default;
+var _default = exports.default = Boundary;

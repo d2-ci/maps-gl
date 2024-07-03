@@ -40,5 +40,4 @@ class Fullscreen extends _maplibreGl.FullscreenControl {
     super._changeIcon();
   }
 }
-var _default = Fullscreen;
-exports.default = _default;
+var _default = exports.default = Fullscreen;

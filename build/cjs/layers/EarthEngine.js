@@ -206,5 +206,4 @@ class EarthEngine extends _Layer.default {
     }
   }
 }
-var _default = EarthEngine;
-exports.default = _default;
+var _default = exports.default = EarthEngine;

@@ -38,5 +38,4 @@ class Label extends _maplibreGl.Popup {
     super._update(cursor);
   }
 }
-var _default = Label;
-exports.default = _default;
+var _default = exports.default = Label;

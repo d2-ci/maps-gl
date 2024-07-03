@@ -87,5 +87,4 @@ class GeoJson extends _Layer.default {
     }
   }
 }
-var _default = GeoJson;
-exports.default = _default;
+var _default = exports.default = GeoJson;

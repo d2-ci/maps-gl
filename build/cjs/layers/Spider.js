@@ -105,5 +105,4 @@ const Spider = function (map, options) {
     getId
   };
 };
-var _default = Spider;
-exports.default = _default;
+var _default = exports.default = Spider;

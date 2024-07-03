@@ -307,5 +307,4 @@ class Layer extends _maplibreGl.Evented {
     }
   }
 }
-var _default = Layer;
-exports.default = _default;
+var _default = exports.default = Layer;

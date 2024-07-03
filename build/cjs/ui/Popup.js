@@ -51,5 +51,4 @@ class Popup extends _maplibreGl.Popup {
     return this;
   }
 }
-var _default = Popup;
-exports.default = _default;
+var _default = exports.default = Popup;

@@ -58,5 +58,4 @@ class FitBoundsControl {
     delete this._mapgl;
   }
 }
-var _default = FitBoundsControl;
-exports.default = _default;
+var _default = exports.default = FitBoundsControl;

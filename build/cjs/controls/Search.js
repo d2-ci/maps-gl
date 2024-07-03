@@ -189,5 +189,4 @@ class SearchControl {
     }).catch(() => this._loadingEl.style.display = 'none');
   }
 }
-var _default = SearchControl;
-exports.default = _default;
+var _default = exports.default = SearchControl;

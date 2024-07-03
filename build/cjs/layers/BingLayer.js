@@ -127,5 +127,4 @@ class BingLayer extends _Layer.default {
     return providers.map(p => p.attribution).join(', ');
   }
 }
-var _default = BingLayer;
-exports.default = _default;
+var _default = exports.default = BingLayer;

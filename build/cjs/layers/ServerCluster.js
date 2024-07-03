@@ -264,5 +264,4 @@ class ServerCluster extends _Cluster.default {
     }
   }
 }
-var _default = ServerCluster;
-exports.default = _default;
+var _default = exports.default = ServerCluster;

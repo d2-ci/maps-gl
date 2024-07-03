@@ -284,5 +284,4 @@ class MeasureControl {
     }
   }
 }
-var _default = MeasureControl;
-exports.default = _default;
+var _default = exports.default = MeasureControl;

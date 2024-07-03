@@ -44,5 +44,4 @@ class TileLayer extends _Layer.default {
     });
   }
 }
-var _default = TileLayer;
-exports.default = _default;
+var _default = exports.default = TileLayer;

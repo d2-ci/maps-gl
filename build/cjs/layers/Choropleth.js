@@ -56,5 +56,4 @@ class Choropleth extends _Layer.default {
     }
   }
 }
-var _default = Choropleth;
-exports.default = _default;
+var _default = exports.default = Choropleth;

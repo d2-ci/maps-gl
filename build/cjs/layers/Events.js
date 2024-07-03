@@ -58,5 +58,4 @@ class Events extends _Layer.default {
     }));
   }
 }
-var _default = Events;
-exports.default = _default;
+var _default = exports.default = Events;

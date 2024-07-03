@@ -117,5 +117,4 @@ class LayerGroup extends _maplibreGl.Evented {
     return this._layers.some(layer => layer.getLayers().some(layer => layer.id === id));
   }
 }
-var _default = LayerGroup;
-exports.default = _default;
+var _default = exports.default = LayerGroup;

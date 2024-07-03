@@ -190,5 +190,4 @@ const spiderifier = (map, userOptions) => {
     each: callback => util.each(previousSpiderLegs, callback)
   };
 };
-var _default = spiderifier;
-exports.default = _default;
+var _default = exports.default = spiderifier;

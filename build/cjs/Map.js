@@ -465,5 +465,4 @@ class MapGL extends _maplibreGl.Evented {
   }
 }
 exports.MapGL = MapGL;
-var _default = MapGL;
-exports.default = _default;
+var _default = exports.default = MapGL;

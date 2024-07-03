@@ -13,7 +13,7 @@ var _FitBounds = _interopRequireDefault(require("./FitBounds"));
 var _Fullscreen = _interopRequireDefault(require("./Fullscreen"));
 require("./Controls.css");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-var _default = {
+var _default = exports.default = {
   zoom: _Navigation.default,
   attribution: _Attribution.default,
   scale: _maplibreGl.ScaleControl,
@@ -22,4 +22,3 @@ var _default = {
   measure: _Measure.default,
   fitBounds: _FitBounds.default
 };
-exports.default = _default;

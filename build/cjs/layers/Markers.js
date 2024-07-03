@@ -51,5 +51,4 @@ class Markers extends _Layer.default {
     }
   }
 }
-var _default = Markers;
-exports.default = _default;
+var _default = exports.default = Markers;

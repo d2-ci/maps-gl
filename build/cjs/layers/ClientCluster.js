@@ -105,5 +105,4 @@ class ClientCluster extends _Cluster.default {
     }
   }
 }
-var _default = ClientCluster;
-exports.default = _default;
+var _default = exports.default = ClientCluster;
