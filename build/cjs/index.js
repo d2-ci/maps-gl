@@ -9,13 +9,18 @@ var _layerTypes = _interopRequireDefault(require("./layers/layerTypes"));
 var _controlTypes = _interopRequireDefault(require("./controls/controlTypes"));
 var _earthengine = _interopRequireDefault(require("./earthengine"));
 var _labels = require("./utils/labels");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 /**
  *  Wrapper around MapLibre GL JS for DHIS2 Maps
  */
 
-const layerTypes = exports.layerTypes = Object.keys(_layerTypes.default);
-const controlTypes = exports.controlTypes = Object.keys(_controlTypes.default);
-const loadEarthEngineWorker = exports.loadEarthEngineWorker = _earthengine.default;
-const poleOfInaccessibility = exports.poleOfInaccessibility = _labels.getLabelPosition;
-var _default = exports.default = _Map.default;
+const layerTypes = Object.keys(_layerTypes.default);
+exports.layerTypes = layerTypes;
+const controlTypes = Object.keys(_controlTypes.default);
+exports.controlTypes = controlTypes;
+const loadEarthEngineWorker = _earthengine.default;
+exports.loadEarthEngineWorker = loadEarthEngineWorker;
+const poleOfInaccessibility = _labels.getLabelPosition;
+exports.poleOfInaccessibility = poleOfInaccessibility;
+var _default = _Map.default;
+exports.default = _default;

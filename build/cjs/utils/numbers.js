@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.setPrecision = exports.numberPrecision = exports.kmToMiles = exports.getPrecision = void 0;
 // Rounds a number to d decimals
 const numberPrecision = d => {
+  console.log('numberPrecision');
   if (d === undefined) {
     return n => n;
   }

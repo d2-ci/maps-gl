@@ -2,7 +2,7 @@
 
 var _labels = require("../labels");
 var _style = _interopRequireDefault(require("../style"));
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 const id = 'abc';
 const opacity = 0.5;
 describe('labels', () => {

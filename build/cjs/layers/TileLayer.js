@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 var _Layer = _interopRequireDefault(require("./Layer"));
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 class TileLayer extends _Layer.default {
   constructor(options) {
     super(options);
@@ -44,4 +44,5 @@ class TileLayer extends _Layer.default {
     });
   }
 }
-var _default = exports.default = TileLayer;
+var _default = TileLayer;
+exports.default = _default;

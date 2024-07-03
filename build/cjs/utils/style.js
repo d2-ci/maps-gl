@@ -4,18 +4,30 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.textSize = exports.textFont = exports.textColor = exports.strokeWidth = exports.strokeColor = exports.radius = exports.opacity = exports.noDataColor = exports.mapStyle = exports.hoverStrokeMultiplier = exports.eventStrokeColor = exports.defaultGlyphs = exports.default = exports.clusterCountColor = void 0;
-const textFont = exports.textFont = ['Open Sans Bold'];
-const textSize = exports.textSize = 16;
-const textColor = exports.textColor = '#FFFFFF';
-const radius = exports.radius = 6;
-const noDataColor = exports.noDataColor = '#CCCCCC';
-const strokeColor = exports.strokeColor = '#333333';
-const strokeWidth = exports.strokeWidth = 1;
-const hoverStrokeMultiplier = exports.hoverStrokeMultiplier = 3;
-const eventStrokeColor = exports.eventStrokeColor = '#333333';
-const clusterCountColor = exports.clusterCountColor = '#000000';
-const opacity = exports.opacity = 1;
-const defaultGlyphs = exports.defaultGlyphs = 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf';
+const textFont = ['Open Sans Bold'];
+exports.textFont = textFont;
+const textSize = 16;
+exports.textSize = textSize;
+const textColor = '#FFFFFF';
+exports.textColor = textColor;
+const radius = 6;
+exports.radius = radius;
+const noDataColor = '#CCCCCC';
+exports.noDataColor = noDataColor;
+const strokeColor = '#333333';
+exports.strokeColor = strokeColor;
+const strokeWidth = 1;
+exports.strokeWidth = strokeWidth;
+const hoverStrokeMultiplier = 3;
+exports.hoverStrokeMultiplier = hoverStrokeMultiplier;
+const eventStrokeColor = '#333333';
+exports.eventStrokeColor = eventStrokeColor;
+const clusterCountColor = '#000000';
+exports.clusterCountColor = clusterCountColor;
+const opacity = 1;
+exports.opacity = opacity;
+const defaultGlyphs = 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf';
+exports.defaultGlyphs = defaultGlyphs;
 const mapStyle = _ref => {
   let {
     glyphs = defaultGlyphs
@@ -28,7 +40,7 @@ const mapStyle = _ref => {
   };
 };
 exports.mapStyle = mapStyle;
-var _default = exports.default = {
+var _default = {
   textFont,
   textSize,
   textColor,
@@ -41,3 +53,4 @@ var _default = exports.default = {
   eventStrokeColor,
   clusterCountColor
 };
+exports.default = _default;

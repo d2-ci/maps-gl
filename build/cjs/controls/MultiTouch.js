@@ -76,4 +76,5 @@ class MultiTouch {
     this.map = undefined;
   }
 }
-var _default = exports.default = MultiTouch;
+var _default = MultiTouch;
+exports.default = _default;

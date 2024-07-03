@@ -4,12 +4,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.getWorkerOptions = exports.defaultOptions = void 0;
-const defaultOptions = exports.defaultOptions = {
+const defaultOptions = {
   bandReducer: 'sum',
   popup: '{name}: {value} {unit}',
   nullPopup: '{name}: {noValue}',
   noValue: 'no value'
 };
+exports.defaultOptions = defaultOptions;
 const workerOptions = ['format', 'aggregationType', 'band', 'bandReducer', 'buffer', 'data', 'datasetId', 'filter', 'legend', 'mask', 'methods', 'mosaic', 'params', 'tileScale'];
 
 // Returns the layer options that should be passed to the EE worker

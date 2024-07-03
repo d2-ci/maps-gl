@@ -5,9 +5,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.donutSegment = exports.donutChart = exports.default = void 0;
 var _maplibreGl = require("maplibre-gl");
-function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return typeof key === "symbol" ? key : String(key); }
+function _toPrimitive(input, hint) { if (typeof input !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (typeof res !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
 // Creates a donut marker component
 class DonutMarker extends _maplibreGl.Marker {
   constructor(segments) {
@@ -67,4 +67,5 @@ const donutSegment = (start, end, r, r0, color) => {
   return ['<path d="M', r + r0 * x0, r + r0 * y0, 'L', r + r * x0, r + r * y0, 'A', r, r, 0, largeArc, 1, r + r * x1, r + r * y1, 'L', r + r0 * x1, r + r0 * y1, 'A', r0, r0, 0, largeArc, 0, r + r0 * x0, r + r0 * y0, '" fill="' + color + '" />'].join(' ');
 };
 exports.donutSegment = donutSegment;
-var _default = exports.default = DonutMarker;
+var _default = DonutMarker;
+exports.default = _default;
