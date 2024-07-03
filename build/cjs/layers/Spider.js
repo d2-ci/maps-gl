@@ -7,7 +7,7 @@ exports.default = void 0;
 var _maplibreGl = require("maplibre-gl");
 var _spiderifier = _interopRequireDefault(require("../utils/spiderifier"));
 var _style = require("../utils/style");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const Spider = function (map, options) {
   let spider;
   let spiderId;
