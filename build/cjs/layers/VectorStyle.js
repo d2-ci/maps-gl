@@ -148,4 +148,5 @@ class VectorStyle extends _maplibreGl.Evented {
     return _layers.BASEMAP_POSITION;
   }
 }
-var _default = exports.default = VectorStyle;
+var _default = VectorStyle;
+exports.default = _default;

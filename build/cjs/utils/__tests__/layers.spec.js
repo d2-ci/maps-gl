@@ -2,7 +2,7 @@
 
 var _layers = require("../layers");
 var _style = _interopRequireDefault(require("../style"));
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 const id = 'abc';
 const color = '#000000';
 const opacity = 0.5;

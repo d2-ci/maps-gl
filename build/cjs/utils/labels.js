@@ -8,7 +8,7 @@ var _area = _interopRequireDefault(require("@turf/area"));
 var _polylabel = _interopRequireDefault(require("polylabel"));
 var _geometry = require("./geometry");
 var _style = _interopRequireDefault(require("./style"));
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 // Default fonts
 const fonts = {
   'normal-normal': 'Open Sans Regular',

@@ -92,4 +92,5 @@ const syncMaps = (() => {
     remove: removeMap
   };
 })();
-var _default = exports.default = syncMaps;
+var _default = syncMaps;
+exports.default = _default;

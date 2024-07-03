@@ -24,4 +24,5 @@ const controlsLocale = {
   'MeasureControl.Hectares': 'ha',
   'MeasureControl.Acres': 'acres'
 };
-var _default = exports.default = controlsLocale;
+var _default = controlsLocale;
+exports.default = _default;
