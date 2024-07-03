@@ -17,8 +17,8 @@ var _EarthEngine = _interopRequireDefault(require("./EarthEngine"));
 var _BingLayer = _interopRequireDefault(require("./BingLayer"));
 var _GeoJson = _interopRequireDefault(require("./GeoJson"));
 var _LayerGroup = _interopRequireDefault(require("./LayerGroup"));
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-var _default = {
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+var _default = exports.default = {
   vectorStyle: _VectorStyle.default,
   //basemap /externalLayer
   tileLayer: _TileLayer.default,
@@ -47,4 +47,3 @@ var _default = {
   // tracked entity layer
   group: _LayerGroup.default // tracked entity layer
 };
-exports.default = _default;

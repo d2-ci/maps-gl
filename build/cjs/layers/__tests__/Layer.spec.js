@@ -1,7 +1,7 @@
 "use strict";
 
 var _Layer = _interopRequireDefault(require("../Layer"));
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const data = [{
   type: 'Feature',
   properties: {

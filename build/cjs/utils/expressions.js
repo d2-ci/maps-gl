@@ -22,5 +22,4 @@ const radiusExpr = radius => ['case', ['has', 'radius'], ['get', 'radius'], radi
 
 // Returns cluster radius
 exports.radiusExpr = radiusExpr;
-const clusterRadiusExpr = ['step', ['get', 'point_count'], 15, 10, 20, 1000, 25, 10000, 30];
-exports.clusterRadiusExpr = clusterRadiusExpr;
+const clusterRadiusExpr = exports.clusterRadiusExpr = ['step', ['get', 'point_count'], 15, 10, 20, 1000, 25, 10000, 30];

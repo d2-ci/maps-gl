@@ -7,13 +7,11 @@ exports.symbolLayer = exports.polygonLayer = exports.pointLayer = exports.outlin
 var _filters = require("./filters");
 var _expressions = require("./expressions");
 var _style = _interopRequireDefault(require("./style"));
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-const BASEMAP_POSITION = 0;
-exports.BASEMAP_POSITION = BASEMAP_POSITION;
-const OVERLAY_START_POSITION = 1;
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+const BASEMAP_POSITION = exports.BASEMAP_POSITION = 0;
+const OVERLAY_START_POSITION = exports.OVERLAY_START_POSITION = 1;
 
 // Layer with point features
-exports.OVERLAY_START_POSITION = OVERLAY_START_POSITION;
 const pointLayer = _ref => {
   let {
     id,

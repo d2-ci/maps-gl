@@ -20,5 +20,4 @@ const getEarthEngineWorker = getAuthToken => new Promise((resolve, reject) => {
     }).catch(reject);
   }
 });
-var _default = getEarthEngineWorker;
-exports.default = _default;
+var _default = exports.default = getEarthEngineWorker;

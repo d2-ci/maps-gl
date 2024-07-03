@@ -26,5 +26,4 @@ class Attribution extends _maplibreGl.AttributionControl {
     return attWidth && mapWidth && attWidth > mapWidth - scaleControlWidth;
   }
 }
-var _default = Attribution;
-exports.default = _default;
+var _default = exports.default = Attribution;
