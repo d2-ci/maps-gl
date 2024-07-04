@@ -4,9 +4,10 @@ function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 import { expose } from 'comlink';
-import ee from './ee_api_js_worker'; // https://github.com/google/earthengine-api/pull/173
-import { getInfo, getScale, hasClasses, combineReducers, getClassifiedImage, getHistogramStatistics, getFeatureCollectionProperties, applyFilter, applyMethods, applyCloudMask } from './ee_worker_utils';
-import { getBufferGeometry } from '../utils/buffers';
+import { getBufferGeometry } from '../utils/buffers.js';
+import ee from './ee_api_js_worker.js'; // https://github.com/google/earthengine-api/pull/173
+// import { ee } from '@google/earthengine/build/ee_api_js_debug' // Run "yarn add @google/earthengine"
+import { getInfo, getScale, hasClasses, combineReducers, getClassifiedImage, getHistogramStatistics, getFeatureCollectionProperties, applyFilter, applyMethods, applyCloudMask } from './ee_worker_utils.js';
 const IMAGE = 'Image';
 const IMAGE_COLLECTION = 'ImageCollection';
 const FEATURE_COLLECTION = 'FeatureCollection';
@@ -261,8 +262,12 @@ class EarthEngineWorker {
         }
         aggFeatures = aggFeatures.select(props, null, false);
         return getInfo(aggFeatures).then(getFeatureCollectionProperties);
-      } else throw new Error('Aggregation type is not valid');
-    } else throw new Error('Missing org unit features');
+      } else {
+        throw new Error('Aggregation type is not valid');
+      }
+    } else {
+      throw new Error('Missing org unit features');
+    }
   }
 }
 
@@ -289,6 +294,7 @@ _defineProperty(EarthEngineWorker, "setAuthToken", getAuthToken => new Promise((
   }
 }));
 if (typeof onconnect !== 'undefined') {
+  // eslint-disable-next-line no-undef
   onconnect = evt => expose(EarthEngineWorker, evt.ports[0]);
 } else {
   expose(EarthEngineWorker);
