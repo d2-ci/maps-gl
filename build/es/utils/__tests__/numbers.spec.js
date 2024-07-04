@@ -1,4 +1,4 @@
-import { numberPrecision, getPrecision, setPrecision, kmToMiles, squareMetersToHectares, squareMetersToAcres } from '../numbers';
+import { numberPrecision, getPrecision, setPrecision, kmToMiles } from '../numbers';
 describe('numbers', () => {
   it('numberPrecision should round number to x decimals', () => {
     const formatNumber = numberPrecision(3);

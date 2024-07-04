@@ -51,9 +51,9 @@ describe('numbers', () => {
     expect((0, _numbers.kmToMiles)(1)).toBe(0.621371192);
   });
   it('Should convert square meters to hectares', () => {
-    expect((0, _numbers.squareMetersToHectares)(10000)).toBe(1);
+    expect(squareMetersToHectares(10000)).toBe(1);
   });
   it('Should convert square meters to acres', () => {
-    expect((0, _numbers.setPrecision)((0, _numbers.squareMetersToAcres)(10000), 2)).toBe(2.47);
+    expect((0, _numbers.setPrecision)(squareMetersToAcres(10000), 2)).toBe(2.47);
   });
 });
