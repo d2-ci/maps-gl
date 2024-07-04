@@ -4,14 +4,14 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-var _Layer = _interopRequireDefault(require("./Layer"));
-var _earthengine = _interopRequireDefault(require("../earthengine"));
-var _earthengine2 = require("../utils/earthengine");
-var _geometry = require("../utils/geometry");
-var _buffers = require("../utils/buffers");
-var _layers = require("../utils/layers");
-var _numbers = require("../utils/numbers");
-var _core = require("../utils/core");
+var _index = _interopRequireDefault(require("../earthengine/index.js"));
+var _buffers = require("../utils/buffers.js");
+var _core = require("../utils/core.js");
+var _earthengine = require("../utils/earthengine.js");
+var _geometry = require("../utils/geometry.js");
+var _layers = require("../utils/layers.js");
+var _numbers = require("../utils/numbers.js");
+var _Layer = _interopRequireDefault(require("./Layer.js"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -20,7 +20,7 @@ function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" 
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 class EarthEngine extends _Layer.default {
   constructor(_options) {
-    super(_objectSpread(_objectSpread({}, _earthengine2.defaultOptions), _options));
+    super(_objectSpread(_objectSpread({}, _earthengine.defaultOptions), _options));
     _defineProperty(this, "addTo", map => new Promise((resolve, reject) => {
       this._map = map;
       if (map.styleIsLoaded()) {
@@ -104,8 +104,8 @@ class EarthEngine extends _Layer.default {
   // Returns promise resolving a new worker instance
   getWorkerInstance() {
     if (!this._workerPromise) {
-      this._workerPromise = new Promise((resolve, reject) => (0, _earthengine.default)(this.options.getAuthToken).then(EarthEngineWorker => {
-        new EarthEngineWorker((0, _earthengine2.getWorkerOptions)(this.options)).then(resolve);
+      this._workerPromise = new Promise((resolve, reject) => (0, _index.default)(this.options.getAuthToken).then(EarthEngineWorker => {
+        new EarthEngineWorker((0, _earthengine.getWorkerOptions)(this.options)).then(resolve);
       }).catch(reject));
     }
     return this._workerPromise;

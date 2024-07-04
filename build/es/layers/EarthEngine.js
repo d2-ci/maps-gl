@@ -3,14 +3,14 @@ function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t =
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-import Layer from './Layer';
-import getEarthEngineWorker from '../earthengine';
-import { defaultOptions, getWorkerOptions } from '../utils/earthengine';
-import { isPoint, featureCollection } from '../utils/geometry';
-import { getBufferGeometry } from '../utils/buffers';
-import { polygonLayer, outlineLayer, pointLayer } from '../utils/layers';
-import { setPrecision } from '../utils/numbers';
-import { setTemplate } from '../utils/core';
+import getEarthEngineWorker from '../earthengine/index.js';
+import { getBufferGeometry } from '../utils/buffers.js';
+import { setTemplate } from '../utils/core.js';
+import { defaultOptions, getWorkerOptions } from '../utils/earthengine.js';
+import { isPoint, featureCollection } from '../utils/geometry.js';
+import { polygonLayer, outlineLayer, pointLayer } from '../utils/layers.js';
+import { setPrecision } from '../utils/numbers.js';
+import Layer from './Layer.js';
 class EarthEngine extends Layer {
   constructor(_options) {
     super(_objectSpread(_objectSpread({}, defaultOptions), _options));
