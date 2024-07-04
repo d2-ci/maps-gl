@@ -143,24 +143,29 @@ class EarthEngineWorker {
     return new Promise((resolve, reject) => {
       switch (format) {
         case FEATURE_COLLECTION:
-          let dataset = _ee_api_js_worker.default.FeatureCollection(datasetId);
-          dataset = (0, _ee_worker_utils.applyFilter)(dataset, filter).draw(_objectSpread(_objectSpread({}, DEFAULT_FEATURE_STYLE), style));
-          if (data) {
-            dataset = dataset.clipToCollection(this.getFeatureCollection());
+          {
+            let dataset = _ee_api_js_worker.default.FeatureCollection(datasetId);
+            dataset = (0, _ee_worker_utils.applyFilter)(dataset, filter).draw(_objectSpread(_objectSpread({}, DEFAULT_FEATURE_STYLE), style));
+            if (data) {
+              dataset = dataset.clipToCollection(this.getFeatureCollection());
+            }
+            dataset.getMap(null, response => resolve(response.urlFormat));
+            break;
           }
-          dataset.getMap(null, response => resolve(response.urlFormat));
-          break;
         case IMAGE:
         case IMAGE_COLLECTION:
-          let {
-            eeImage,
-            params
-          } = (0, _ee_worker_utils.getClassifiedImage)(this.getImage(), this.options);
-          if (data) {
-            eeImage = eeImage.clipToCollection(this.getFeatureCollection());
+          {
+            // eslint-disable-next-line prefer-const
+            let {
+              eeImage,
+              params
+            } = (0, _ee_worker_utils.getClassifiedImage)(this.getImage(), this.options);
+            if (data) {
+              eeImage = eeImage.clipToCollection(this.getFeatureCollection());
+            }
+            eeImage.visualize(params).getMap(null, response => resolve(response.urlFormat));
+            break;
           }
-          eeImage.visualize(params).getMap(null, response => resolve(response.urlFormat));
-          break;
         default:
           reject(new Error('Unknown format'));
       }
