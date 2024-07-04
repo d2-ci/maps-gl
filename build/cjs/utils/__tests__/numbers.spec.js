@@ -1,6 +1,6 @@
 "use strict";
 
-var _numbers = require("../numbers");
+var _numbers = require("../numbers.js");
 describe('numbers', () => {
   it('numberPrecision should round number to x decimals', () => {
     const formatNumber = (0, _numbers.numberPrecision)(3);
@@ -51,9 +51,9 @@ describe('numbers', () => {
     expect((0, _numbers.kmToMiles)(1)).toBe(0.621371192);
   });
   it('Should convert square meters to hectares', () => {
-    expect(squareMetersToHectares(10000)).toBe(1);
+    expect((0, _numbers.squareMetersToHectares)(10000)).toBe(1);
   });
   it('Should convert square meters to acres', () => {
-    expect((0, _numbers.setPrecision)(squareMetersToAcres(10000), 2)).toBe(2.47);
+    expect((0, _numbers.setPrecision)((0, _numbers.squareMetersToAcres)(10000), 2)).toBe(2.47);
   });
 });
