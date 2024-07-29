@@ -6,6 +6,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 import ee from './ee_api_js_worker';
 import { squareMetersToHectares, squareMetersToAcres } from '../utils/numbers';
 const classAggregation = ['percentage', 'hectares', 'acres'];
+const DEFAULT_MASK_VALUE = 0;
 export const hasClasses = type => classAggregation.includes(type);
 
 // Makes evaluate a promise
@@ -77,8 +78,15 @@ export const getFeatureCollectionProperties = data => data.features.reduce((obj,
 export const getClassifiedImage = (eeImage, {
   legend = [],
   style,
-  band
+  band,
+  maskOperator
 }) => {
+  // Use mask operator (e.g. mask out values below a certain threshold)
+  // Only used for styling, not aggregations
+  if (maskOperator && eeImage[maskOperator]) {
+    eeImage = eeImage.updateMask(eeImage[maskOperator](style?.min || DEFAULT_MASK_VALUE));
+  }
+
   // Image has classes (e.g. landcover)
   if (Array.isArray(style)) {
     return {

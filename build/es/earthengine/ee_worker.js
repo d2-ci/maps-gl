@@ -6,7 +6,6 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 import { expose } from 'comlink';
 import { getBufferGeometry } from '../utils/buffers.js';
 import ee from './ee_api_js_worker.js'; // https://github.com/google/earthengine-api/pull/173
-// import { ee } from '@google/earthengine/build/ee_api_js_debug' // Run "yarn add @google/earthengine"
 import { getInfo, getScale, hasClasses, combineReducers, getClassifiedImage, getHistogramStatistics, getFeatureCollectionProperties, applyFilter, applyMethods, applyCloudMask } from './ee_worker_utils.js';
 const IMAGE = 'Image';
 const IMAGE_COLLECTION = 'ImageCollection';
@@ -20,7 +19,7 @@ const DEFAULT_FEATURE_STYLE = {
   pointRadius: 5
 };
 const DEFAULT_TILE_SCALE = 1;
-const DEFAULT_MASK_VALUE = 0;
+const DEFAULT_UNMASK_VALUE = 0;
 class EarthEngineWorker {
   constructor(options = {}) {
     this.options = options;
@@ -69,9 +68,7 @@ class EarthEngineWorker {
       mosaic,
       band,
       bandReducer,
-      maskOperator,
       methods,
-      style,
       cloudScore
     } = this.options;
     let eeImage;
@@ -119,11 +116,6 @@ class EarthEngineWorker {
 
     // Run methods on image
     eeImage = applyMethods(eeImage, methods);
-
-    // Use mask operator (e.g. mask out values below a certain threshold)
-    if (maskOperator && eeImage[maskOperator]) {
-      eeImage = eeImage.updateMask(eeImage[maskOperator](style?.min || DEFAULT_MASK_VALUE));
-    }
     this.eeImage = eeImage;
     return eeImage;
   }
@@ -206,13 +198,20 @@ class EarthEngineWorker {
       band,
       useCentroid,
       style,
-      tileScale = DEFAULT_TILE_SCALE
+      tileScale = DEFAULT_TILE_SCALE,
+      unmaskAggregation
     } = this.options;
     const singleAggregation = !Array.isArray(aggregationType);
     const useHistogram = singleAggregation && hasClasses(aggregationType) && Array.isArray(style);
-    const image = await this.getImage();
     const scale = this.eeScale;
     const collection = this.getFeatureCollection();
+    let image = await this.getImage();
+
+    // Used for "constrained" WorldPop layers
+    // We need to unmask the image to get the correct population density
+    if (unmaskAggregation || typeof unmaskAggregation === 'number') {
+      image = image.unmask(typeof unmaskAggregation === 'number' ? unmaskAggregation : DEFAULT_UNMASK_VALUE);
+    }
     if (collection) {
       if (format === FEATURE_COLLECTION) {
         const {

@@ -14,6 +14,7 @@ function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 const classAggregation = ['percentage', 'hectares', 'acres'];
+const DEFAULT_MASK_VALUE = 0;
 const hasClasses = type => classAggregation.includes(type);
 
 // Makes evaluate a promise
@@ -97,8 +98,15 @@ const getClassifiedImage = (eeImage, _ref4) => {
   let {
     legend = [],
     style,
-    band
+    band,
+    maskOperator
   } = _ref4;
+  // Use mask operator (e.g. mask out values below a certain threshold)
+  // Only used for styling, not aggregations
+  if (maskOperator && eeImage[maskOperator]) {
+    eeImage = eeImage.updateMask(eeImage[maskOperator](style?.min || DEFAULT_MASK_VALUE));
+  }
+
   // Image has classes (e.g. landcover)
   if (Array.isArray(style)) {
     return {
