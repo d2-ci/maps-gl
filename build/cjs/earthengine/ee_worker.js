@@ -214,7 +214,7 @@ class EarthEngineWorker {
     // Used for "constrained" WorldPop layers
     // We need to unmask the image to get the correct population density
     if (unmaskAggregation || typeof unmaskAggregation === 'number') {
-      image = image.unmask(typeof unmaskAggregation === number ? unmaskAggregation : DEFAULT_UNMASK_VALUE);
+      image = image.unmask(typeof unmaskAggregation === 'number' ? unmaskAggregation : DEFAULT_UNMASK_VALUE);
     }
     if (collection) {
       if (format === FEATURE_COLLECTION) {
