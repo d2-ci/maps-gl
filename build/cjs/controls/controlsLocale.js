@@ -7,7 +7,7 @@ exports.default = void 0;
 const controlsLocale = {
   'SearchControl.SearchForPlace': 'Search for place or address',
   'FitBoundsControl.ZoomToContent': 'Zoom to content',
-  'HoverLabel.NoData': 'No data',
+  'Label.NoData': 'No data',
   'MeasureControl.MeasureDistancesAndAreas': 'Measure distances and areas',
   'MeasureControl.ClickStartMeasurement': 'Click where you want to start the measurement',
   'MeasureControl.ClickNextPosition': 'Click the next position',

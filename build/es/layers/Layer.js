@@ -116,7 +116,7 @@ class Layer extends Evented {
       this.setSource(`${id}-buffer`, bufferSource(features, buffer / 1000));
     }
     if (label) {
-      this.setSource(`${id}-label`, labelSource(features, labelStyle));
+      this.setSource(`${id}-label`, labelSource(features, labelStyle, this.locale('Label.NoData')));
     }
   }
   setVisibility(isVisible) {
@@ -277,7 +277,7 @@ class Layer extends Evented {
       const {
         properties
       } = feature;
-      const content = (hoverLabel || label).replace(/\{ *([\w_-]+) *\}/g, (str, key) => properties[key] ?? (key === 'value' ? this.locale('HoverLabel.NoData') : ''));
+      const content = (hoverLabel || label).replace(/\{ *([\w_-]+) *\}/g, (str, key) => properties[key] ?? (key === 'value' ? this.locale('Label.NoData') : ''));
       this._map.showLabel(content, evt.lngLat);
     } else {
       this._map.hideLabel();

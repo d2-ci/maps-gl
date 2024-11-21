@@ -124,7 +124,7 @@ class Layer extends _maplibreGl.Evented {
       this.setSource(`${id}-buffer`, (0, _buffers.bufferSource)(features, buffer / 1000));
     }
     if (label) {
-      this.setSource(`${id}-label`, (0, _labels.labelSource)(features, labelStyle));
+      this.setSource(`${id}-label`, (0, _labels.labelSource)(features, labelStyle, this.locale('Label.NoData')));
     }
   }
   setVisibility(isVisible) {
@@ -288,7 +288,7 @@ class Layer extends _maplibreGl.Evented {
       const {
         properties
       } = feature;
-      const content = (hoverLabel || label).replace(/\{ *([\w_-]+) *\}/g, (str, key) => properties[key] ?? (key === 'value' ? this.locale('HoverLabel.NoData') : ''));
+      const content = (hoverLabel || label).replace(/\{ *([\w_-]+) *\}/g, (str, key) => properties[key] ?? (key === 'value' ? this.locale('Label.NoData') : ''));
       this._map.showLabel(content, evt.lngLat);
     } else {
       this._map.hideLabel();
