@@ -23,7 +23,7 @@ const getOffsetEms = function (type) {
   let fontSize = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 11;
   return type === 'Point' ? radius / parseInt(fontSize, 10) + 0.4 : 0;
 };
-const labelSource = (features, _ref, isBoundary, labelNoData) => {
+const labelSource = (features, _ref, isBoundary) => {
   let {
     fontSize
   } = _ref;
@@ -45,7 +45,7 @@ const labelSource = (features, _ref, isBoundary, labelNoData) => {
           anchor: geometry.type === 'Point' ? 'top' : 'center',
           offset: [0, getOffsetEms(geometry.type, properties.radius, fontSize)],
           color: isBoundary ? properties.color : '#333',
-          value: properties.value ?? labelNoData
+          value: properties.value ?? 'No Data'
         }
       };
     }))

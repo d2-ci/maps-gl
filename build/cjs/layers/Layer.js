@@ -109,6 +109,7 @@ class Layer extends _maplibreGl.Evented {
     this._map = null;
   }
   createSource() {
+    console.log('🚀 ~ Layer ~ createSource ~ this:', this);
     const id = this.getId();
     const features = this.getFeatures();
     const {
@@ -116,6 +117,12 @@ class Layer extends _maplibreGl.Evented {
       label,
       labelStyle
     } = this.options;
+    try {
+      const labelNoData = this.locale('Label.NoData');
+      console.log('🚀 ~ Layer ~ createSource ~ labelNoData:', labelNoData);
+    } catch (error) {
+      console.error('Error fetching labelNoData:', error);
+    }
     this.setSource(id, {
       type: 'geojson',
       data: (0, _geometry.featureCollection)(features)
@@ -124,7 +131,7 @@ class Layer extends _maplibreGl.Evented {
       this.setSource(`${id}-buffer`, (0, _buffers.bufferSource)(features, buffer / 1000));
     }
     if (label) {
-      this.setSource(`${id}-label`, (0, _labels.labelSource)(features, labelStyle, this.locale('Label.NoData')));
+      this.setSource(`${id}-label`, (0, _labels.labelSource)(features, labelStyle));
     }
   }
   setVisibility(isVisible) {
