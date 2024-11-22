@@ -101,8 +101,6 @@ class Layer extends Evented {
     this._map = null;
   }
   createSource() {
-    console.log('🚀 ~ Layer ~ createSource ~ this:', this);
-    console.log('🚀 ~ Layer ~ createSource ~ this.locale:', this.locale);
     const id = this.getId();
     const features = this.getFeatures();
     const {
@@ -110,12 +108,6 @@ class Layer extends Evented {
       label,
       labelStyle
     } = this.options;
-    try {
-      const labelNoData = this.locale['Label.NoData'];
-      console.log('🚀 ~ Layer ~ createSource ~ labelNoData:', labelNoData);
-    } catch (error) {
-      console.error('Error fetching labelNoData:', error);
-    }
     this.setSource(id, {
       type: 'geojson',
       data: featureCollection(features)

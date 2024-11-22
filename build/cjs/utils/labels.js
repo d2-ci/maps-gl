@@ -25,7 +25,8 @@ const getOffsetEms = function (type) {
 };
 const labelSource = (features, _ref, isBoundary) => {
   let {
-    fontSize
+    fontSize,
+    labelNoData = ''
   } = _ref;
   return {
     type: 'geojson',
@@ -45,7 +46,7 @@ const labelSource = (features, _ref, isBoundary) => {
           anchor: geometry.type === 'Point' ? 'top' : 'center',
           offset: [0, getOffsetEms(geometry.type, properties.radius, fontSize)],
           color: isBoundary ? properties.color : '#333',
-          value: properties.value ?? 'No Data'
+          value: properties.value ?? labelNoData
         }
       };
     }))
