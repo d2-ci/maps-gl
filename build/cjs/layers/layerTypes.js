@@ -4,19 +4,19 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-var _VectorStyle = _interopRequireDefault(require("./VectorStyle"));
-var _TileLayer = _interopRequireDefault(require("./TileLayer"));
-var _Choropleth = _interopRequireDefault(require("./Choropleth"));
+var _BingLayer = _interopRequireDefault(require("./BingLayer"));
 var _Boundary = _interopRequireDefault(require("./Boundary"));
-var _Markers = _interopRequireDefault(require("./Markers"));
-var _Events = _interopRequireDefault(require("./Events"));
+var _Choropleth = _interopRequireDefault(require("./Choropleth"));
 var _ClientCluster = _interopRequireDefault(require("./ClientCluster"));
 var _DonutCluster = _interopRequireDefault(require("./DonutCluster"));
-var _ServerCluster = _interopRequireDefault(require("./ServerCluster"));
 var _EarthEngine = _interopRequireDefault(require("./EarthEngine"));
-var _BingLayer = _interopRequireDefault(require("./BingLayer"));
+var _Events = _interopRequireDefault(require("./Events"));
 var _GeoJson = _interopRequireDefault(require("./GeoJson"));
 var _LayerGroup = _interopRequireDefault(require("./LayerGroup"));
+var _Markers = _interopRequireDefault(require("./Markers"));
+var _ServerCluster = _interopRequireDefault(require("./ServerCluster"));
+var _TileLayer = _interopRequireDefault(require("./TileLayer"));
+var _VectorStyle = _interopRequireDefault(require("./VectorStyle"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 var _default = exports.default = {
   vectorStyle: _VectorStyle.default,

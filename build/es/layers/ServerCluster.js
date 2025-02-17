@@ -5,12 +5,12 @@ function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" 
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 import SphericalMercator from '@mapbox/sphericalmercator';
 import centroid from '@turf/centroid';
-import Cluster from './Cluster';
-import { pointLayer, polygonLayer, outlineLayer, clusterLayer, clusterCountLayer } from '../utils/layers';
 import { isClusterPoint } from '../utils/filters';
-import { featureCollection } from '../utils/geometry';
-import { eventStrokeColor, clusterCountColor } from '../utils/style';
 import { earthRadius } from '../utils/geo';
+import { featureCollection } from '../utils/geometry';
+import { pointLayer, polygonLayer, outlineLayer, clusterLayer, clusterCountLayer } from '../utils/layers';
+import { eventStrokeColor, clusterCountColor } from '../utils/style';
+import Cluster from './Cluster';
 class ServerCluster extends Cluster {
   constructor(options) {
     super(_objectSpread({

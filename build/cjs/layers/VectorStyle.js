@@ -5,8 +5,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 var _maplibreGl = require("maplibre-gl");
-var _style = require("../utils/style");
 var _layers = require("../utils/layers");
+var _style = require("../utils/style");
 class VectorStyle extends _maplibreGl.Evented {
   constructor() {
     let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};

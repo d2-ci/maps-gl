@@ -1,5 +1,5 @@
-import { isPointNoSymbol, isPolygon, isLine, isCluster, isSymbol } from './filters';
 import { colorExpr, widthExpr, radiusExpr, clusterRadiusExpr } from './expressions';
+import { isPointNoSymbol, isPolygon, isLine, isCluster, isSymbol } from './filters';
 import defaults from './style';
 export const BASEMAP_POSITION = 0;
 export const OVERLAY_START_POSITION = 1;

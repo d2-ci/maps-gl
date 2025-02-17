@@ -1,6 +1,6 @@
 import { Evented } from 'maplibre-gl';
-import { mapStyle } from '../utils/style';
 import { BASEMAP_POSITION } from '../utils/layers';
+import { mapStyle } from '../utils/style';
 class VectorStyle extends Evented {
   constructor(options = {}) {
     super();

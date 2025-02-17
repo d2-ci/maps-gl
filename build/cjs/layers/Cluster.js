@@ -5,12 +5,12 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 var _centerOfMass = _interopRequireDefault(require("@turf/center-of-mass"));
-var _Layer = _interopRequireDefault(require("./Layer"));
-var _Spider = _interopRequireDefault(require("./Spider"));
-var _layers = require("../utils/layers");
 var _filters = require("../utils/filters");
 var _geometry = require("../utils/geometry");
+var _layers = require("../utils/layers");
 var _style = require("../utils/style");
+var _Layer = _interopRequireDefault(require("./Layer"));
+var _Spider = _interopRequireDefault(require("./Spider"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -27,7 +27,9 @@ class Cluster extends _Layer.default {
         const mapgl = this.getMapGL();
         const source = mapgl.getSource(this.getId());
         source.getClusterExpansionZoom(clusterId, (error, zoom) => {
-          if (error) return;
+          if (error) {
+            return;
+          }
           mapgl.easeTo({
             center,
             zoom: zoom + 1

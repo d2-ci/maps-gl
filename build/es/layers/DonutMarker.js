@@ -49,7 +49,9 @@ export const donutChart = segments => {
 
 // Returns a SVG donut chart segment
 export const donutSegment = (start, end, r, r0, color) => {
-  if (end - start === 1) end -= 0.00001;
+  if (end - start === 1) {
+    end -= 0.00001;
+  }
   const a0 = 2 * Math.PI * (start - 0.25);
   const a1 = 2 * Math.PI * (end - 0.25);
   const x0 = Math.cos(a0);

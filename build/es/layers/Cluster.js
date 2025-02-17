@@ -4,12 +4,12 @@ function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 import centerOfMass from '@turf/center-of-mass';
-import Layer from './Layer';
-import Spider from './Spider';
-import { pointLayer, polygonLayer, outlineLayer } from '../utils/layers';
 import { isClusterPoint } from '../utils/filters';
 import { featureCollection } from '../utils/geometry';
+import { pointLayer, polygonLayer, outlineLayer } from '../utils/layers';
 import { eventStrokeColor } from '../utils/style';
+import Layer from './Layer';
+import Spider from './Spider';
 class Cluster extends Layer {
   constructor(options) {
     super(options);
@@ -20,7 +20,9 @@ class Cluster extends Layer {
         const mapgl = this.getMapGL();
         const source = mapgl.getSource(this.getId());
         source.getClusterExpansionZoom(clusterId, (error, zoom) => {
-          if (error) return;
+          if (error) {
+            return;
+          }
           mapgl.easeTo({
             center,
             zoom: zoom + 1

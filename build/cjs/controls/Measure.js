@@ -4,12 +4,12 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-var _length = _interopRequireDefault(require("@turf/length"));
 var _area = _interopRequireDefault(require("@turf/area"));
 var _bbox = _interopRequireDefault(require("@turf/bbox"));
+var _length = _interopRequireDefault(require("@turf/length"));
 var _dom = require("../utils/dom");
-var _numbers = require("../utils/numbers");
 var _geometry = require("../utils/geometry");
+var _numbers = require("../utils/numbers");
 require("./Measure.css");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }

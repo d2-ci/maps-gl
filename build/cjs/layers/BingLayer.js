@@ -5,8 +5,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 var _fetchJsonp = _interopRequireDefault(require("fetch-jsonp"));
-var _Layer = _interopRequireDefault(require("./Layer"));
 var _geo = require("../utils/geo");
+var _Layer = _interopRequireDefault(require("./Layer"));
 require("./BingLayer.css");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
