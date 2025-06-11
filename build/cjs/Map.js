@@ -70,7 +70,6 @@ class MapGL extends _maplibreGl.Evented {
       }
     });
     _defineProperty(this, "onMouseMove", evt => {
-      console.log('jj mapsgl mouseMoveEnabled', this.mouseMoveEnabled);
       if (this.mouseMoveEnabled) {
         const feature = this.getEventFeature(evt);
         let layer;
