@@ -52,7 +52,7 @@ class AzureLayer extends Layer {
       }
     });
   }
-  async createSource() {
+  createSource() {
     const {
       apiKey,
       style
@@ -67,7 +67,7 @@ class AzureLayer extends Layer {
   }
   async addTo(map) {
     this._isLoading = true;
-    await this.createSource();
+    this.createSource();
     this.createLayer();
     await super.addTo(map);
     this._isLoading = false;

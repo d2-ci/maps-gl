@@ -58,7 +58,7 @@ class AzureLayer extends _Layer.default {
       }
     });
   }
-  async createSource() {
+  createSource() {
     const {
       apiKey,
       style
@@ -73,7 +73,7 @@ class AzureLayer extends _Layer.default {
   }
   async addTo(map) {
     this._isLoading = true;
-    await this.createSource();
+    this.createSource();
     this.createLayer();
     await super.addTo(map);
     this._isLoading = false;
