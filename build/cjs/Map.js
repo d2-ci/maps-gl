@@ -70,7 +70,7 @@ class MapGL extends _maplibreGl.Evented {
       }
     });
     _defineProperty(this, "onMouseMove", evt => {
-      if (!this.mouseMoveEnabled) {
+      if (!this._mouseMoveEnabled) {
         return;
       }
       const feature = this.getEventFeature(evt);
@@ -128,7 +128,7 @@ class MapGL extends _maplibreGl.Evented {
     this._mapgl = mapgl;
     this._glyphs = glyphs;
     this._renderTimeout = null;
-    this.mouseMoveEnabled = true;
+    this._mouseMoveEnabled = true;
 
     // Translate strings
     if (locale) {
@@ -268,7 +268,7 @@ class MapGL extends _maplibreGl.Evented {
     _sync.default.remove(id, this._mapgl);
   }
   setMouseMoveEnabled(val) {
-    this.mouseMoveEnabled = val;
+    this._mouseMoveEnabled = val;
   }
   // Set hover state for features
   setHoverState(features) {

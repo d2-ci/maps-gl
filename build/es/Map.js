@@ -62,7 +62,7 @@ export class MapGL extends Evented {
       }
     });
     _defineProperty(this, "onMouseMove", evt => {
-      if (!this.mouseMoveEnabled) {
+      if (!this._mouseMoveEnabled) {
         return;
       }
       const feature = this.getEventFeature(evt);
@@ -120,7 +120,7 @@ export class MapGL extends Evented {
     this._mapgl = mapgl;
     this._glyphs = glyphs;
     this._renderTimeout = null;
-    this.mouseMoveEnabled = true;
+    this._mouseMoveEnabled = true;
 
     // Translate strings
     if (locale) {
@@ -260,7 +260,7 @@ export class MapGL extends Evented {
     syncMaps.remove(id, this._mapgl);
   }
   setMouseMoveEnabled(val) {
-    this.mouseMoveEnabled = val;
+    this._mouseMoveEnabled = val;
   }
   // Set hover state for features
   setHoverState(features) {
