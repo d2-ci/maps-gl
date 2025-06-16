@@ -20,33 +20,33 @@ var _TileLayer = _interopRequireDefault(require("./TileLayer.js"));
 var _VectorStyle = _interopRequireDefault(require("./VectorStyle.js"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 var _default = exports.default = {
-  vectorStyle: _VectorStyle.default,
-  // basemap / externalLayer
-  tileLayer: _TileLayer.default,
-  // basemap / external layer
-  wmsLayer: _TileLayer.default,
-  // external layer
-  choropleth: _Choropleth.default,
-  // thematic layer
+  azureLayer: _AzureLayer.default,
+  // azure layer basemap
+  bingLayer: _BingLayer.default,
+  // bing layer basemap
   boundary: _Boundary.default,
   // boundary layer
-  markers: _Markers.default,
-  // facility layer
-  events: _Events.default,
-  // event layer
+  choropleth: _Choropleth.default,
+  // thematic layer
   clientCluster: _ClientCluster.default,
   // event layer
   donutCluster: _DonutCluster.default,
   // event layer
-  serverCluster: _ServerCluster.default,
-  // event layer
   earthEngine: _EarthEngine.default,
   // google earth engine layer
-  bingLayer: _BingLayer.default,
-  // bing layer basemap
-  azureLayer: _AzureLayer.default,
-  // azure layer basemap
+  events: _Events.default,
+  // event layer
   geoJson: _GeoJson.default,
   // tracked entity layer
-  group: _LayerGroup.default // tracked entity layer
+  group: _LayerGroup.default,
+  // tracked entity layer
+  markers: _Markers.default,
+  // facility layer
+  serverCluster: _ServerCluster.default,
+  // event layer
+  tileLayer: _TileLayer.default,
+  // basemap / external layer
+  vectorStyle: _VectorStyle.default,
+  // basemap / externalLayer
+  wmsLayer: _TileLayer.default // external layer
 };
