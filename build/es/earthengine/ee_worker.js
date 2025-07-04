@@ -298,3 +298,4 @@ if (typeof onconnect !== 'undefined') {
 } else {
   expose(EarthEngineWorker);
 }
+export default null;
