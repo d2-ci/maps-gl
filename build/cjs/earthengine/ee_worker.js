@@ -306,4 +306,4 @@ if (typeof onconnect !== 'undefined') {
 } else {
   (0, _comlink.expose)(EarthEngineWorker);
 }
-var _default = exports.default = null;
+var _default = exports.default = EarthEngineWorker;
