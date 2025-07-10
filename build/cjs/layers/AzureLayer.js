@@ -21,7 +21,7 @@ class AzureLayer extends _Layer.default {
       } = this.options;
       style.forEach(tilesetId => {
         this.addLayer({
-          id: `${id}-${tilesetId}`,
+          id: `${id}-${tilesetId}-raster`,
           type: 'raster',
           source: `${id}-${tilesetId}`
         });
