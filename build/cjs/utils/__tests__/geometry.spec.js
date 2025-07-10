@@ -1,6 +1,6 @@
 "use strict";
 
-var _geometry = require("../geometry");
+var _geometry = require("../geometry.js");
 const point = {
   type: 'Feature',
   geometry: {

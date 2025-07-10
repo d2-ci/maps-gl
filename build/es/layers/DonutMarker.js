@@ -37,7 +37,13 @@ export const donutChart = segments => {
   let offset = 0;
   let html = `<svg width="${w}" height="${w}" viewbox="0 0 ${w} ${w}" text-anchor="middle" style="font:${fontSize}px sans-serif;cursor:pointer;filter:drop-shadow(0 0 2px #777);">`;
   segments.forEach(segment => {
-    html += donutSegment(offset / total, (offset + segment.count) / total, r, r0, segment.color);
+    html += donutSegment({
+      start: offset / total,
+      end: (offset + segment.count) / total,
+      r,
+      r0,
+      color: segment.color
+    });
     offset += segment.count;
   });
   html += `<circle cx="${r}" cy="${r}" r="${r0}" fill="white" />`;
@@ -48,8 +54,16 @@ export const donutChart = segments => {
 };
 
 // Returns a SVG donut chart segment
-export const donutSegment = (start, end, r, r0, color) => {
-  if (end - start === 1) end -= 0.00001;
+export const donutSegment = ({
+  start,
+  end,
+  r,
+  r0,
+  color
+}) => {
+  if (end - start === 1) {
+    end -= 0.00001;
+  }
   const a0 = 2 * Math.PI * (start - 0.25);
   const a1 = 2 * Math.PI * (end - 0.25);
   const x0 = Math.cos(a0);

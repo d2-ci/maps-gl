@@ -6,8 +6,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.labelSource = exports.labelLayer = exports.getLabelPosition = void 0;
 var _area = _interopRequireDefault(require("@turf/area"));
 var _polylabel = _interopRequireDefault(require("polylabel"));
-var _geometry = require("./geometry");
-var _style = _interopRequireDefault(require("./style"));
+var _geometry = require("./geometry.js");
+var _style = require("./style.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 // Default fonts
 const fonts = {
@@ -78,7 +78,7 @@ const labelLayer = _ref3 => {
     },
     paint: {
       'text-color': color ? color : ['get', 'color'],
-      'text-opacity': opacity ?? _style.default.opacity
+      'text-opacity': opacity ?? _style.textOpacity
     }
   };
 };

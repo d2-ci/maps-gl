@@ -1,9 +1,7 @@
 import { Point } from 'maplibre-gl';
-import spiderifier from '../utils/spiderifier';
-import { eventStrokeColor as strokeColor, strokeWidth } from '../utils/style';
+import spiderifier from '../utils/spiderifier.js';
+import { eventStrokeColor as strokeColor, strokeWidth } from '../utils/style.js';
 const Spider = function (map, options) {
-  let spider;
-  let spiderId;
   const initializeLeg = leg => {
     const {
       feature,
@@ -34,30 +32,6 @@ const Spider = function (map, options) {
     elements.container.style.opacity = opacity;
     elements.pin.appendChild(marker);
   };
-  const setOpacity = opacity => {
-    if (spiderId) {
-      spider.each(leg => leg.elements.container.style.opacity = opacity);
-    }
-  };
-  const spiderfy = (clusterId, lnglat, features) => {
-    if (clusterId !== spiderId) {
-      spider.spiderfy(lnglat, features);
-      spiderId = clusterId;
-      map.on('click', unspiderfy);
-    }
-  };
-  const unspiderfy = () => {
-    if (spiderId) {
-      spider.unspiderfy();
-      if (options.onClose) {
-        options.onClose(spiderId);
-      }
-      spiderId = null;
-      map.off('click', unspiderfy);
-    }
-  };
-  const isExpanded = clusterId => clusterId === spiderId;
-  const getId = () => spiderId;
   const onClick = (evt, leg) => {
     evt.stopPropagation();
     const {
@@ -83,13 +57,38 @@ const Spider = function (map, options) {
       feature: feature
     });
   };
-  spider = spiderifier(map, {
+  const spider = spiderifier(map, {
     animate: true,
     animationSpeed: 200,
     customPin: true,
     initializeLeg: initializeLeg,
     onClick: onClick
   });
+  let spiderId;
+  const setOpacity = opacity => {
+    if (spiderId) {
+      spider.each(leg => leg.elements.container.style.opacity = opacity);
+    }
+  };
+  const spiderfy = (clusterId, lnglat, features) => {
+    if (clusterId !== spiderId) {
+      spider.spiderfy(lnglat, features);
+      spiderId = clusterId;
+      map.on('click', unspiderfy);
+    }
+  };
+  const unspiderfy = () => {
+    if (spiderId) {
+      spider.unspiderfy();
+      if (options.onClose) {
+        options.onClose(spiderId);
+      }
+      spiderId = null;
+      map.off('click', unspiderfy);
+    }
+  };
+  const isExpanded = clusterId => clusterId === spiderId;
+  const getId = () => spiderId;
   return {
     spiderfy,
     unspiderfy,

@@ -17,7 +17,7 @@ const defaultOptions = {
 class SearchControl {
   constructor(options) {
     // Clear search list when input field is changing
-    _defineProperty(this, "_onKeyDown", evt => setTimeout(() => {
+    _defineProperty(this, "_onKeyDown", () => setTimeout(() => {
       const {
         selected
       } = this._typeahead;

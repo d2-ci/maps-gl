@@ -1,8 +1,7 @@
 "use strict";
 
-var _labels = require("../labels");
-var _style = _interopRequireDefault(require("../style"));
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+var _labels = require("../labels.js");
+var _style = require("../style.js");
 const id = 'abc';
 const opacity = 0.5;
 const fontSize = 10;
@@ -47,7 +46,14 @@ const features = [{
     radius: 1
   }
 }];
-const generateLabelSourceItem = (coordinates, name, anchor, offset, value) => {
+const generateLabelSourceItem = _ref => {
+  let {
+    coordinates,
+    name,
+    anchor,
+    offset,
+    value
+  } = _ref;
   return {
     type: 'Feature',
     geometry: {
@@ -71,13 +77,37 @@ describe('labels', () => {
         type: 'FeatureCollection',
         features: [
         // Label for a polygon
-        generateLabelSourceItem([0.5, 0.5], 'Feature1', 'center', [0, 0], 1),
+        generateLabelSourceItem({
+          coordinates: [0.5, 0.5],
+          name: 'Feature1',
+          anchor: 'center',
+          offset: [0, 0],
+          value: 1
+        }),
         // Label for a point with a valid value which is not 0
-        generateLabelSourceItem([0, 0], 'Feature2', 'top', [0, 0.5], 1),
+        generateLabelSourceItem({
+          coordinates: [0, 0],
+          name: 'Feature2',
+          anchor: 'top',
+          offset: [0, 0.5],
+          value: 1
+        }),
         // Label for a point with a valid value which is 0
-        generateLabelSourceItem([0, 0], 'Feature3', 'top', [0, 0.5], 0),
+        generateLabelSourceItem({
+          coordinates: [0, 0],
+          name: 'Feature3',
+          anchor: 'top',
+          offset: [0, 0.5],
+          value: 0
+        }),
         // Label for a point with no value
-        generateLabelSourceItem([0, 0], 'Feature4', 'top', [0, 0.5], 'No Data')]
+        generateLabelSourceItem({
+          coordinates: [0, 0],
+          name: 'Feature4',
+          anchor: 'top',
+          offset: [0, 0.5],
+          value: 'No Data'
+        })]
       }
     };
     const received = (0, _labels.labelSource)(features, {
@@ -95,6 +125,6 @@ describe('labels', () => {
   it('Should set default opacity for label layer', () => {
     expect((0, _labels.labelLayer)({
       id
-    }).paint['text-opacity']).toBe(_style.default.opacity);
+    }).paint['text-opacity']).toBe(_style.textOpacity);
   });
 });

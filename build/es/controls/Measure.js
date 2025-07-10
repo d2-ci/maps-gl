@@ -1,12 +1,12 @@
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-import turfLength from '@turf/length';
 import turfArea from '@turf/area';
 import bbox from '@turf/bbox';
-import { createElement } from '../utils/dom';
-import { numberPrecision, kmToMiles } from '../utils/numbers';
-import { featureCollection } from '../utils/geometry';
+import turfLength from '@turf/length';
+import { createElement } from '../utils/dom.js';
+import { featureCollection } from '../utils/geometry.js';
+import { numberPrecision, kmToMiles } from '../utils/numbers.js';
 import './Measure.css';
 
 // Inspired by https://github.com/ljagis/leaflet-measure
@@ -116,13 +116,43 @@ class MeasureControl {
       if (!this._geojson) {
         this._setupMapWhenReady();
       }
-      this._distanceContainer = createElement('div', 'dhis2-map-ctrl-measure-result', '', mapgl.getContainer());
-      createElement('div', 'dhis2-map-ctrl-measure-header', locale('MeasureControl.MeasureDistancesAndAreas'), this._distanceContainer);
-      this._distanceText = createElement('p', '', locale('MeasureControl.ClickStartMeasurement'), this._distanceContainer);
-      this._actionsEl = createElement('div', 'dhis2-map-ctrl-measure-actions', '', this._distanceContainer);
-      this._cancelEl = createElement('span', 'dhis2-map-ctrl-measure-cancel', locale('MeasureControl.Cancel'), this._actionsEl);
+      this._distanceContainer = createElement({
+        element: 'div',
+        className: 'dhis2-map-ctrl-measure-result',
+        text: '',
+        appendTo: mapgl.getContainer()
+      });
+      createElement({
+        element: 'div',
+        className: 'dhis2-map-ctrl-measure-header',
+        text: locale('MeasureControl.MeasureDistancesAndAreas'),
+        appendTo: this._distanceContainer
+      });
+      this._distanceText = createElement({
+        element: 'p',
+        className: '',
+        text: locale('MeasureControl.ClickStartMeasurement'),
+        appendTo: this._distanceContainer
+      });
+      this._actionsEl = createElement({
+        element: 'div',
+        className: 'dhis2-map-ctrl-measure-actions',
+        text: '',
+        appendTo: this._distanceContainer
+      });
+      this._cancelEl = createElement({
+        element: 'span',
+        className: 'dhis2-map-ctrl-measure-cancel',
+        text: locale('MeasureControl.Cancel'),
+        appendTo: this._actionsEl
+      });
       this._cancelEl.addEventListener('click', this._endMeasure);
-      this._finishEl = createElement('span', 'dhis2-map-ctrl-measure-finish', locale('MeasureControl.FinishMeasurement'), this._actionsEl);
+      this._finishEl = createElement({
+        element: 'span',
+        className: 'dhis2-map-ctrl-measure-finish',
+        text: locale('MeasureControl.FinishMeasurement'),
+        appendTo: this._actionsEl
+      });
       this._finishEl.addEventListener('click', this._finishMeasure);
     });
     _defineProperty(this, "_finishMeasure", () => {
@@ -144,9 +174,19 @@ class MeasureControl {
         this._distanceEl.textContent = perimeterText;
       }
       this._actionsEl.innerText = '';
-      this._centerEl = createElement('span', 'dhis2-map-ctrl-measure-center', locale(`MeasureControl.CenterMapOn${points.length === 2 ? 'Line' : 'Area'}`), this._actionsEl);
+      this._centerEl = createElement({
+        element: 'span',
+        className: 'dhis2-map-ctrl-measure-center',
+        text: locale(`MeasureControl.CenterMapOn${points.length === 2 ? 'Line' : 'Area'}`),
+        appendTo: this._actionsEl
+      });
       this._centerEl.addEventListener('click', this._centerMap);
-      this._deleteEl = createElement('span', 'dhis2-map-ctrl-measure-delete', locale('MeasureControl.Delete'), this._actionsEl);
+      this._deleteEl = createElement({
+        element: 'span',
+        className: 'dhis2-map-ctrl-measure-delete',
+        text: locale('MeasureControl.Delete'),
+        appendTo: this._actionsEl
+      });
       this._deleteEl.addEventListener('click', this._endMeasure);
       mapgl.off('click', this._onMapClick);
       mapgl.off('mousemove', this._onMouseMove);
@@ -209,7 +249,12 @@ class MeasureControl {
         const miles = kmToMiles(length);
         const distanceText = `${locale('MeasureControl.Distance')}: ${numFormat(length)} ${locale('MeasureControl.Kilometers')} (${numFormat(miles)} ${locale('MeasureControl.Miles')})`;
         this._distanceText.innerText = '';
-        this._distanceEl = createElement('div', 'dhis2-map-ctrl-measure-distance', distanceText, this._distanceText);
+        this._distanceEl = createElement({
+          element: 'div',
+          className: 'dhis2-map-ctrl-measure-distance',
+          text: distanceText,
+          appendTo: this._distanceText
+        });
       }
       if (points.length > 2) {
         this._polygon.geometry.coordinates = [[...points.map(point => point.geometry.coordinates), points[0].geometry.coordinates]];
@@ -218,7 +263,12 @@ class MeasureControl {
         const hectares = area / 10000;
         const acres = hectares * 2.47105381;
         const areaText = `${locale('MeasureControl.Area')}: ${numFormat(hectares)} ${locale('MeasureControl.Hectares')} (${numFormat(acres)} ${locale('MeasureControl.Acres')})`;
-        createElement('div', 'dhis2-map-ctrl-measure-area', areaText, this._distanceText);
+        createElement({
+          element: 'div',
+          className: 'dhis2-map-ctrl-measure-area',
+          text: areaText,
+          appendTo: this._distanceText
+        });
       }
       mapgl.getSource('measure').setData(geojson);
     });
@@ -251,7 +301,10 @@ class MeasureControl {
     mapgl.addControl(this);
   }
   onAdd() {
-    this._container = createElement('div', 'maplibregl-ctrl maplibregl-ctrl-group');
+    this._container = createElement({
+      element: 'div',
+      className: 'maplibregl-ctrl maplibregl-ctrl-group'
+    });
     this._setupUI();
     return this._container;
   }
@@ -263,7 +316,12 @@ class MeasureControl {
   }
   _setupUI() {
     const label = this.locale('MeasureControl.MeasureDistancesAndAreas');
-    this._button = createElement('button', 'maplibregl-ctrl-icon dhis2-map-ctrl-measure', '', this._container);
+    this._button = createElement({
+      element: 'button',
+      className: 'maplibregl-ctrl-icon dhis2-map-ctrl-measure',
+      text: '',
+      appendTo: this._container
+    });
     this._button.type = 'button';
     this._button.setAttribute('title', label);
     this._button.setAttribute('aria-label', label);

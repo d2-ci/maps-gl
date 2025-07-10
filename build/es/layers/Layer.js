@@ -6,11 +6,11 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 import bbox from '@turf/bbox';
 import { Evented } from 'maplibre-gl';
 import { v4 as uuid } from 'uuid';
-import { bufferSource } from '../utils/buffers';
-import { featureCollection } from '../utils/geometry';
-import { addImages } from '../utils/images';
-import { labelSource } from '../utils/labels';
-import { setLayersOpacity } from '../utils/opacity';
+import { bufferSource } from '../utils/buffers.js';
+import { featureCollection } from '../utils/geometry.js';
+import { addImages } from '../utils/images.js';
+import { labelSource } from '../utils/labels.js';
+import { setLayersOpacity } from '../utils/opacity.js';
 class Layer extends Evented {
   constructor(options = {}) {
     super();
@@ -267,7 +267,7 @@ class Layer extends Evented {
     }
   }
   // "Normalise" event before passing back to app
-  onRightClick(evt) {}
+  onRightClick() {}
   onMouseMove(evt, feature) {
     const {
       label,

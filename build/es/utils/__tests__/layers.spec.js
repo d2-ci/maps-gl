@@ -1,5 +1,5 @@
-import { pointLayer, lineLayer, polygonLayer, outlineLayer, symbolLayer, clusterLayer, clusterCountLayer } from '../layers';
-import defaults from '../style';
+import { pointLayer, lineLayer, polygonLayer, outlineLayer, symbolLayer, clusterLayer, clusterCountLayer } from '../layers.js';
+import { textOpacity, circleOpacity, lineOpacity, fillOpacity, iconOpacity } from '../style.js';
 const id = 'abc';
 const color = '#000000';
 const opacity = 0.5;
@@ -40,25 +40,25 @@ describe('layers', () => {
     expect(pointLayer({
       id,
       color
-    }).paint['circle-opacity']).toBe(defaults.opacity);
+    }).paint['circle-opacity']).toBe(circleOpacity);
     expect(lineLayer({
       id
-    }).paint['line-opacity']).toBe(defaults.opacity);
+    }).paint['line-opacity']).toBe(lineOpacity);
     expect(polygonLayer({
       id,
       color
-    }).paint['fill-opacity']).toBe(defaults.opacity);
+    }).paint['fill-opacity']).toBe(fillOpacity);
     expect(outlineLayer({
       id
-    }).paint['line-opacity']).toBe(defaults.opacity);
+    }).paint['line-opacity']).toBe(lineOpacity);
     expect(symbolLayer({
       id
-    }).paint['icon-opacity']).toBe(defaults.opacity);
+    }).paint['icon-opacity']).toBe(iconOpacity);
     expect(clusterLayer({
       id
-    }).paint['circle-opacity']).toBe(defaults.opacity);
+    }).paint['circle-opacity']).toBe(circleOpacity);
     expect(clusterCountLayer({
       id
-    }).paint['text-opacity']).toBe(defaults.opacity);
+    }).paint['text-opacity']).toBe(textOpacity);
   });
 });
