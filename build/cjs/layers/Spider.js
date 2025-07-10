@@ -9,14 +9,6 @@ var _spiderifier = _interopRequireDefault(require("../utils/spiderifier.js"));
 var _style = require("../utils/style.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const Spider = function (map, options) {
-  const spider = (0, _spiderifier.default)(map, {
-    animate: true,
-    animationSpeed: 200,
-    customPin: true,
-    initializeLeg: initializeLeg,
-    onClick: onClick
-  });
-  let spiderId;
   const initializeLeg = leg => {
     const {
       feature,
@@ -72,6 +64,14 @@ const Spider = function (map, options) {
       feature: feature
     });
   };
+  const spider = (0, _spiderifier.default)(map, {
+    animate: true,
+    animationSpeed: 200,
+    customPin: true,
+    initializeLeg: initializeLeg,
+    onClick: onClick
+  });
+  let spiderId;
   const setOpacity = opacity => {
     if (spiderId) {
       spider.each(leg => leg.elements.container.style.opacity = opacity);
