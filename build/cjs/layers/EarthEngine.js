@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-var _index = _interopRequireDefault(require("../earthengine/index.js"));
+var _index = require("../earthengine/index.js");
 var _buffers = require("../utils/buffers.js");
 var _core = require("../utils/core.js");
 var _earthengine = require("../utils/earthengine.js");
@@ -104,7 +104,7 @@ class EarthEngine extends _Layer.default {
   // Returns promise resolving a new worker instance
   getWorkerInstance() {
     if (!this._workerPromise) {
-      this._workerPromise = new Promise((resolve, reject) => (0, _index.default)(this.options.getAuthToken).then(EarthEngineWorker => {
+      this._workerPromise = new Promise((resolve, reject) => (0, _index.getEarthEngineWorker)(this.options.getAuthToken).then(EarthEngineWorker => {
         new EarthEngineWorker((0, _earthengine.getWorkerOptions)(this.options)).then(resolve);
       }).catch(reject));
     }
