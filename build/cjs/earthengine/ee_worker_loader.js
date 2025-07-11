@@ -13,9 +13,9 @@ const getEarthEngineWorker = (workerUrl, getAuthToken) => new Promise((resolve, 
     resolve(resolvedWorker);
   } else {
     // Service Worker not supported in Safari
-    const EarthEngineWorker = (0, _comlink.wrap)(typeof SharedWorker !== 'undefined' ? new SharedWorker(workerUrl, {
+    const EarthEngineWorker = (0, _comlink.wrap)(typeof SharedWorker !== 'undefined' ? new SharedWorker(new URL(workerUrl, import.meta.url), {
       type: 'module'
-    }).port : new Worker(workerUrl, {
+    }).port : new Worker(new URL(workerUrl, import.meta.url), {
       type: 'module'
     }));
     EarthEngineWorker.setAuthToken((0, _comlink.proxy)(getAuthToken)).then(() => {
