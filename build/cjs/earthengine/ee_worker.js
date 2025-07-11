@@ -1,9 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
 var _comlink = require("comlink");
 var _buffers = require("../utils/buffers.js");
 var _ee_api_js_worker = _interopRequireDefault(require("./ee_api_js_worker.js"));
@@ -306,4 +302,3 @@ if (typeof onconnect !== 'undefined') {
 } else {
   (0, _comlink.expose)(EarthEngineWorker);
 }
-var _default = exports.default = '';
