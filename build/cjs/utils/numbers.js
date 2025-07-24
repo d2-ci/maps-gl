@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.squareMetersToHectares = exports.squareMetersToAcres = exports.setPrecision = exports.numberPrecision = exports.kmToMiles = exports.getPrecision = void 0;
+exports.setPrecision = exports.numberPrecision = exports.kmToMiles = exports.getPrecision = void 0;
 // Rounds a number to d decimals
 const numberPrecision = d => {
   if (d === undefined) {
@@ -23,7 +23,3 @@ const setPrecision = (value, precision) => numberPrecision(typeof precision === 
 exports.setPrecision = setPrecision;
 const kmToMiles = value => value * 0.621371192;
 exports.kmToMiles = kmToMiles;
-const squareMetersToHectares = value => value / 10000;
-exports.squareMetersToHectares = squareMetersToHectares;
-const squareMetersToAcres = value => value / 4046.8564224;
-exports.squareMetersToAcres = squareMetersToAcres;
