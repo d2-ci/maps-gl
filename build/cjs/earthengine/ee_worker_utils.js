@@ -4,8 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.hasClasses = exports.getScale = exports.getInfo = exports.getHistogramStatistics = exports.getFeatureCollectionProperties = exports.getClassifiedImage = exports.combineReducers = exports.applyMethods = exports.applyFilter = exports.applyCloudMask = void 0;
-var _ee_api_js_worker = _interopRequireDefault(require("./ee_api_js_worker"));
-var _numbers = require("../utils/numbers");
+var _ee_api_js_worker = _interopRequireDefault(require("./ee_api_js_worker.js"));
 var _this = void 0;
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
@@ -13,6 +12,8 @@ function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t =
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+const squareMetersToHectares = value => value / 10000;
+const squareMetersToAcres = value => value / 4046.8564224;
 const classAggregation = ['percentage', 'hectares', 'acres'];
 const DEFAULT_MASK_VALUE = 0;
 const hasClasses = type => classAggregation.includes(type);
@@ -70,10 +71,10 @@ const getHistogramStatistics = _ref => {
       let value;
       switch (aggregationType) {
         case 'hectares':
-          value = Math.round((0, _numbers.squareMetersToHectares)(sqMeters));
+          value = Math.round(squareMetersToHectares(sqMeters));
           break;
         case 'acres':
-          value = Math.round((0, _numbers.squareMetersToAcres)(sqMeters));
+          value = Math.round(squareMetersToAcres(sqMeters));
           break;
         default:
           value = count / sum * 100;

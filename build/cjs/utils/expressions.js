@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.widthExpr = exports.radiusExpr = exports.colorExpr = exports.clusterRadiusExpr = void 0;
-var _filters = require("./filters");
-var _style = require("./style");
+var _filters = require("./filters.js");
+var _style = require("./style.js");
 // Returns color from feature with fallback
 const colorExpr = color => ['case', ['has', 'color'], ['get', 'color'], color];
 

@@ -6,19 +6,19 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = exports.MapGL = void 0;
 var _maplibreGl = require("maplibre-gl");
 require("maplibre-gl/dist/maplibre-gl.css");
-var _Layer = _interopRequireDefault(require("./layers/Layer"));
-var _layerTypes = _interopRequireDefault(require("./layers/layerTypes"));
-var _controlTypes = _interopRequireDefault(require("./controls/controlTypes"));
-var _controlsLocale = _interopRequireDefault(require("./controls/controlsLocale"));
-var _MultiTouch = _interopRequireDefault(require("./controls/MultiTouch"));
-var _images = require("./utils/images");
-var _style = require("./utils/style");
-var _geometry = require("./utils/geometry");
-var _sync = _interopRequireDefault(require("./utils/sync"));
-var _core = require("./utils/core");
-var _layers = require("./utils/layers");
-var _Popup = _interopRequireDefault(require("./ui/Popup"));
-var _Label = _interopRequireDefault(require("./ui/Label"));
+var _controlsLocale = _interopRequireDefault(require("./controls/controlsLocale.js"));
+var _controlTypes = _interopRequireDefault(require("./controls/controlTypes.js"));
+var _MultiTouch = _interopRequireDefault(require("./controls/MultiTouch.js"));
+var _Layer = _interopRequireDefault(require("./layers/Layer.js"));
+var _layerTypes = _interopRequireDefault(require("./layers/layerTypes.js"));
+var _Label = _interopRequireDefault(require("./ui/Label.js"));
+var _Popup = _interopRequireDefault(require("./ui/Popup.js"));
+var _core = require("./utils/core.js");
+var _geometry = require("./utils/geometry.js");
+var _images = require("./utils/images.js");
+var _layers = require("./utils/layers.js");
+var _style = require("./utils/style.js");
+var _sync = _interopRequireDefault(require("./utils/sync.js"));
 require("./Map.css");
 const _excluded = ["locale", "glyphs"];
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
@@ -70,6 +70,9 @@ class MapGL extends _maplibreGl.Evented {
       }
     });
     _defineProperty(this, "onMouseMove", evt => {
+      if (!this._mouseMoveEnabled) {
+        return;
+      }
       const feature = this.getEventFeature(evt);
       let layer;
       if (feature) {
@@ -125,6 +128,7 @@ class MapGL extends _maplibreGl.Evented {
     this._mapgl = mapgl;
     this._glyphs = glyphs;
     this._renderTimeout = null;
+    this._mouseMoveEnabled = true;
 
     // Translate strings
     if (locale) {
@@ -140,7 +144,7 @@ class MapGL extends _maplibreGl.Evented {
     mapgl.on('load', this.onLoad);
     mapgl.on('click', this.onClick);
     mapgl.on('contextmenu', this.onContextMenu);
-    mapgl.on('mousemove', this.onMouseMove);
+    mapgl.on('mousemove', this.onMouseMove.bind(this));
     mapgl.on('mouseout', this.onMouseOut);
     mapgl.on('error', this.onError);
     /* Data and dataloading events are an indication that
@@ -262,6 +266,9 @@ class MapGL extends _maplibreGl.Evented {
   // Remove synchronize of this map
   unsync(id) {
     _sync.default.remove(id, this._mapgl);
+  }
+  setMouseMoveEnabled(val) {
+    this._mouseMoveEnabled = val;
   }
   // Set hover state for features
   setHoverState(features) {

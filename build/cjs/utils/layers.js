@@ -4,10 +4,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.symbolLayer = exports.polygonLayer = exports.pointLayer = exports.outlineLayer = exports.lineLayer = exports.heatLayer = exports.clusterLayer = exports.clusterCountLayer = exports.OVERLAY_START_POSITION = exports.BASEMAP_POSITION = void 0;
-var _filters = require("./filters");
-var _expressions = require("./expressions");
-var _style = _interopRequireDefault(require("./style"));
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+var _expressions = require("./expressions.js");
+var _filters = require("./filters.js");
+var _style = require("./style.js");
 const BASEMAP_POSITION = exports.BASEMAP_POSITION = 0;
 const OVERLAY_START_POSITION = exports.OVERLAY_START_POSITION = 1;
 
@@ -28,12 +27,12 @@ const pointLayer = _ref => {
     type: 'circle',
     source: source || id,
     paint: {
-      'circle-color': (0, _expressions.colorExpr)(color || _style.default.noDataColor),
-      'circle-radius': (0, _expressions.radiusExpr)(radius || _style.default.radius),
-      'circle-opacity': opacity ?? _style.default.opacity,
+      'circle-color': (0, _expressions.colorExpr)(color || _style.noDataColor),
+      'circle-radius': (0, _expressions.radiusExpr)(radius || _style.circleRadius),
+      'circle-opacity': opacity ?? _style.circleOpacity,
       'circle-stroke-width': (0, _expressions.widthExpr)(width),
-      'circle-stroke-color': strokeColor || _style.default.strokeColor,
-      'circle-stroke-opacity': opacity ?? _style.default.opacity
+      'circle-stroke-color': strokeColor || _style.circleStrokeColor,
+      'circle-stroke-opacity': opacity ?? _style.circleOpacity
     },
     filter: filter || _filters.isPointNoSymbol
   };
@@ -55,9 +54,9 @@ const lineLayer = _ref2 => {
     type: 'line',
     source: source || id,
     paint: {
-      'line-color': color || _style.default.strokeColor,
+      'line-color': color || _style.lineStrokeColor,
       'line-width': (0, _expressions.widthExpr)(width),
-      'line-opacity': opacity ?? _style.default.opacity
+      'line-opacity': opacity ?? _style.lineOpacity
     },
     layout: {
       'line-join': 'round',
@@ -82,8 +81,8 @@ const polygonLayer = _ref3 => {
     type: 'fill',
     source: source || id,
     paint: {
-      'fill-color': (0, _expressions.colorExpr)(color || _style.default.noDataColor),
-      'fill-opacity': opacity ?? _style.default.opacity
+      'fill-color': (0, _expressions.colorExpr)(color || _style.noDataColor),
+      'fill-opacity': opacity ?? _style.fillOpacity
     },
     filter: filter || _filters.isPolygon
   };
@@ -106,9 +105,9 @@ const outlineLayer = _ref4 => {
     type: 'line',
     source: source || id,
     paint: {
-      'line-color': color || _style.default.strokeColor,
+      'line-color': color || _style.lineStrokeColor,
       'line-width': (0, _expressions.widthExpr)(width),
-      'line-opacity': opacity ?? _style.default.opacity
+      'line-opacity': opacity ?? _style.lineOpacity
     },
     layout: {
       'line-join': 'round',
@@ -135,7 +134,7 @@ const symbolLayer = _ref5 => {
       'icon-allow-overlap': true
     },
     paint: {
-      'icon-opacity': opacity ?? _style.default.opacity
+      'icon-opacity': opacity ?? _style.iconOpacity
     },
     filter: filter || _filters.isSymbol
   };
@@ -158,10 +157,10 @@ const clusterLayer = _ref6 => {
     paint: {
       'circle-color': color,
       'circle-radius': _expressions.clusterRadiusExpr,
-      'circle-opacity': opacity ?? _style.default.opacity,
+      'circle-opacity': opacity ?? _style.circleOpacity,
       'circle-stroke-color': strokeColor,
-      'circle-stroke-width': _style.default.strokeWidth,
-      'circle-stroke-opacity': opacity ?? _style.default.opacity
+      'circle-stroke-width': _style.strokeWidth,
+      'circle-stroke-opacity': opacity ?? _style.circleOpacity
     }
   };
 };
@@ -181,13 +180,13 @@ const clusterCountLayer = _ref7 => {
     filter: _filters.isCluster,
     layout: {
       'text-field': '{point_count_abbreviated}',
-      'text-font': _style.default.textFont,
-      'text-size': _style.default.textSize,
+      'text-font': _style.textFont,
+      'text-size': _style.textSize,
       'text-allow-overlap': true
     },
     paint: {
-      'text-color': color || _style.default.textColor,
-      'text-opacity': opacity ?? _style.default.opacity
+      'text-color': color || _style.textColor,
+      'text-opacity': opacity ?? _style.textOpacity
     }
   };
 };

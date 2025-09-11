@@ -1,7 +1,12 @@
 "use strict";
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+var _buffer = _interopRequireDefault(require("@turf/buffer"));
+var _circle = _interopRequireDefault(require("@turf/circle"));
 var _comlink = require("comlink");
-var _buffers = require("../utils/buffers.js");
 var _ee_api_js_worker = _interopRequireDefault(require("./ee_api_js_worker.js"));
 var _ee_worker_utils = require("./ee_worker_utils.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
@@ -13,6 +18,12 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 const IMAGE = 'Image';
 const IMAGE_COLLECTION = 'ImageCollection';
 const FEATURE_COLLECTION = 'FeatureCollection';
+const getBufferGeometry = (_ref, buffer) => {
+  let {
+    geometry
+  } = _ref;
+  return (geometry.type === 'Point' ? (0, _circle.default)(geometry, buffer) : (0, _buffer.default)(geometry, buffer)).geometry;
+};
 
 // Options are defined here:
 // https://developers.google.com/earth-engine/apidocs/ee-featurecollection-draw
@@ -53,7 +64,7 @@ class EarthEngineWorker {
         id: feature.properties.id,
         // EE requires id to be string, MapLibre integer
         // Translate points to buffer polygons
-        geometry: buffer && feature.geometry.type === 'Point' ? (0, _buffers.getBufferGeometry)(feature, buffer / 1000) : feature.geometry
+        geometry: buffer && feature.geometry.type === 'Point' ? getBufferGeometry(feature, buffer / 1000) : feature.geometry
       })));
     }
     return this.eeFeatureCollection;
@@ -302,3 +313,4 @@ if (typeof onconnect !== 'undefined') {
 } else {
   (0, _comlink.expose)(EarthEngineWorker);
 }
+var _default = exports.default = '';

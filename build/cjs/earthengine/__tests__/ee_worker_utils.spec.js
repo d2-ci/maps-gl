@@ -1,6 +1,6 @@
 "use strict";
 
-var _ee_worker_utils = require("../ee_worker_utils");
+var _ee_worker_utils = require("../ee_worker_utils.js");
 const scale = 1000;
 const style = [{
   value: 9,

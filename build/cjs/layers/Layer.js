@@ -7,11 +7,11 @@ exports.default = void 0;
 var _bbox = _interopRequireDefault(require("@turf/bbox"));
 var _maplibreGl = require("maplibre-gl");
 var _uuid = require("uuid");
-var _buffers = require("../utils/buffers");
-var _geometry = require("../utils/geometry");
-var _images = require("../utils/images");
-var _labels = require("../utils/labels");
-var _opacity = require("../utils/opacity");
+var _buffers = require("../utils/buffers.js");
+var _geometry = require("../utils/geometry.js");
+var _images = require("../utils/images.js");
+var _labels = require("../utils/labels.js");
+var _opacity = require("../utils/opacity.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -278,7 +278,7 @@ class Layer extends _maplibreGl.Evented {
     }
   }
   // "Normalise" event before passing back to app
-  onRightClick(evt) {}
+  onRightClick() {}
   onMouseMove(evt, feature) {
     const {
       label,

@@ -3,13 +3,17 @@ function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t =
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+import polygonBuffer from '@turf/buffer';
+import circle from '@turf/circle';
 import { expose } from 'comlink';
-import { getBufferGeometry } from '../utils/buffers.js';
 import ee from './ee_api_js_worker.js'; // https://github.com/google/earthengine-api/pull/173
 import { getInfo, getScale, hasClasses, combineReducers, getClassifiedImage, getHistogramStatistics, getFeatureCollectionProperties, applyFilter, applyMethods, applyCloudMask } from './ee_worker_utils.js';
 const IMAGE = 'Image';
 const IMAGE_COLLECTION = 'ImageCollection';
 const FEATURE_COLLECTION = 'FeatureCollection';
+const getBufferGeometry = ({
+  geometry
+}, buffer) => (geometry.type === 'Point' ? circle(geometry, buffer) : polygonBuffer(geometry, buffer)).geometry;
 
 // Options are defined here:
 // https://developers.google.com/earth-engine/apidocs/ee-featurecollection-draw
@@ -298,3 +302,4 @@ if (typeof onconnect !== 'undefined') {
 } else {
   expose(EarthEngineWorker);
 }
+export default '';

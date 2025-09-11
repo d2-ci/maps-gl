@@ -1,6 +1,6 @@
 "use strict";
 
-var _core = require("../core");
+var _core = require("../core.js");
 describe('core utils', () => {
   it('Should add values to template string', () => {
     expect((0, _core.setTemplate)('{name}: {value} {unit}', {

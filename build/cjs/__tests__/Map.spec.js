@@ -1,6 +1,6 @@
 "use strict";
 
-var _Map = _interopRequireDefault(require("../Map"));
+var _Map = _interopRequireDefault(require("../Map.js"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -11,7 +11,7 @@ jest.mock('maplibre-gl', () => {
   const actualMapLibreGl = jest.requireActual('maplibre-gl');
   class MockMap {
     constructor() {
-      Object.assign(this, mockMapGL);
+      Object.assign(this, global.mockMapGL);
     }
   }
   return _objectSpread(_objectSpread({}, actualMapLibreGl), {}, {
@@ -27,39 +27,64 @@ describe('DHIS2 Maps-gl Map', () => {
     const map = new _Map.default('el');
     const mapgl = map.getMapGL();
     expect(mapgl).not.toBe(undefined);
-    expect(mapgl).toEqual(mockMapGL);
+    expect(mapgl).toEqual(global.mockMapGL);
     expect(mapgl.on).toHaveBeenCalledTimes(10);
   });
-  it('should set layer feature hover state', () => {
+  it('should call setHoverState on mousemove when mousemove enabled', () => {
     const map = new _Map.default('el');
-    const mapgl = map.getMapGL();
-    const getSourceMock = mapgl.getSource;
-    const setFeatureStateSpy = jest.spyOn(map, 'setFeatureState');
-    const feature = {
+    const setHoverStateSpy = jest.spyOn(map, 'setHoverState');
+    const mockLayer = {
+      isInteractive: () => true,
+      getInteractiveIds: () => ['layer-1'],
+      getFeaturesById: () => [{
+        id: 1,
+        source: 'abc'
+      }],
+      hasLayerId: id => id === 'layer-1',
+      getIndex: () => 0,
+      onMouseMove: jest.fn()
+    };
+    map._layers = [mockLayer];
+    jest.spyOn(map, 'getLayers').mockReturnValue([mockLayer]);
+    map.getMapGL().queryRenderedFeatures = jest.fn(() => [{
+      id: 1,
+      source: 'abc',
+      layer: {
+        id: 'layer-1'
+      },
+      properties: {
+        id: 1
+      }
+    }]);
+    map.setMouseMoveEnabled(true);
+    map.onMouseMove({
+      point: {},
+      features: [{
+        id: 1,
+        source: 'abc',
+        layer: {
+          id: 'layer-1'
+        },
+        properties: {
+          id: 1
+        }
+      }]
+    });
+    expect(setHoverStateSpy).toHaveBeenCalledWith([{
       id: 1,
       source: 'abc'
-    };
-    mapgl.getSource.mockReturnValue(true);
-    expect(map._hoverFeatures).toBe(undefined);
-    map.setHoverState([feature]);
-    expect(map._hoverFeatures).toStrictEqual([feature]);
-    expect(setFeatureStateSpy).toHaveBeenCalled();
-    expect(setFeatureStateSpy).lastCalledWith(feature, {
-      hover: true
+    }]);
+  });
+  it('should not call setHoverState on mousemove when mousemove disabled', () => {
+    const map = new _Map.default('el');
+    const setHoverStateSpy = jest.spyOn(map, 'setHoverState');
+    map.setMouseMoveEnabled(false);
+    map.onMouseMove({
+      features: [{
+        id: 1,
+        source: 'abc'
+      }]
     });
-    expect(getSourceMock).toHaveBeenCalled();
-    expect(mapgl.setFeatureState).lastCalledWith(feature, {
-      hover: true
-    });
-    map.setHoverState(null);
-    expect(map._hoverFeatures).toBe(null);
-    expect(setFeatureStateSpy).toHaveBeenCalledTimes(2);
-    expect(setFeatureStateSpy).lastCalledWith(feature, {
-      hover: false
-    });
-    expect(getSourceMock).toHaveBeenCalledTimes(2);
-    expect(mapgl.setFeatureState).lastCalledWith(feature, {
-      hover: false
-    });
+    expect(setHoverStateSpy).not.toHaveBeenCalled();
   });
 });
