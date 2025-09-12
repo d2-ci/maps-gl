@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+var _intensity = require("../utils/intensity.js");
 var _layers = require("../utils/layers.js");
 var _Layer = _interopRequireDefault(require("./Layer.js"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
@@ -33,6 +34,13 @@ class Heat extends _Layer.default {
     }), {
       isInteractive
     });
+  }
+  setIntensity(intensity) {
+    const mapgl = this.getMapGL();
+    if (mapgl) {
+      (0, _intensity.setLayersIntensity)(mapgl, this.getId(), intensity);
+    }
+    this.options.intensity = intensity;
   }
 }
 var _default = exports.default = Heat;

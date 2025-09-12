@@ -1,3 +1,4 @@
+import { setLayersIntensity } from '../utils/intensity.js';
 import { heatLayer } from '../utils/layers.js';
 import Layer from './Layer.js';
 class Heat extends Layer {
@@ -26,6 +27,13 @@ class Heat extends Layer {
     }), {
       isInteractive
     });
+  }
+  setIntensity(intensity) {
+    const mapgl = this.getMapGL();
+    if (mapgl) {
+      setLayersIntensity(mapgl, this.getId(), intensity);
+    }
+    this.options.intensity = intensity;
   }
 }
 export default Heat;
