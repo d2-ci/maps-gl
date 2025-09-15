@@ -199,7 +199,7 @@ const heatLayer = _ref8 => {
     weight = 1,
     intensity = 0.5,
     color,
-    radius = 0.5,
+    radius = 100,
     opacity = 1,
     source
   } = _ref8;

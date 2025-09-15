@@ -40,14 +40,14 @@ class Heat extends _Layer.default {
     if (mapgl) {
       (0, _heat.setLayersIntensity)(mapgl, this.getId(), (0, _heat.makeHeatmapIntensity)(intensity));
     }
-    this.options.intensity = (0, _heat.makeHeatmapIntensity)(intensity);
+    this.options.intensity = intensity;
   }
   setRadius(radius) {
     const mapgl = this.getMapGL();
     if (mapgl) {
       (0, _heat.setLayersRadius)(mapgl, this.getId(), (0, _heat.makeHeatmapRadius)(radius));
     }
-    this.options.radius = (0, _heat.makeHeatmapRadius)(radius);
+    this.options.radius = radius;
   }
 }
 var _default = exports.default = Heat;
