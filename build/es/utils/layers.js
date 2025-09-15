@@ -1,5 +1,6 @@
 import { colorExpr, widthExpr, radiusExpr, clusterRadiusExpr } from './expressions.js';
 import { isPointNoSymbol, isPolygon, isLine, isCluster, isSymbol } from './filters.js';
+import { makeHeatmapIntensity, makeHeatmapRadius } from './heat.js';
 import { textFont, textSize, textColor, textOpacity, circleRadius, circleStrokeColor, circleOpacity, lineStrokeColor, lineOpacity, fillOpacity, iconOpacity, noDataColor, strokeWidth } from './style.js';
 export const BASEMAP_POSITION = 0;
 export const OVERLAY_START_POSITION = 1;
@@ -162,9 +163,9 @@ export const clusterCountLayer = ({
 export const heatLayer = ({
   id,
   weight = 1,
-  intensity = 1,
+  intensity = 0.5,
   color,
-  radius = 30,
+  radius = 0.5,
   opacity = 1,
   source
 }) => {
@@ -178,13 +179,13 @@ export const heatLayer = ({
       'heatmap-weight': weight,
       // Increase the heatmap color weight weight by zoom level
       // heatmap-intensity is a multiplier on top of heatmap-weight
-      'heatmap-intensity': intensity,
+      'heatmap-intensity': makeHeatmapIntensity(intensity),
       // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
       // Begin color ramp at 0-stop with a 0-transparency color
       // to create a blur-like effect.
       'heatmap-color': color || defaultHeatmapColor,
       // Adjust the heatmap radius by zoom level
-      'heatmap-radius': radius,
+      'heatmap-radius': makeHeatmapRadius(radius),
       // Transition from heatmap to circle layer by zoom level
       'heatmap-opacity': opacity
     }

@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.symbolLayer = exports.polygonLayer = exports.pointLayer = exports.outlineLayer = exports.lineLayer = exports.heatLayer = exports.clusterLayer = exports.clusterCountLayer = exports.OVERLAY_START_POSITION = exports.BASEMAP_POSITION = void 0;
 var _expressions = require("./expressions.js");
 var _filters = require("./filters.js");
+var _heat = require("./heat.js");
 var _style = require("./style.js");
 const BASEMAP_POSITION = exports.BASEMAP_POSITION = 0;
 const OVERLAY_START_POSITION = exports.OVERLAY_START_POSITION = 1;
@@ -197,9 +198,9 @@ const heatLayer = _ref8 => {
   let {
     id,
     weight = 1,
-    intensity = 1,
+    intensity = 0.5,
     color,
-    radius = 30,
+    radius = 0.5,
     opacity = 1,
     source
   } = _ref8;
@@ -213,13 +214,13 @@ const heatLayer = _ref8 => {
       'heatmap-weight': weight,
       // Increase the heatmap color weight weight by zoom level
       // heatmap-intensity is a multiplier on top of heatmap-weight
-      'heatmap-intensity': intensity,
+      'heatmap-intensity': (0, _heat.makeHeatmapIntensity)(intensity),
       // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
       // Begin color ramp at 0-stop with a 0-transparency color
       // to create a blur-like effect.
       'heatmap-color': color || defaultHeatmapColor,
       // Adjust the heatmap radius by zoom level
-      'heatmap-radius': radius,
+      'heatmap-radius': (0, _heat.makeHeatmapRadius)(radius),
       // Transition from heatmap to circle layer by zoom level
       'heatmap-opacity': opacity
     }
