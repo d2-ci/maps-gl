@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-var _intensity = require("../utils/intensity.js");
+var _heat = require("../utils/heat.js");
 var _layers = require("../utils/layers.js");
 var _Layer = _interopRequireDefault(require("./Layer.js"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
@@ -38,9 +38,16 @@ class Heat extends _Layer.default {
   setIntensity(intensity) {
     const mapgl = this.getMapGL();
     if (mapgl) {
-      (0, _intensity.setLayersIntensity)(mapgl, this.getId(), intensity);
+      (0, _heat.setLayersIntensity)(mapgl, this.getId(), intensity);
     }
     this.options.intensity = intensity;
+  }
+  setRadius(radius) {
+    const mapgl = this.getMapGL();
+    if (mapgl) {
+      (0, _heat.setLayersRadius)(mapgl, this.getId(), radius);
+    }
+    this.options.radius = radius;
   }
 }
 var _default = exports.default = Heat;

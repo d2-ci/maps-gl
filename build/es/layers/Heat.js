@@ -1,4 +1,4 @@
-import { setLayersIntensity } from '../utils/intensity.js';
+import { setLayersIntensity, setLayersRadius } from '../utils/heat.js';
 import { heatLayer } from '../utils/layers.js';
 import Layer from './Layer.js';
 class Heat extends Layer {
@@ -34,6 +34,13 @@ class Heat extends Layer {
       setLayersIntensity(mapgl, this.getId(), intensity);
     }
     this.options.intensity = intensity;
+  }
+  setRadius(radius) {
+    const mapgl = this.getMapGL();
+    if (mapgl) {
+      setLayersRadius(mapgl, this.getId(), radius);
+    }
+    this.options.radius = radius;
   }
 }
 export default Heat;
