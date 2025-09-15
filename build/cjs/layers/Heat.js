@@ -27,9 +27,9 @@ class Heat extends _Layer.default {
     this.addLayer((0, _layers.heatLayer)({
       id,
       weight,
-      intensity,
+      intensity: (0, _heat.makeHeatmapIntensity)(intensity),
       color,
-      radius,
+      radius: (0, _heat.makeHeatmapRadius)(radius),
       opacity
     }), {
       isInteractive
@@ -38,16 +38,16 @@ class Heat extends _Layer.default {
   setIntensity(intensity) {
     const mapgl = this.getMapGL();
     if (mapgl) {
-      (0, _heat.setLayersIntensity)(mapgl, this.getId(), intensity);
+      (0, _heat.setLayersIntensity)(mapgl, this.getId(), (0, _heat.makeHeatmapIntensity)(intensity));
     }
-    this.options.intensity = intensity;
+    this.options.intensity = (0, _heat.makeHeatmapIntensity)(intensity);
   }
   setRadius(radius) {
     const mapgl = this.getMapGL();
     if (mapgl) {
-      (0, _heat.setLayersRadius)(mapgl, this.getId(), radius);
+      (0, _heat.setLayersRadius)(mapgl, this.getId(), (0, _heat.makeHeatmapRadius)(radius));
     }
-    this.options.radius = radius;
+    this.options.radius = (0, _heat.makeHeatmapRadius)(radius);
   }
 }
 var _default = exports.default = Heat;

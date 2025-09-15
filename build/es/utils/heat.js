@@ -1,21 +1,12 @@
 export const makeHeatmapIntensity = i => i * 2;
 export const setLayersIntensity = (mapgl, id, intensity) => {
   mapgl.getStyle().layers.filter(layer => layer.id.startsWith(id)).forEach(layer => {
-    mapgl.setPaintProperty(layer.id, 'heatmap-intensity', makeHeatmapIntensity(intensity));
+    mapgl.setPaintProperty(layer.id, 'heatmap-intensity', intensity);
   });
 };
-export const makeHeatmapRadius = r => 100 * r; /*[
-                                               'interpolate',
-                                               ['linear'],
-                                               ['zoom'],
-                                               7,
-                                               50 * r,
-                                               20,
-                                               1000 * r,
-                                               ]*/
-
+export const makeHeatmapRadius = r => ['interpolate', ['linear'], ['zoom'], 7, 50 * r, 20, 1000 * r];
 export const setLayersRadius = (mapgl, id, radius) => {
   mapgl.getStyle().layers.filter(layer => layer.id.startsWith(id)).forEach(layer => {
-    mapgl.setPaintProperty(layer.id, 'heatmap-radius', makeHeatmapRadius(radius));
+    mapgl.setPaintProperty(layer.id, 'heatmap-radius', radius);
   });
 };

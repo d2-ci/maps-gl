@@ -1,4 +1,4 @@
-import { setLayersIntensity, setLayersRadius } from '../utils/heat.js';
+import { makeHeatmapIntensity, setLayersIntensity, makeHeatmapRadius, setLayersRadius } from '../utils/heat.js';
 import { heatLayer } from '../utils/layers.js';
 import Layer from './Layer.js';
 class Heat extends Layer {
@@ -20,9 +20,9 @@ class Heat extends Layer {
     this.addLayer(heatLayer({
       id,
       weight,
-      intensity,
+      intensity: makeHeatmapIntensity(intensity),
       color,
-      radius,
+      radius: makeHeatmapRadius(radius),
       opacity
     }), {
       isInteractive
@@ -31,16 +31,16 @@ class Heat extends Layer {
   setIntensity(intensity) {
     const mapgl = this.getMapGL();
     if (mapgl) {
-      setLayersIntensity(mapgl, this.getId(), intensity);
+      setLayersIntensity(mapgl, this.getId(), makeHeatmapIntensity(intensity));
     }
-    this.options.intensity = intensity;
+    this.options.intensity = makeHeatmapIntensity(intensity);
   }
   setRadius(radius) {
     const mapgl = this.getMapGL();
     if (mapgl) {
-      setLayersRadius(mapgl, this.getId(), radius);
+      setLayersRadius(mapgl, this.getId(), makeHeatmapRadius(radius));
     }
-    this.options.radius = radius;
+    this.options.radius = makeHeatmapRadius(radius);
   }
 }
 export default Heat;
