@@ -12,7 +12,15 @@ const setLayersIntensity = (mapgl, id, intensity) => {
   });
 };
 exports.setLayersIntensity = setLayersIntensity;
-const makeHeatmapRadius = r => ['interpolate', ['linear'], ['zoom'], 7, 50 * r, 20, 1000 * r];
+const makeHeatmapRadius = r => 100 * r; /*[
+                                        'interpolate',
+                                        ['linear'],
+                                        ['zoom'],
+                                        7,
+                                        50 * r,
+                                        20,
+                                        1000 * r,
+                                        ]*/
 exports.makeHeatmapRadius = makeHeatmapRadius;
 const setLayersRadius = (mapgl, id, radius) => {
   mapgl.getStyle().layers.filter(layer => layer.id.startsWith(id)).forEach(layer => {

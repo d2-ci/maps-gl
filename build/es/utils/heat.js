@@ -4,7 +4,16 @@ export const setLayersIntensity = (mapgl, id, intensity) => {
     mapgl.setPaintProperty(layer.id, 'heatmap-intensity', makeHeatmapIntensity(intensity));
   });
 };
-export const makeHeatmapRadius = r => ['interpolate', ['linear'], ['zoom'], 7, 50 * r, 20, 1000 * r];
+export const makeHeatmapRadius = r => 100 * r; /*[
+                                               'interpolate',
+                                               ['linear'],
+                                               ['zoom'],
+                                               7,
+                                               50 * r,
+                                               20,
+                                               1000 * r,
+                                               ]*/
+
 export const setLayersRadius = (mapgl, id, radius) => {
   mapgl.getStyle().layers.filter(layer => layer.id.startsWith(id)).forEach(layer => {
     mapgl.setPaintProperty(layer.id, 'heatmap-radius', makeHeatmapRadius(radius));
