@@ -17,37 +17,48 @@ class Heat extends _Layer.default {
   createLayers() {
     const id = this.getId();
     const {
-      weight,
-      intensity,
-      color,
-      radius,
+      heatWeight,
+      heatIntensity,
+      heatColor,
+      heatRadius,
       opacity
     } = this.options;
     const isInteractive = false;
+    const transformedIntensity = (0, _heat.makeHeatmapIntensity)(heatIntensity);
+    const transformedRadius = (0, _heat.makeHeatmapRadius)(heatRadius);
     this.addLayer((0, _layers.heatLayer)({
       id,
-      weight,
-      intensity: (0, _heat.makeHeatmapIntensity)(intensity),
-      color,
-      radius: (0, _heat.makeHeatmapRadius)(radius),
+      heatWeight,
+      heatIntensity: transformedIntensity,
+      heatColor,
+      heatRadius: transformedRadius,
       opacity
     }), {
       isInteractive
     });
   }
-  setIntensity(intensity) {
+  setOpacity(opacity) {
     const mapgl = this.getMapGL();
     if (mapgl) {
-      (0, _heat.setLayersIntensity)(mapgl, this.getId(), (0, _heat.makeHeatmapIntensity)(intensity));
+      (0, _heat.setLayersOpacity)(mapgl, this.getId(), opacity);
     }
-    this.options.intensity = intensity;
+    this.options.opacity = opacity;
   }
-  setRadius(radius) {
+  setIntensity(heatIntensity) {
     const mapgl = this.getMapGL();
+    const transformedIntensity = (0, _heat.makeHeatmapIntensity)(heatIntensity);
     if (mapgl) {
-      (0, _heat.setLayersRadius)(mapgl, this.getId(), (0, _heat.makeHeatmapRadius)(radius));
+      (0, _heat.setLayersIntensity)(mapgl, this.getId(), transformedIntensity);
     }
-    this.options.radius = radius;
+    this.options.heatIntensity = transformedIntensity;
+  }
+  setRadius(heatRadius) {
+    const mapgl = this.getMapGL();
+    const transformedRadius = (0, _heat.makeHeatmapRadius)(heatRadius);
+    if (mapgl) {
+      (0, _heat.setLayersRadius)(mapgl, this.getId(), transformedRadius);
+    }
+    this.options.heatRadius = heatRadius;
   }
 }
 var _default = exports.default = Heat;
