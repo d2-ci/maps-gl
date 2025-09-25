@@ -189,8 +189,13 @@ class EarthEngineWorker {
   }
 
   // Returns available periods for an image collection
-  getPeriods(eeId) {
-    const imageCollection = _ee_api_js_worker.default.ImageCollection(eeId).distinct('system:time_start').sort('system:time_start', false);
+  getPeriods(eeId, year) {
+    let imageCollection = _ee_api_js_worker.default.ImageCollection(eeId).distinct('system:time_start').sort('system:time_start', false);
+    if (year) {
+      const startDate = _ee_api_js_worker.default.Date.fromYMD(year, 1, 1);
+      const endDate = _ee_api_js_worker.default.Date.fromYMD(year, 12, 31);
+      imageCollection = imageCollection.filterDate(startDate, endDate);
+    }
     const featureCollection = _ee_api_js_worker.default.FeatureCollection(imageCollection).select(['system:time_start', 'system:time_end', 'year'], null, false);
     return (0, _ee_worker_utils.getInfo)(featureCollection);
   }
@@ -200,6 +205,17 @@ class EarthEngineWorker {
     const collection = _ee_api_js_worker.default.ImageCollection(eeId);
     const range = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
     return (0, _ee_worker_utils.getInfo)(range);
+  }
+
+  // Returns info for first and last images in collection
+  getCollectionSpan(eeId) {
+    const collection = _ee_api_js_worker.default.ImageCollection(eeId);
+    const first = collection.sort('system:time_start', true).first();
+    const last = collection.sort('system:time_start', false).first();
+    return (0, _ee_worker_utils.getInfo)(_ee_api_js_worker.default.Dictionary({
+      first,
+      last
+    }));
   }
 
   // Returns aggregated values for org unit features

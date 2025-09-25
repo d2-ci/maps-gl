@@ -178,8 +178,13 @@ class EarthEngineWorker {
   }
 
   // Returns available periods for an image collection
-  getPeriods(eeId) {
-    const imageCollection = ee.ImageCollection(eeId).distinct('system:time_start').sort('system:time_start', false);
+  getPeriods(eeId, year) {
+    let imageCollection = ee.ImageCollection(eeId).distinct('system:time_start').sort('system:time_start', false);
+    if (year) {
+      const startDate = ee.Date.fromYMD(year, 1, 1);
+      const endDate = ee.Date.fromYMD(year, 12, 31);
+      imageCollection = imageCollection.filterDate(startDate, endDate);
+    }
     const featureCollection = ee.FeatureCollection(imageCollection).select(['system:time_start', 'system:time_end', 'year'], null, false);
     return getInfo(featureCollection);
   }
@@ -189,6 +194,17 @@ class EarthEngineWorker {
     const collection = ee.ImageCollection(eeId);
     const range = collection.reduceColumns(ee.Reducer.minMax(), ['system:time_start']);
     return getInfo(range);
+  }
+
+  // Returns info for first and last images in collection
+  getCollectionSpan(eeId) {
+    const collection = ee.ImageCollection(eeId);
+    const first = collection.sort('system:time_start', true).first();
+    const last = collection.sort('system:time_start', false).first();
+    return getInfo(ee.Dictionary({
+      first,
+      last
+    }));
   }
 
   // Returns aggregated values for org unit features
