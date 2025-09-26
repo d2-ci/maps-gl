@@ -98,6 +98,11 @@ class EarthEngineWorker {
       // Scale is lost when creating a mosaic below
       this.eeScale = (0, _ee_worker_utils.getScale)(collection.first());
 
+      // Apply period reducer (e.g. going from daily to monthly)
+      if (periodReducer === 'EE_MONTHLY') {
+        collection = (0, _ee_worker_utils.aggregateMonthly)(collection);
+      }
+
       // Apply array of filters (e.g. period)
       collection = (0, _ee_worker_utils.applyFilter)(collection, filter);
 
@@ -105,10 +110,7 @@ class EarthEngineWorker {
       if (cloudScore) {
         collection = (0, _ee_worker_utils.applyCloudMask)(collection, cloudScore);
       }
-      if (periodReducer) {
-        // Apply period reducer (e.g. going from daily to monthly)
-        eeImage = collection[periodReducer]();
-      } else if (mosaic) {
+      if (mosaic) {
         // Composite all images inn a collection (e.g. per country)
         eeImage = collection.mosaic();
       } else {
@@ -189,27 +191,33 @@ class EarthEngineWorker {
   }
 
   // Returns available periods for an image collection
-  getPeriods(eeId, year) {
-    let imageCollection = _ee_api_js_worker.default.ImageCollection(eeId).distinct('system:time_start').sort('system:time_start', false);
+  getPeriods(datasetId, year, periodReducer) {
+    let imageCollection = _ee_api_js_worker.default.ImageCollection(datasetId).distinct('system:time_start').sort('system:time_start', false);
     if (year) {
       const startDate = _ee_api_js_worker.default.Date.fromYMD(year, 1, 1);
       const endDate = _ee_api_js_worker.default.Date.fromYMD(year, 12, 31);
       imageCollection = imageCollection.filterDate(startDate, endDate);
+    }
+    if (periodReducer && periodReducer === 'EE_MONTHLY') {
+      imageCollection = (0, _ee_worker_utils.aggregateMonthly)(imageCollection);
     }
     const featureCollection = _ee_api_js_worker.default.FeatureCollection(imageCollection).select(['system:time_start', 'system:time_end', 'year'], null, false);
     return (0, _ee_worker_utils.getInfo)(featureCollection);
   }
 
   // Returns min and max timestamp for an image collection
-  getTimeRange(eeId) {
-    const collection = _ee_api_js_worker.default.ImageCollection(eeId);
+  getTimeRange(datasetId) {
+    const collection = _ee_api_js_worker.default.ImageCollection(datasetId);
     const range = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
     return (0, _ee_worker_utils.getInfo)(range);
   }
 
   // Returns info for first and last images in collection
-  getCollectionSpan(eeId) {
-    const collection = _ee_api_js_worker.default.ImageCollection(eeId);
+  getCollectionSpan(datasetId, periodReducer) {
+    let collection = _ee_api_js_worker.default.ImageCollection(datasetId);
+    if (periodReducer && periodReducer === 'EE_MONTHLY') {
+      collection = (0, _ee_worker_utils.aggregateMonthly)(collection);
+    }
     const first = collection.sort('system:time_start', true).first();
     const last = collection.sort('system:time_start', false).first();
     return (0, _ee_worker_utils.getInfo)(_ee_api_js_worker.default.Dictionary({

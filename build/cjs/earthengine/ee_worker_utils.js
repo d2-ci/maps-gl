@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.hasClasses = exports.getScale = exports.getInfo = exports.getHistogramStatistics = exports.getFeatureCollectionProperties = exports.getClassifiedImage = exports.combineReducers = exports.applyMethods = exports.applyFilter = exports.applyCloudMask = void 0;
+exports.hasClasses = exports.getScale = exports.getInfo = exports.getHistogramStatistics = exports.getFeatureCollectionProperties = exports.getClassifiedImage = exports.combineReducers = exports.applyMethods = exports.applyFilter = exports.applyCloudMask = exports.aggregateMonthly = void 0;
 var _ee_api_js_worker = _interopRequireDefault(require("./ee_api_js_worker.js"));
 var _this = void 0;
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
@@ -129,14 +129,15 @@ const getClassifiedImage = (eeImage, _ref4) => {
       params: style
     };
   }
+  const sortedLegend = legend.slice().sort((a, b) => a.from - b.from);
   const min = 0;
-  const max = legend.length - 1;
+  const max = sortedLegend.length - 1;
   const {
     palette
   } = style;
   let zones;
   for (let i = min, item; i < max; i++) {
-    item = legend[i];
+    item = sortedLegend[i];
     if (!zones) {
       zones = eeImage.gt(item.to);
     } else {
@@ -198,4 +199,34 @@ const applyCloudMask = (collection, cloudScore) => {
   } = cloudScore;
   return collection.linkCollection(_ee_api_js_worker.default.ImageCollection(datasetId), [band]).map(img => img.updateMask(img.select(band).gte(clearThreshold)));
 };
+
+// Converts a daily ImageCollection into monthly composites.
 exports.applyCloudMask = applyCloudMask;
+const aggregateMonthly = function (collection) {
+  let reducer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : _ee_api_js_worker.default.Reducer.mean();
+  const dateRange = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
+  const minDate = _ee_api_js_worker.default.Date.fromYMD(_ee_api_js_worker.default.Date(dateRange.get('min')).get('year'), _ee_api_js_worker.default.Date(dateRange.get('min')).get('month'), 1);
+  const maxDate = _ee_api_js_worker.default.Date(dateRange.get('max')); //.advance(1, 'month') // Include last month
+  const months = _ee_api_js_worker.default.List.sequence(0, maxDate.difference(minDate, 'month'));
+
+  // Get original band names to rename after reduction
+  const bandNames = _ee_api_js_worker.default.Image(collection.first()).bandNames();
+  const monthlyImages = _ee_api_js_worker.default.ImageCollection.fromImages(months.map(m => {
+    const startDate = minDate.advance(_ee_api_js_worker.default.Number(m), 'month');
+    const endDate = startDate.advance(1, 'month');
+    let monthlyCollection = _ee_api_js_worker.default.ImageCollection(collection.filterDate(startDate, endDate));
+    monthlyCollection = monthlyCollection.reduce(reducer);
+
+    // Rename bands to remove reducer suffix
+    monthlyCollection = monthlyCollection.rename(bandNames);
+    return monthlyCollection.set({
+      'system:time_start': startDate.millis(),
+      'system:time_end': endDate.millis(),
+      year: startDate.get('year'),
+      month: startDate.get('month'),
+      'system:index': startDate.format('YYYY_MM')
+    });
+  }));
+  return monthlyImages.sort('system:time_start', false);
+};
+exports.aggregateMonthly = aggregateMonthly;
