@@ -80,6 +80,7 @@ class EarthEngineWorker {
       format,
       filter,
       periodReducer,
+      periodReducerType,
       mosaic,
       band,
       bandReducer,
@@ -99,8 +100,53 @@ class EarthEngineWorker {
       this.eeScale = (0, _ee_worker_utils.getScale)(collection.first());
 
       // Apply period reducer (e.g. going from daily to monthly)
-      if (periodReducer === 'EE_MONTHLY') {
-        collection = (0, _ee_worker_utils.aggregateMonthly)(collection);
+      if (['EE_MONTHLY'].includes(periodReducer)) {
+        const year = parseInt(filter[0].arguments[1].slice(0, 4));
+        const startDate = _ee_api_js_worker.default.Date.fromYMD(year, 1, 1);
+        const endDate = _ee_api_js_worker.default.Date.fromYMD(year, 12, 31);
+        collection = collection.filterDate(startDate, endDate);
+        collection = (0, _ee_worker_utils.aggregateMonthly)({
+          collection,
+          metadataOnly: false,
+          year,
+          reducer: periodReducerType
+        });
+      }
+      if (['EE_MONTHLY_WEIGHTED'].includes(periodReducer)) {
+        const year = parseInt(filter[0].arguments[1].slice(0, 4));
+        const startDate = _ee_api_js_worker.default.Date.fromYMD(year, 1, 1);
+        const endDate = _ee_api_js_worker.default.Date.fromYMD(year, 12, 31);
+        collection = collection.filterDate(startDate, endDate);
+        collection = (0, _ee_worker_utils.aggregateMonthlyWeighted)({
+          collection,
+          metadataOnly: false,
+          year
+        });
+      }
+      if (['EE_WEEKLY'].includes(periodReducer)) {
+        const year = parseInt(filter[0].arguments[1].slice(0, 4));
+        const startDate = (0, _ee_worker_utils.getStartOfEpiYear)(year);
+        const startOfNextEpiYear = (0, _ee_worker_utils.getStartOfEpiYear)(year + 1);
+        const endDate = new Date(startOfNextEpiYear.getTime() - 1 * 24 * 60 * 60 * 1000);
+        collection = collection.filterDate(startDate, endDate);
+        collection = (0, _ee_worker_utils.aggregateWeekly)({
+          collection,
+          metadataOnly: false,
+          year,
+          reducer: periodReducerType
+        });
+      }
+      if (['EE_WEEKLY_WEIGHTED'].includes(periodReducer)) {
+        const year = parseInt(filter[0].arguments[1].slice(0, 4));
+        const startDate = (0, _ee_worker_utils.getStartOfEpiYear)(year);
+        const startOfNextEpiYear = (0, _ee_worker_utils.getStartOfEpiYear)(year + 1);
+        const endDate = new Date(startOfNextEpiYear.getTime() - 1 * 24 * 60 * 60 * 1000);
+        collection = collection.filterDate(startDate, endDate);
+        collection = (0, _ee_worker_utils.aggregateWeeklyWeighted)({
+          collection,
+          metadataOnly: false,
+          year
+        });
       }
 
       // Apply array of filters (e.g. period)
@@ -192,17 +238,35 @@ class EarthEngineWorker {
 
   // Returns available periods for an image collection
   getPeriods(datasetId, year, periodReducer) {
-    let imageCollection = _ee_api_js_worker.default.ImageCollection(datasetId).distinct('system:time_start').sort('system:time_start', false);
+    let imageCollection = _ee_api_js_worker.default.ImageCollection(datasetId);
     if (year) {
-      const startDate = _ee_api_js_worker.default.Date.fromYMD(year, 1, 1);
-      const endDate = _ee_api_js_worker.default.Date.fromYMD(year, 12, 31);
-      imageCollection = imageCollection.filterDate(startDate, endDate);
+      if (periodReducer && ['EE_WEEKLY'].includes(periodReducer)) {
+        const startDate = (0, _ee_worker_utils.getStartOfEpiYear)(year);
+        const startOfNextEpiYear = (0, _ee_worker_utils.getStartOfEpiYear)(year + 1);
+        const endDate = new Date(startOfNextEpiYear.getTime() - 1 * 24 * 60 * 60 * 1000);
+        imageCollection = imageCollection.filterDate(startDate, endDate);
+      } else {
+        const startDate = _ee_api_js_worker.default.Date.fromYMD(year, 1, 1);
+        const endDate = _ee_api_js_worker.default.Date.fromYMD(year, 12, 31);
+        imageCollection = imageCollection.filterDate(startDate, endDate);
+      }
     }
-    if (periodReducer && periodReducer === 'EE_MONTHLY') {
-      imageCollection = (0, _ee_worker_utils.aggregateMonthly)(imageCollection);
+    if (periodReducer && ['EE_MONTHLY', 'EE_MONTHLY_WEIGHTED'].includes(periodReducer)) {
+      imageCollection = (0, _ee_worker_utils.aggregateMonthly)({
+        collection: imageCollection,
+        metadataOnly: true,
+        year
+      });
     }
-    const featureCollection = _ee_api_js_worker.default.FeatureCollection(imageCollection).select(['system:time_start', 'system:time_end', 'year'], null, false);
-    return (0, _ee_worker_utils.getInfo)(featureCollection);
+    if (periodReducer && ['EE_WEEKLY', 'EE_WEEKLY_WEIGHTED'].includes(periodReducer)) {
+      imageCollection = (0, _ee_worker_utils.aggregateWeekly)({
+        collection: imageCollection,
+        metadataOnly: true,
+        year
+      });
+    }
+    const featureCollection = _ee_api_js_worker.default.FeatureCollection(imageCollection).select(['system:time_start', 'system:time_end', 'year', 'month', 'week'], null, false);
+    return (0, _ee_worker_utils.getInfo)(featureCollection.distinct('system:time_start').sort('system:time_start', false));
   }
 
   // Returns min and max timestamp for an image collection
@@ -215,8 +279,17 @@ class EarthEngineWorker {
   // Returns info for first and last images in collection
   getCollectionSpan(datasetId, periodReducer) {
     let collection = _ee_api_js_worker.default.ImageCollection(datasetId);
-    if (periodReducer && periodReducer === 'EE_MONTHLY') {
-      collection = (0, _ee_worker_utils.aggregateMonthly)(collection);
+    if (periodReducer && ['EE_MONTHLY', 'EE_MONTHLY_WEIGHTED'].includes(periodReducer)) {
+      collection = (0, _ee_worker_utils.aggregateMonthly)({
+        collection,
+        metadataOnly: true
+      });
+    }
+    if (periodReducer && ['EE_WEEKLY', 'EE_WEEKLY_WEIGHTED'].includes(periodReducer)) {
+      collection = (0, _ee_worker_utils.aggregateWeekly)({
+        collection,
+        metadataOnly: true
+      });
     }
     const first = collection.sort('system:time_start', true).first();
     const last = collection.sort('system:time_start', false).first();
