@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.hasClasses = exports.getStartOfEpiYear = exports.getScale = exports.getInfo = exports.getHistogramStatistics = exports.getFeatureCollectionProperties = exports.getClassifiedImage = exports.combineReducers = exports.applyMethods = exports.applyFilter = exports.applyCloudMask = exports.aggregateWeeklyWeighted = exports.aggregateWeekly = exports.aggregateMonthlyWeighted = exports.aggregateMonthly = void 0;
+exports.hasClasses = exports.getStartOfEpiYear = exports.getScale = exports.getInfo = exports.getHistogramStatistics = exports.getFeatureCollectionProperties = exports.getClassifiedImage = exports.combineReducers = exports.applyMethods = exports.applyFilter = exports.applyCloudMask = exports.aggregateTemporalWeighted = exports.aggregateTemporal = exports.EE_WEEKLY_WEIGHTED = exports.EE_WEEKLY = exports.EE_MONTHLY_WEIGHTED = exports.EE_MONTHLY = void 0;
 var _ee_api_js_worker = _interopRequireDefault(require("./ee_api_js_worker.js"));
 var _this = void 0;
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
@@ -16,6 +16,10 @@ const squareMetersToHectares = value => value / 10000;
 const squareMetersToAcres = value => value / 4046.8564224;
 const classAggregation = ['percentage', 'hectares', 'acres'];
 const DEFAULT_MASK_VALUE = 0;
+const EE_WEEKLY = exports.EE_WEEKLY = 'EE_WEEKLY';
+const EE_WEEKLY_WEIGHTED = exports.EE_WEEKLY_WEIGHTED = 'EE_WEEKLY_WEIGHTED';
+const EE_MONTHLY = exports.EE_MONTHLY = 'EE_MONTHLY';
+const EE_MONTHLY_WEIGHTED = exports.EE_MONTHLY_WEIGHTED = 'EE_MONTHLY_WEIGHTED';
 const hasClasses = type => classAggregation.includes(type);
 exports.hasClasses = hasClasses;
 const getStartOfEpiYear = year => {
@@ -216,211 +220,155 @@ const applyCloudMask = (collection, cloudScore) => {
   return collection.linkCollection(_ee_api_js_worker.default.ImageCollection(datasetId), [band]).map(img => img.updateMask(img.select(band).gte(clearThreshold)));
 };
 
-// Converts a daily ImageCollection into monthly composites.
+// Generic temporal aggregation function for daily ImageCollections.
+// Supported periods: 'month' and 'week'
 exports.applyCloudMask = applyCloudMask;
-const aggregateMonthly = _ref5 => {
+const aggregateTemporal = _ref5 => {
   let {
     collection,
-    metadataOnly,
-    year,
-    reducer
+    metadataOnly = false,
+    year = null,
+    reducer = 'mean',
+    periodReducer = EE_MONTHLY
   } = _ref5;
-  let temporalReducer;
-  switch (reducer) {
-    case 'sum':
-      temporalReducer = _ee_api_js_worker.default.Reducer.sum();
+  // Choose temporal reducer within period
+  const temporalReducer = reducer === 'sum' ? _ee_api_js_worker.default.Reducer.sum() : _ee_api_js_worker.default.Reducer.mean();
+
+  // Map periodReducer to period type
+  let period;
+  switch (periodReducer) {
+    case EE_WEEKLY:
+    case EE_WEEKLY_WEIGHTED:
+      period = 'week';
       break;
+    case EE_MONTHLY:
+    case EE_MONTHLY_WEIGHTED:
     default:
-      temporalReducer = _ee_api_js_worker.default.Reducer.mean();
+      period = 'month';
       break;
   }
+
+  // Determine min/max dates
   const dateRange = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
-  const minDate = _ee_api_js_worker.default.Date.fromYMD(_ee_api_js_worker.default.Date(dateRange.get('min')).get('year'), _ee_api_js_worker.default.Date(dateRange.get('min')).get('month'), 1);
+  let minDate = _ee_api_js_worker.default.Date(dateRange.get('min'));
   const maxDate = _ee_api_js_worker.default.Date(dateRange.get('max'));
-  const months = _ee_api_js_worker.default.List.sequence(0, maxDate.difference(minDate, 'month'));
+
+  // Align minDate to first of month if doing monthly aggregation
+  if (period === 'month') {
+    minDate = _ee_api_js_worker.default.Date.fromYMD(minDate.get('year'), minDate.get('month'), 1);
+  }
+
+  // Build list of temporal steps
+  const stepList = _ee_api_js_worker.default.List.sequence(0, maxDate.difference(minDate, period));
   const bandNames = _ee_api_js_worker.default.Image(collection.first()).bandNames();
-  const monthlyImages = _ee_api_js_worker.default.ImageCollection.fromImages(months.map(m => {
-    const startDate = minDate.advance(_ee_api_js_worker.default.Number(m), 'month');
-    const endDate = startDate.advance(1, 'month').advance(-1, 'second');
+
+  // Build aggregated images
+  const aggregatedImages = _ee_api_js_worker.default.ImageCollection.fromImages(stepList.map(i => {
+    const startDate = minDate.advance(_ee_api_js_worker.default.Number(i), period);
+    const endDate = startDate.advance(1, period).advance(-1, 'second');
     const tempYear = year || startDate.get('year');
     let image;
     if (metadataOnly) {
-      image = _ee_api_js_worker.default.Image(0); // Use a dummy image
+      image = _ee_api_js_worker.default.Image(0);
     } else {
-      const monthlyCollection = _ee_api_js_worker.default.ImageCollection(collection.filterDate(startDate, endDate));
-      image = monthlyCollection.reduce(temporalReducer).rename(bandNames);
+      const subCollection = collection.filterDate(startDate, endDate);
+      image = subCollection.reduce(temporalReducer).rename(bandNames);
     }
-    return image.set({
+
+    // Build period-specific metadata
+    const metadata = {
       'system:time_start': startDate.millis(),
       'system:time_end': endDate.millis(),
       year: tempYear,
-      month: startDate.get('month'),
-      'system:index': _ee_api_js_worker.default.String(tempYear.toString()).cat(startDate.format('MM'))
-    });
+      'system:index': _ee_api_js_worker.default.String(tempYear.toString()).cat(period === 'month' ? startDate.format('MM') : _ee_api_js_worker.default.String('W').cat(startDate.format('w')))
+    };
+    if (period === 'month') {
+      metadata.month = startDate.get('month');
+    } else {
+      metadata.week = startDate.format('w');
+    }
+    return image.set(metadata);
   }));
-  return monthlyImages.sort('system:time_start', false);
+  return aggregatedImages.sort('system:time_start', false);
 };
 
-// Aggregates a daily ImageCollection into weekly composites
-exports.aggregateMonthly = aggregateMonthly;
-const aggregateWeekly = _ref6 => {
+// Aggregates an ImageCollection (with system:time_start and system:time_end)
+// into weighted composites, either monthly or weekly, based on overlap duration.
+exports.aggregateTemporal = aggregateTemporal;
+const aggregateTemporalWeighted = _ref6 => {
   let {
     collection,
-    metadataOnly,
     year,
-    reducer
+    periodReducer = 'EE_MONTHLY_WEIGHTED'
   } = _ref6;
-  let temporalReducer;
-  switch (reducer) {
-    case 'sum':
-      temporalReducer = _ee_api_js_worker.default.Reducer.sum();
+  let period;
+  switch (periodReducer) {
+    case 'EE_WEEKLY_WEIGHTED':
+      period = 'week';
       break;
+    case 'EE_MONTHLY_WEIGHTED':
     default:
-      temporalReducer = _ee_api_js_worker.default.Reducer.mean();
+      period = 'month';
       break;
   }
   const dateRange = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
-  const minDate = _ee_api_js_worker.default.Date(dateRange.get('min'));
+  let minDate = _ee_api_js_worker.default.Date(dateRange.get('min'));
   const maxDate = _ee_api_js_worker.default.Date(dateRange.get('max'));
-  const weeks = _ee_api_js_worker.default.List.sequence(0, maxDate.difference(minDate, 'week'));
+  if (period === 'month') {
+    minDate = _ee_api_js_worker.default.Date.fromYMD(minDate.get('year'), minDate.get('month'), 1);
+  }
+  const steps = _ee_api_js_worker.default.List.sequence(0, maxDate.difference(minDate, period));
   const bandNames = _ee_api_js_worker.default.Image(collection.first()).bandNames();
-  const weeklyImages = _ee_api_js_worker.default.ImageCollection.fromImages(weeks.map(w => {
-    const startDate = minDate.advance(_ee_api_js_worker.default.Number(w), 'week');
-    const endDate = startDate.advance(1, 'week').advance(-1, 'second');
-    const tempYear = year || startDate.get('year');
-    let image;
-    if (metadataOnly) {
-      image = _ee_api_js_worker.default.Image(0); // Use a dummy image
-    } else {
-      const weeklyCollection = _ee_api_js_worker.default.ImageCollection(collection.filterDate(startDate, endDate));
-      image = weeklyCollection.reduce(temporalReducer).rename(bandNames);
-    }
-    return image.set({
-      'system:time_start': startDate.millis(),
-      'system:time_end': endDate.millis(),
-      year: tempYear,
-      week: startDate.format('w'),
-      'system:index': _ee_api_js_worker.default.String(tempYear.toString()).cat('W').cat(startDate.format('w'))
-    });
-  }));
-  return weeklyImages.sort('system:time_start', false);
-};
 
-// Aggregates an ImageCollection (with system:time_start and system:time_end)
-// into monthly composites, weighting each image by its overlap duration
-// within the month.
-exports.aggregateWeekly = aggregateWeekly;
-const aggregateMonthlyWeighted = _ref7 => {
-  let {
-    collection,
-    year
-  } = _ref7;
-  const dateRange = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
-  const minDate = _ee_api_js_worker.default.Date.fromYMD(_ee_api_js_worker.default.Date(dateRange.get('min')).get('year'), _ee_api_js_worker.default.Date(dateRange.get('min')).get('month'), 1);
-  const maxDate = _ee_api_js_worker.default.Date(dateRange.get('max'));
-  const months = _ee_api_js_worker.default.List.sequence(0, maxDate.difference(minDate, 'month'));
-  const bandNames = _ee_api_js_worker.default.Image(collection.first()).bandNames();
-  const monthlyImages = months.map(m => {
-    const monthStartDate = minDate.advance(_ee_api_js_worker.default.Number(m), 'month');
-    const monthEndDate = monthStartDate.advance(1, 'month').advance(-1, 'second');
+  // Map over each time step
+  const weightedImages = steps.map(s => {
+    const startDate = minDate.advance(_ee_api_js_worker.default.Number(s), period);
+    const endDate = startDate.advance(1, period).advance(-1, 'second');
 
     // Compute overlap duration for each image
     const withOverlap = collection.map(img => {
-      const imgStartDate = _ee_api_js_worker.default.Date(img.get('system:time_start'));
-      const imgEndDate = _ee_api_js_worker.default.Date(img.get('system:time_end'));
-      const overlapStart = _ee_api_js_worker.default.Date(_ee_api_js_worker.default.Algorithms.If(imgStartDate.millis().gt(monthStartDate.millis()), imgStartDate, monthStartDate));
-      const overlapEnd = _ee_api_js_worker.default.Date(_ee_api_js_worker.default.Algorithms.If(imgEndDate.millis().lt(monthEndDate.millis()), imgEndDate, monthEndDate));
+      const imgStart = _ee_api_js_worker.default.Date(img.get('system:time_start'));
+      const imgEnd = _ee_api_js_worker.default.Date(img.get('system:time_end'));
+      const overlapStart = _ee_api_js_worker.default.Date(_ee_api_js_worker.default.Algorithms.If(imgStart.millis().gt(startDate.millis()), imgStart, startDate));
+      const overlapEnd = _ee_api_js_worker.default.Date(_ee_api_js_worker.default.Algorithms.If(imgEnd.millis().lt(endDate.millis()), imgEnd, endDate));
       const overlapDuration = overlapEnd.difference(overlapStart, 'second');
       return img.updateMask(overlapDuration.gt(0)).set({
-        overlapDuration: overlapDuration
+        overlapDuration
       });
     });
 
-    // Filter out images with zero overlap
+    // Keep only overlapping images
     const overlapping = withOverlap.filter(_ee_api_js_worker.default.Filter.gt('overlapDuration', 0));
 
-    // Skip months with no overlapping images
+    // Skip periods with no overlapping images
     return _ee_api_js_worker.default.Algorithms.If(overlapping.size().gt(0), (() => {
-      // Sum weighted images
+      // Weighted sum of images
       const weightedSum = _ee_api_js_worker.default.Image(overlapping.map(img => {
         const duration = _ee_api_js_worker.default.Number(img.get('overlapDuration'));
         return img.toFloat().multiply(duration).addBands(_ee_api_js_worker.default.Image.constant(duration).float().rename('duration'));
       }).reduce(_ee_api_js_worker.default.Reducer.sum().forEach(bandNames.add('duration'))));
 
-      // Total duration as float
+      // Total duration
       const totalDuration = _ee_api_js_worker.default.Image.constant(overlapping.aggregate_sum('overlapDuration')).float();
 
-      // Compute weighted mean and keep only original bands
-      const monthlyImage = weightedSum.divide(totalDuration).rename(bandNames.add('duration')).select(bandNames);
-      const tempYear = year || monthStartDate.get('year');
-      return monthlyImage.set({
-        'system:time_start': monthStartDate.millis(),
-        'system:time_end': monthEndDate.millis(),
-        year: tempYear,
-        ['month']: monthStartDate.get('month'),
-        'system:index': _ee_api_js_worker.default.Number(tempYear).format('%d').cat(monthStartDate.format('MM'))
-      });
+      // Weighted mean
+      const weightedImage = weightedSum.divide(totalDuration).rename(bandNames.add('duration')).select(bandNames);
+      const tempYear = year || startDate.get('year');
+      const metadata = {
+        'system:time_start': startDate.millis(),
+        'system:time_end': endDate.millis(),
+        year: tempYear
+      };
+      if (period === 'month') {
+        metadata.month = startDate.get('month');
+        metadata['system:index'] = _ee_api_js_worker.default.String(tempYear.toString()).cat(startDate.format('MM'));
+      } else {
+        metadata.week = startDate.format('w');
+        metadata['system:index'] = _ee_api_js_worker.default.String(tempYear.toString()).cat('W').cat(startDate.format('w'));
+      }
+      return weightedImage.set(metadata);
     })(), _ee_api_js_worker.default.Image([]));
   });
-  return _ee_api_js_worker.default.ImageCollection.fromImages(monthlyImages).sort('system:time_start', false);
+  return _ee_api_js_worker.default.ImageCollection.fromImages(weightedImages).sort('system:time_start', false);
 };
-
-// Aggregates an ImageCollection (with system:time_start and system:time_end)
-// into weekly composites, weighting each image by its overlap duration
-// within the week.
-exports.aggregateMonthlyWeighted = aggregateMonthlyWeighted;
-const aggregateWeeklyWeighted = _ref8 => {
-  let {
-    collection,
-    year
-  } = _ref8;
-  const dateRange = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
-  const minDate = _ee_api_js_worker.default.Date(dateRange.get('min'));
-  const maxDate = _ee_api_js_worker.default.Date(dateRange.get('max'));
-  const weeks = _ee_api_js_worker.default.List.sequence(0, maxDate.difference(minDate, 'week'));
-  const bandNames = _ee_api_js_worker.default.Image(collection.first()).bandNames();
-  const weeklyImages = weeks.map(m => {
-    const weekStartDate = minDate.advance(_ee_api_js_worker.default.Number(m), 'week');
-    const weekEndDate = weekStartDate.advance(1, 'week').advance(-1, 'second');
-
-    // Compute overlap duration for each image
-    const withOverlap = collection.map(img => {
-      const imgStartDate = _ee_api_js_worker.default.Date(img.get('system:time_start'));
-      const imgEndDate = _ee_api_js_worker.default.Date(img.get('system:time_end'));
-      const overlapStart = _ee_api_js_worker.default.Date(_ee_api_js_worker.default.Algorithms.If(imgStartDate.millis().gt(weekStartDate.millis()), imgStartDate, weekStartDate));
-      const overlapEnd = _ee_api_js_worker.default.Date(_ee_api_js_worker.default.Algorithms.If(imgEndDate.millis().lt(weekEndDate.millis()), imgEndDate, weekEndDate));
-      const overlapDuration = overlapEnd.difference(overlapStart, 'second');
-      return img.updateMask(overlapDuration.gt(0)).set({
-        overlapDuration: overlapDuration
-      });
-    });
-
-    // Filter out images with zero overlap
-    const overlapping = withOverlap.filter(_ee_api_js_worker.default.Filter.gt('overlapDuration', 0));
-
-    // Skip weeks with no overlapping images
-    return _ee_api_js_worker.default.Algorithms.If(overlapping.size().gt(0), (() => {
-      // Sum weighted images
-      const weightedSum = _ee_api_js_worker.default.Image(overlapping.map(img => {
-        const duration = _ee_api_js_worker.default.Number(img.get('overlapDuration'));
-        return img.toFloat().multiply(duration).addBands(_ee_api_js_worker.default.Image.constant(duration).float().rename('duration'));
-      }).reduce(_ee_api_js_worker.default.Reducer.sum().forEach(bandNames.add('duration'))));
-
-      // Total duration as float
-      const totalDuration = _ee_api_js_worker.default.Image.constant(overlapping.aggregate_sum('overlapDuration')).float();
-
-      // Compute weighted mean and keep only original bands
-      const weeklyImage = weightedSum.divide(totalDuration).rename(bandNames.add('duration')).select(bandNames);
-      const tempYear = year || weekStartDate.get('year');
-      return weeklyImage.set({
-        'system:time_start': weekStartDate.millis(),
-        'system:time_end': weekEndDate.millis(),
-        year: tempYear,
-        ['week']: weekStartDate.format('w'),
-        'system:index': _ee_api_js_worker.default.String(tempYear.toString()).cat('W').cat(weekStartDate.format('w'))
-      });
-    })(), _ee_api_js_worker.default.Image([]));
-  });
-  return _ee_api_js_worker.default.ImageCollection.fromImages(weeklyImages).sort('system:time_start', false);
-};
-exports.aggregateWeeklyWeighted = aggregateWeeklyWeighted;
+exports.aggregateTemporalWeighted = aggregateTemporalWeighted;
