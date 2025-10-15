@@ -14,17 +14,17 @@ export const EE_MONTHLY = 'EE_MONTHLY';
 export const EE_MONTHLY_WEIGHTED = 'EE_MONTHLY_WEIGHTED';
 export const hasClasses = type => classAggregation.includes(type);
 export const getStartOfEpiYear = year => {
-  const jan1 = new Date(year, 0, 1); // Month is 0-indexed (0 = Jan)
+  const jan1 = new Date(Date.UTC(year, 0, 1)); // Month is 0-indexed (0 = Jan)
   const dayOfWeek = jan1.getDay(); // Sunday=0, Monday=1, ..., Saturday=6
 
   const dayOfWeekMondayStart = dayOfWeek === 0 ? 7 : dayOfWeek;
   let startDate;
   if (dayOfWeekMondayStart <= 4) {
     const diff = dayOfWeekMondayStart - 1;
-    startDate = new Date(year, 0, 1 - diff);
+    startDate = new Date(Date.UTC(year, 0, 1 - diff));
   } else {
     const diff = 8 - dayOfWeekMondayStart;
-    startDate = new Date(year, 0, 1 + diff);
+    startDate = new Date(Date.UTC(year, 0, 1 + diff));
   }
   return startDate;
 };
@@ -201,7 +201,8 @@ export const aggregateTemporal = ({
   metadataOnly = false,
   year = null,
   reducer = 'mean',
-  periodReducer = EE_MONTHLY
+  periodReducer = EE_MONTHLY,
+  overrideDate
 }) => {
   // Choose temporal reducer within period
   const temporalReducer = reducer === 'sum' ? ee.Reducer.sum() : ee.Reducer.mean();
@@ -222,7 +223,7 @@ export const aggregateTemporal = ({
 
   // Determine min/max dates
   const dateRange = collection.reduceColumns(ee.Reducer.minMax(), ['system:time_start']);
-  let minDate = ee.Date(dateRange.get('min'));
+  let minDate = overrideDate ?? ee.Date(dateRange.get('min'));
   const maxDate = ee.Date(dateRange.get('max'));
 
   // Align minDate to first of month if doing monthly aggregation
@@ -269,7 +270,8 @@ export const aggregateTemporal = ({
 export const aggregateTemporalWeighted = ({
   collection,
   year,
-  periodReducer = 'EE_MONTHLY_WEIGHTED'
+  periodReducer = 'EE_MONTHLY_WEIGHTED',
+  overrideDate
 }) => {
   let period;
   switch (periodReducer) {
@@ -282,7 +284,7 @@ export const aggregateTemporalWeighted = ({
       break;
   }
   const dateRange = collection.reduceColumns(ee.Reducer.minMax(), ['system:time_start']);
-  let minDate = ee.Date(dateRange.get('min'));
+  let minDate = overrideDate ?? ee.Date(dateRange.get('min'));
   const maxDate = ee.Date(dateRange.get('max'));
   if (period === 'month') {
     minDate = ee.Date.fromYMD(minDate.get('year'), minDate.get('month'), 1);

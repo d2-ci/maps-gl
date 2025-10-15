@@ -23,17 +23,17 @@ const EE_MONTHLY_WEIGHTED = exports.EE_MONTHLY_WEIGHTED = 'EE_MONTHLY_WEIGHTED';
 const hasClasses = type => classAggregation.includes(type);
 exports.hasClasses = hasClasses;
 const getStartOfEpiYear = year => {
-  const jan1 = new Date(year, 0, 1); // Month is 0-indexed (0 = Jan)
+  const jan1 = new Date(Date.UTC(year, 0, 1)); // Month is 0-indexed (0 = Jan)
   const dayOfWeek = jan1.getDay(); // Sunday=0, Monday=1, ..., Saturday=6
 
   const dayOfWeekMondayStart = dayOfWeek === 0 ? 7 : dayOfWeek;
   let startDate;
   if (dayOfWeekMondayStart <= 4) {
     const diff = dayOfWeekMondayStart - 1;
-    startDate = new Date(year, 0, 1 - diff);
+    startDate = new Date(Date.UTC(year, 0, 1 - diff));
   } else {
     const diff = 8 - dayOfWeekMondayStart;
-    startDate = new Date(year, 0, 1 + diff);
+    startDate = new Date(Date.UTC(year, 0, 1 + diff));
   }
   return startDate;
 };
@@ -229,7 +229,8 @@ const aggregateTemporal = _ref5 => {
     metadataOnly = false,
     year = null,
     reducer = 'mean',
-    periodReducer = EE_MONTHLY
+    periodReducer = EE_MONTHLY,
+    overrideDate
   } = _ref5;
   // Choose temporal reducer within period
   const temporalReducer = reducer === 'sum' ? _ee_api_js_worker.default.Reducer.sum() : _ee_api_js_worker.default.Reducer.mean();
@@ -250,7 +251,7 @@ const aggregateTemporal = _ref5 => {
 
   // Determine min/max dates
   const dateRange = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
-  let minDate = _ee_api_js_worker.default.Date(dateRange.get('min'));
+  let minDate = overrideDate ?? _ee_api_js_worker.default.Date(dateRange.get('min'));
   const maxDate = _ee_api_js_worker.default.Date(dateRange.get('max'));
 
   // Align minDate to first of month if doing monthly aggregation
@@ -299,7 +300,8 @@ const aggregateTemporalWeighted = _ref6 => {
   let {
     collection,
     year,
-    periodReducer = 'EE_MONTHLY_WEIGHTED'
+    periodReducer = 'EE_MONTHLY_WEIGHTED',
+    overrideDate
   } = _ref6;
   let period;
   switch (periodReducer) {
@@ -312,7 +314,7 @@ const aggregateTemporalWeighted = _ref6 => {
       break;
   }
   const dateRange = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
-  let minDate = _ee_api_js_worker.default.Date(dateRange.get('min'));
+  let minDate = overrideDate ?? _ee_api_js_worker.default.Date(dateRange.get('min'));
   const maxDate = _ee_api_js_worker.default.Date(dateRange.get('max'));
   if (period === 'month') {
     minDate = _ee_api_js_worker.default.Date.fromYMD(minDate.get('year'), minDate.get('month'), 1);

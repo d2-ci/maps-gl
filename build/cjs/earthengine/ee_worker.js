@@ -126,13 +126,14 @@ class EarthEngineWorker {
         } else {
           aggregatorFn = _ee_worker_utils.aggregateTemporal;
         }
-        collection = collection.filterDate(startDate, endDate);
+        collection = collection.filter(_ee_api_js_worker.default.Filter.or(_ee_api_js_worker.default.Filter.date(_ee_api_js_worker.default.Date(startDate), _ee_api_js_worker.default.Date(endDate)), _ee_api_js_worker.default.Filter.and(_ee_api_js_worker.default.Filter.lt('system:time_start', _ee_api_js_worker.default.Date(endDate).millis()), _ee_api_js_worker.default.Filter.gt('system:time_end', _ee_api_js_worker.default.Date(startDate).millis()))));
         collection = aggregatorFn({
           collection,
           metadataOnly: false,
           year,
           reducer: periodReducerType,
-          periodReducer
+          periodReducer,
+          overrideDate: _ee_api_js_worker.default.Date(startDate)
         });
       }
 
@@ -226,24 +227,25 @@ class EarthEngineWorker {
   // Returns available periods for an image collection
   getPeriods(datasetId, year, periodReducer) {
     let collection = _ee_api_js_worker.default.ImageCollection(datasetId);
+    let startDate, endDate;
     if (year) {
       if (periodReducer && [_ee_worker_utils.EE_WEEKLY, _ee_worker_utils.EE_WEEKLY_WEIGHTED].includes(periodReducer)) {
-        const startDate = (0, _ee_worker_utils.getStartOfEpiYear)(year);
+        startDate = (0, _ee_worker_utils.getStartOfEpiYear)(year);
         const startOfNextEpiYear = (0, _ee_worker_utils.getStartOfEpiYear)(year + 1);
-        const endDate = new Date(startOfNextEpiYear.getTime() - 1 * 24 * 60 * 60 * 1000);
-        collection = collection.filterDate(startDate, endDate);
+        endDate = new Date(startOfNextEpiYear.getTime() - 1 * 24 * 60 * 60 * 1000);
       } else {
-        const startDate = _ee_api_js_worker.default.Date.fromYMD(year, 1, 1);
-        const endDate = _ee_api_js_worker.default.Date.fromYMD(year, 12, 31);
-        collection = collection.filterDate(startDate, endDate);
+        startDate = _ee_api_js_worker.default.Date.fromYMD(year, 1, 1);
+        endDate = _ee_api_js_worker.default.Date.fromYMD(year, 12, 31);
       }
+      collection = collection.filter(_ee_api_js_worker.default.Filter.or(_ee_api_js_worker.default.Filter.date(_ee_api_js_worker.default.Date(startDate), _ee_api_js_worker.default.Date(endDate)), _ee_api_js_worker.default.Filter.and(_ee_api_js_worker.default.Filter.lt('system:time_start', _ee_api_js_worker.default.Date(endDate).millis()), _ee_api_js_worker.default.Filter.gt('system:time_end', _ee_api_js_worker.default.Date(startDate).millis()))));
     }
     if (periodReducer) {
       collection = (0, _ee_worker_utils.aggregateTemporal)({
         collection,
         metadataOnly: true,
         year,
-        periodReducer
+        periodReducer,
+        overrideDate: _ee_api_js_worker.default.Date(startDate)
       });
     }
     const featureCollection = _ee_api_js_worker.default.FeatureCollection(collection).select(['system:time_start', 'system:time_end', 'year', 'month', 'week'], null, false);
