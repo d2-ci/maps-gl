@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.hasClasses = exports.getStartOfEpiYear = exports.getScale = exports.getInfo = exports.getHistogramStatistics = exports.getFeatureCollectionProperties = exports.getClassifiedImage = exports.combineReducers = exports.applyMethods = exports.applyFilter = exports.applyCloudMask = exports.aggregateTemporalWeighted = exports.aggregateTemporal = exports.EE_WEEKLY_WEIGHTED = exports.EE_WEEKLY = exports.EE_MONTHLY_WEIGHTED = exports.EE_MONTHLY = void 0;
+exports.hasClasses = exports.getStartOfEpiYear = exports.getScale = exports.getPeriodDates = exports.getInfo = exports.getHistogramStatistics = exports.getFeatureCollectionProperties = exports.getClassifiedImage = exports.getAggregatorFn = exports.filterCollectionByDateRange = exports.combineReducers = exports.applyMethods = exports.applyFilter = exports.applyCloudMask = exports.aggregateTemporalWeighted = exports.aggregateTemporal = void 0;
 var _ee_api_js_worker = _interopRequireDefault(require("./ee_api_js_worker.js"));
 var _this = void 0;
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
@@ -16,10 +16,10 @@ const squareMetersToHectares = value => value / 10000;
 const squareMetersToAcres = value => value / 4046.8564224;
 const classAggregation = ['percentage', 'hectares', 'acres'];
 const DEFAULT_MASK_VALUE = 0;
-const EE_WEEKLY = exports.EE_WEEKLY = 'EE_WEEKLY';
-const EE_WEEKLY_WEIGHTED = exports.EE_WEEKLY_WEIGHTED = 'EE_WEEKLY_WEIGHTED';
-const EE_MONTHLY = exports.EE_MONTHLY = 'EE_MONTHLY';
-const EE_MONTHLY_WEIGHTED = exports.EE_MONTHLY_WEIGHTED = 'EE_MONTHLY_WEIGHTED';
+const EE_WEEKLY = 'EE_WEEKLY';
+const EE_WEEKLY_WEIGHTED = 'EE_WEEKLY_WEIGHTED';
+const EE_MONTHLY = 'EE_MONTHLY';
+const EE_MONTHLY_WEIGHTED = 'EE_MONTHLY_WEIGHTED';
 const hasClasses = type => classAggregation.includes(type);
 exports.hasClasses = hasClasses;
 const getStartOfEpiYear = year => {
@@ -37,9 +37,41 @@ const getStartOfEpiYear = year => {
   }
   return startDate;
 };
+exports.getStartOfEpiYear = getStartOfEpiYear;
+const getPeriodDates = (periodReducer, year) => {
+  switch (periodReducer) {
+    case EE_WEEKLY:
+    case EE_WEEKLY_WEIGHTED:
+      {
+        const start = getStartOfEpiYear(year);
+        const end = new Date(getStartOfEpiYear(year + 1).getTime() - 24 * 60 * 60 * 1000);
+        return {
+          startDate: start,
+          endDate: end
+        };
+      }
+    case EE_MONTHLY:
+    case EE_MONTHLY_WEIGHTED:
+    default:
+      {
+        return {
+          startDate: _ee_api_js_worker.default.Date.fromYMD(year, 1, 1),
+          endDate: _ee_api_js_worker.default.Date.fromYMD(year, 12, 31)
+        };
+      }
+  }
+};
+exports.getPeriodDates = getPeriodDates;
+const filterCollectionByDateRange = (collection, startDate, endDate) => {
+  return collection.filter(_ee_api_js_worker.default.Filter.or(_ee_api_js_worker.default.Filter.date(_ee_api_js_worker.default.Date(startDate), _ee_api_js_worker.default.Date(endDate)), _ee_api_js_worker.default.Filter.and(_ee_api_js_worker.default.Filter.lt('system:time_start', _ee_api_js_worker.default.Date(endDate).millis()), _ee_api_js_worker.default.Filter.gt('system:time_end', _ee_api_js_worker.default.Date(startDate).millis()))));
+};
+exports.filterCollectionByDateRange = filterCollectionByDateRange;
+const getAggregatorFn = periodReducer => {
+  return [EE_WEEKLY_WEIGHTED, EE_MONTHLY_WEIGHTED].includes(periodReducer) ? aggregateTemporalWeighted : aggregateTemporal;
+};
 
 // Makes evaluate a promise
-exports.getStartOfEpiYear = getStartOfEpiYear;
+exports.getAggregatorFn = getAggregatorFn;
 const getInfo = instance => new Promise((resolve, reject) => instance.evaluate((data, error) => {
   if (error) {
     reject(error);
@@ -348,7 +380,7 @@ const aggregateTemporalWeighted = _ref6 => {
       const weightedSum = _ee_api_js_worker.default.Image(overlapping.map(img => {
         const duration = _ee_api_js_worker.default.Number(img.get('overlapDuration'));
         return img.toFloat().multiply(duration).addBands(_ee_api_js_worker.default.Image.constant(duration).float().rename('duration'));
-      }).reduce(_ee_api_js_worker.default.Reducer.sum().forEach(bandNames.add('duration'))));
+      }).reduce(_ee_api_js_worker.default.Reducer.sum()));
 
       // Total duration
       const totalDuration = _ee_api_js_worker.default.Image.constant(overlapping.aggregate_sum('overlapDuration')).float();

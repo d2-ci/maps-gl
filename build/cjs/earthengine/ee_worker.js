@@ -102,32 +102,13 @@ class EarthEngineWorker {
 
       // Apply period reducer (e.g. going from daily to monthly)
       if (periodReducer) {
-        const year = parseInt(filter[0].arguments[1].slice(0, 4));
-        let startDate, endDate, aggregatorFn;
-        switch (periodReducer) {
-          case _ee_worker_utils.EE_WEEKLY:
-          case _ee_worker_utils.EE_WEEKLY_WEIGHTED:
-            {
-              startDate = (0, _ee_worker_utils.getStartOfEpiYear)(year);
-              const startOfNextEpiYear = (0, _ee_worker_utils.getStartOfEpiYear)(year + 1);
-              endDate = new Date(startOfNextEpiYear.getTime() - 24 * 60 * 60 * 1000);
-              break;
-            }
-          case _ee_worker_utils.EE_MONTHLY:
-          case _ee_worker_utils.EE_MONTHLY_WEIGHTED:
-          default:
-            {
-              startDate = _ee_api_js_worker.default.Date.fromYMD(year, 1, 1);
-              endDate = _ee_api_js_worker.default.Date.fromYMD(year, 12, 31);
-              break;
-            }
-        }
-        if ([_ee_worker_utils.EE_WEEKLY_WEIGHTED, _ee_worker_utils.EE_MONTHLY_WEIGHTED].includes(periodReducer)) {
-          aggregatorFn = _ee_worker_utils.aggregateTemporalWeighted;
-        } else {
-          aggregatorFn = _ee_worker_utils.aggregateTemporal;
-        }
-        collection = collection.filter(_ee_api_js_worker.default.Filter.or(_ee_api_js_worker.default.Filter.date(_ee_api_js_worker.default.Date(startDate), _ee_api_js_worker.default.Date(endDate)), _ee_api_js_worker.default.Filter.and(_ee_api_js_worker.default.Filter.lt('system:time_start', _ee_api_js_worker.default.Date(endDate).millis()), _ee_api_js_worker.default.Filter.gt('system:time_end', _ee_api_js_worker.default.Date(startDate).millis()))));
+        const year = Number.parseInt(filter[0].arguments[1].slice(0, 4));
+        const {
+          startDate,
+          endDate
+        } = (0, _ee_worker_utils.getPeriodDates)(periodReducer, year);
+        collection = (0, _ee_worker_utils.filterCollectionByDateRange)(collection, startDate, endDate);
+        const aggregatorFn = (0, _ee_worker_utils.getAggregatorFn)(periodReducer);
         collection = aggregatorFn({
           collection,
           metadataOnly: false,
@@ -230,15 +211,12 @@ class EarthEngineWorker {
     let collection = _ee_api_js_worker.default.ImageCollection(datasetId);
     let startDate, endDate;
     if (year) {
-      if (periodReducer && [_ee_worker_utils.EE_WEEKLY, _ee_worker_utils.EE_WEEKLY_WEIGHTED].includes(periodReducer)) {
-        startDate = (0, _ee_worker_utils.getStartOfEpiYear)(year);
-        const startOfNextEpiYear = (0, _ee_worker_utils.getStartOfEpiYear)(year + 1);
-        endDate = new Date(startOfNextEpiYear.getTime() - 1 * 24 * 60 * 60 * 1000);
-      } else {
-        startDate = _ee_api_js_worker.default.Date.fromYMD(year, 1, 1);
-        endDate = _ee_api_js_worker.default.Date.fromYMD(year, 12, 31);
-      }
-      collection = collection.filter(_ee_api_js_worker.default.Filter.or(_ee_api_js_worker.default.Filter.date(_ee_api_js_worker.default.Date(startDate), _ee_api_js_worker.default.Date(endDate)), _ee_api_js_worker.default.Filter.and(_ee_api_js_worker.default.Filter.lt('system:time_start', _ee_api_js_worker.default.Date(endDate).millis()), _ee_api_js_worker.default.Filter.gt('system:time_end', _ee_api_js_worker.default.Date(startDate).millis()))));
+      ;
+      ({
+        startDate,
+        endDate
+      } = (0, _ee_worker_utils.getPeriodDates)(periodReducer, year));
+      collection = (0, _ee_worker_utils.filterCollectionByDateRange)(collection, startDate, endDate);
     }
     if (periodReducer) {
       collection = (0, _ee_worker_utils.aggregateTemporal)({
