@@ -21,6 +21,8 @@ const EE_WEEKLY_WEIGHTED = 'EE_WEEKLY_WEIGHTED';
 const EE_MONTHLY = 'EE_MONTHLY';
 const EE_MONTHLY_WEIGHTED = 'EE_MONTHLY_WEIGHTED';
 const hasClasses = type => classAggregation.includes(type);
+
+// Get the start date (UTC) of the epidemiological year for a given year
 exports.hasClasses = hasClasses;
 const getStartOfEpiYear = year => {
   const jan1 = new Date(Date.UTC(year, 0, 1)); // Month is 0-indexed (0 = Jan)
@@ -37,6 +39,8 @@ const getStartOfEpiYear = year => {
   }
   return startDate;
 };
+
+// Return JS Date start/end for the given period reducer and year
 exports.getStartOfEpiYear = getStartOfEpiYear;
 const getPeriodDates = (periodReducer, year) => {
   switch (periodReducer) {
@@ -54,24 +58,24 @@ const getPeriodDates = (periodReducer, year) => {
     case EE_MONTHLY_WEIGHTED:
     default:
       {
+        // Return plain JS Date objects for monthly period boundaries so callers
+        // can work consistently with native dates (UTC midnight)
         return {
-          startDate: _ee_api_js_worker.default.Date.fromYMD(year, 1, 1),
-          endDate: _ee_api_js_worker.default.Date.fromYMD(year, 12, 31)
+          startDate: new Date(Date.UTC(year, 0, 1)),
+          endDate: new Date(Date.UTC(year, 11, 31))
         };
       }
   }
 };
+
+// Filter an ImageCollection to images overlapping a JS Date range
 exports.getPeriodDates = getPeriodDates;
 const filterCollectionByDateRange = (collection, startDate, endDate) => {
   return collection.filter(_ee_api_js_worker.default.Filter.or(_ee_api_js_worker.default.Filter.date(_ee_api_js_worker.default.Date(startDate), _ee_api_js_worker.default.Date(endDate)), _ee_api_js_worker.default.Filter.and(_ee_api_js_worker.default.Filter.lt('system:time_start', _ee_api_js_worker.default.Date(endDate).millis()), _ee_api_js_worker.default.Filter.gt('system:time_end', _ee_api_js_worker.default.Date(startDate).millis()))));
 };
-exports.filterCollectionByDateRange = filterCollectionByDateRange;
-const getAggregatorFn = periodReducer => {
-  return [EE_WEEKLY_WEIGHTED, EE_MONTHLY_WEIGHTED].includes(periodReducer) ? aggregateTemporalWeighted : aggregateTemporal;
-};
 
 // Makes evaluate a promise
-exports.getAggregatorFn = getAggregatorFn;
+exports.filterCollectionByDateRange = filterCollectionByDateRange;
 const getInfo = instance => new Promise((resolve, reject) => instance.evaluate((data, error) => {
   if (error) {
     reject(error);
@@ -80,7 +84,7 @@ const getInfo = instance => new Promise((resolve, reject) => instance.evaluate((
   }
 }));
 
-// unweighted means that centroids are used for each grid cell
+// Unweighted means that centroids are used for each grid cell
 // https://developers.google.com/earth-engine/guides/reducers_reduce_region#pixels-in-the-region
 exports.getInfo = getInfo;
 const createReducer = (eeReducer, type, unweighted) => {
@@ -252,10 +256,81 @@ const applyCloudMask = (collection, cloudScore) => {
   return collection.linkCollection(_ee_api_js_worker.default.ImageCollection(datasetId), [band]).map(img => img.updateMask(img.select(band).gte(clearThreshold)));
 };
 
+// Map periodReducer string to period unit used by ee ("month" or "week")
+exports.applyCloudMask = applyCloudMask;
+const mapPeriodReducerToPeriod = periodReducer => {
+  switch (periodReducer) {
+    case EE_WEEKLY:
+    case EE_WEEKLY_WEIGHTED:
+      return 'week';
+    case EE_MONTHLY:
+    case EE_MONTHLY_WEIGHTED:
+    default:
+      return 'month';
+  }
+};
+
+// Compute min/max dates for a collection and align the minDate for monthly periods
+const computeMinMaxAndAlign = _ref5 => {
+  let {
+    collection,
+    period,
+    overrideDate
+  } = _ref5;
+  const dateRange = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
+  let minDate = overrideDate ?? _ee_api_js_worker.default.Date(dateRange.get('min'));
+  const maxDate = _ee_api_js_worker.default.Date(dateRange.get('max'));
+  if (period === 'month') {
+    minDate = _ee_api_js_worker.default.Date.fromYMD(minDate.get('year'), minDate.get('month'), 1);
+  }
+  return {
+    minDate,
+    maxDate
+  };
+};
+
+// Build steps sequence and band names for a collection given the period and min/max dates
+const buildStepsAndBandNames = _ref6 => {
+  let {
+    minDate,
+    maxDate,
+    period,
+    collection
+  } = _ref6;
+  const steps = _ee_api_js_worker.default.List.sequence(0, maxDate.difference(minDate, period));
+  const bandNames = _ee_api_js_worker.default.Image(collection.first()).bandNames();
+  return {
+    steps,
+    bandNames
+  };
+};
+
+// Build metadata object for a period (shared by temporal aggregators)
+const buildPeriodMetadata = _ref7 => {
+  let {
+    startDate,
+    endDate,
+    period,
+    tempYear
+  } = _ref7;
+  const metadata = {
+    'system:time_start': startDate.millis(),
+    'system:time_end': endDate.millis(),
+    year: tempYear
+  };
+  if (period === 'month') {
+    metadata.month = startDate.get('month');
+    metadata['system:index'] = _ee_api_js_worker.default.String(tempYear.toString()).cat(startDate.format('MM'));
+  } else {
+    metadata.week = startDate.format('w');
+    metadata['system:index'] = _ee_api_js_worker.default.String(tempYear.toString()).cat(_ee_api_js_worker.default.String('W')).cat(startDate.format('w'));
+  }
+  return metadata;
+};
+
 // Generic temporal aggregation function for daily ImageCollections.
 // Supported periods: 'month' and 'week'
-exports.applyCloudMask = applyCloudMask;
-const aggregateTemporal = _ref5 => {
+const aggregateTemporal = _ref8 => {
   let {
     collection,
     metadataOnly = false,
@@ -263,37 +338,31 @@ const aggregateTemporal = _ref5 => {
     reducer = 'mean',
     periodReducer = EE_MONTHLY,
     overrideDate
-  } = _ref5;
+  } = _ref8;
   // Choose temporal reducer within period
   const temporalReducer = reducer === 'sum' ? _ee_api_js_worker.default.Reducer.sum() : _ee_api_js_worker.default.Reducer.mean();
 
-  // Map periodReducer to period type
-  let period;
-  switch (periodReducer) {
-    case EE_WEEKLY:
-    case EE_WEEKLY_WEIGHTED:
-      period = 'week';
-      break;
-    case EE_MONTHLY:
-    case EE_MONTHLY_WEIGHTED:
-    default:
-      period = 'month';
-      break;
-  }
+  // Map periodReducer to period type and compute min/max dates
+  const period = mapPeriodReducerToPeriod(periodReducer);
+  const {
+    minDate,
+    maxDate
+  } = computeMinMaxAndAlign({
+    collection,
+    period,
+    overrideDate
+  });
 
-  // Determine min/max dates
-  const dateRange = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
-  let minDate = overrideDate ?? _ee_api_js_worker.default.Date(dateRange.get('min'));
-  const maxDate = _ee_api_js_worker.default.Date(dateRange.get('max'));
-
-  // Align minDate to first of month if doing monthly aggregation
-  if (period === 'month') {
-    minDate = _ee_api_js_worker.default.Date.fromYMD(minDate.get('year'), minDate.get('month'), 1);
-  }
-
-  // Build list of temporal steps
-  const stepList = _ee_api_js_worker.default.List.sequence(0, maxDate.difference(minDate, period));
-  const bandNames = _ee_api_js_worker.default.Image(collection.first()).bandNames();
+  // Build list of temporal steps and band names
+  const {
+    steps: stepList,
+    bandNames
+  } = buildStepsAndBandNames({
+    minDate,
+    maxDate,
+    period,
+    collection
+  });
 
   // Build aggregated images
   const aggregatedImages = _ee_api_js_worker.default.ImageCollection.fromImages(stepList.map(i => {
@@ -308,18 +377,13 @@ const aggregateTemporal = _ref5 => {
       image = subCollection.reduce(temporalReducer).rename(bandNames);
     }
 
-    // Build period-specific metadata
-    const metadata = {
-      'system:time_start': startDate.millis(),
-      'system:time_end': endDate.millis(),
-      year: tempYear,
-      'system:index': _ee_api_js_worker.default.String(tempYear.toString()).cat(period === 'month' ? startDate.format('MM') : _ee_api_js_worker.default.String('W').cat(startDate.format('w')))
-    };
-    if (period === 'month') {
-      metadata.month = startDate.get('month');
-    } else {
-      metadata.week = startDate.format('w');
-    }
+    // Build and set period-specific metadata
+    const metadata = buildPeriodMetadata({
+      startDate,
+      endDate,
+      period,
+      tempYear
+    });
     return image.set(metadata);
   }));
   return aggregatedImages.sort('system:time_start', false);
@@ -328,31 +392,31 @@ const aggregateTemporal = _ref5 => {
 // Aggregates an ImageCollection (with system:time_start and system:time_end)
 // into weighted composites, either monthly or weekly, based on overlap duration.
 exports.aggregateTemporal = aggregateTemporal;
-const aggregateTemporalWeighted = _ref6 => {
+const aggregateTemporalWeighted = _ref9 => {
   let {
     collection,
     year,
     periodReducer = 'EE_MONTHLY_WEIGHTED',
     overrideDate
-  } = _ref6;
-  let period;
-  switch (periodReducer) {
-    case 'EE_WEEKLY_WEIGHTED':
-      period = 'week';
-      break;
-    case 'EE_MONTHLY_WEIGHTED':
-    default:
-      period = 'month';
-      break;
-  }
-  const dateRange = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
-  let minDate = overrideDate ?? _ee_api_js_worker.default.Date(dateRange.get('min'));
-  const maxDate = _ee_api_js_worker.default.Date(dateRange.get('max'));
-  if (period === 'month') {
-    minDate = _ee_api_js_worker.default.Date.fromYMD(minDate.get('year'), minDate.get('month'), 1);
-  }
-  const steps = _ee_api_js_worker.default.List.sequence(0, maxDate.difference(minDate, period));
-  const bandNames = _ee_api_js_worker.default.Image(collection.first()).bandNames();
+  } = _ref9;
+  const period = mapPeriodReducerToPeriod(periodReducer);
+  const {
+    minDate,
+    maxDate
+  } = computeMinMaxAndAlign({
+    collection,
+    period,
+    overrideDate
+  });
+  const {
+    steps,
+    bandNames
+  } = buildStepsAndBandNames({
+    minDate,
+    maxDate,
+    period,
+    collection
+  });
 
   // Map over each time step
   const weightedImages = steps.map(s => {
@@ -388,21 +452,19 @@ const aggregateTemporalWeighted = _ref6 => {
       // Weighted mean
       const weightedImage = weightedSum.divide(totalDuration).rename(bandNames.add('duration')).select(bandNames);
       const tempYear = year || startDate.get('year');
-      const metadata = {
-        'system:time_start': startDate.millis(),
-        'system:time_end': endDate.millis(),
-        year: tempYear
-      };
-      if (period === 'month') {
-        metadata.month = startDate.get('month');
-        metadata['system:index'] = _ee_api_js_worker.default.String(tempYear.toString()).cat(startDate.format('MM'));
-      } else {
-        metadata.week = startDate.format('w');
-        metadata['system:index'] = _ee_api_js_worker.default.String(tempYear.toString()).cat('W').cat(startDate.format('w'));
-      }
+      const metadata = buildPeriodMetadata({
+        startDate,
+        endDate,
+        period,
+        tempYear
+      });
       return weightedImage.set(metadata);
     })(), _ee_api_js_worker.default.Image([]));
   });
   return _ee_api_js_worker.default.ImageCollection.fromImages(weightedImages).sort('system:time_start', false);
 };
 exports.aggregateTemporalWeighted = aggregateTemporalWeighted;
+const getAggregatorFn = periodReducer => {
+  return [EE_WEEKLY_WEIGHTED, EE_MONTHLY_WEIGHTED].includes(periodReducer) ? aggregateTemporalWeighted : aggregateTemporal;
+};
+exports.getAggregatorFn = getAggregatorFn;
