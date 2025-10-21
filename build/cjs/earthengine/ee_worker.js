@@ -272,7 +272,7 @@ class EarthEngineWorker {
     } = this.options;
     const singleAggregation = !Array.isArray(aggregationType);
     const useHistogram = singleAggregation && (0, _ee_worker_utils.hasClasses)(aggregationType) && Array.isArray(style);
-    const scale = this.eeScale.min(DEFAULT_SCALE);
+    const scale = this.eeScale?.min?.(DEFAULT_SCALE) ?? DEFAULT_SCALE;
     const collection = this.getFeatureCollection();
     let image = await this.getImage();
 
