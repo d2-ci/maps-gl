@@ -71,7 +71,7 @@ const getPeriodDates = (periodReducer, year) => {
 // Filter an ImageCollection to images overlapping a JS Date range
 exports.getPeriodDates = getPeriodDates;
 const filterCollectionByDateRange = (collection, startDate, endDate) => {
-  return collection.filter(_ee_api_js_worker.default.Filter.and(_ee_api_js_worker.default.Filter.lt('system:time_start', endDate.getTime()), _ee_api_js_worker.default.Filter.gt('system:time_end', startDate.getTime())));
+  return collection.filter(_ee_api_js_worker.default.Filter.or(_ee_api_js_worker.default.Filter.date(_ee_api_js_worker.default.Date(startDate.getTime()), _ee_api_js_worker.default.Date(endDate.getTime())), _ee_api_js_worker.default.Filter.and(_ee_api_js_worker.default.Filter.lt('system:time_start', endDate.getTime()), _ee_api_js_worker.default.Filter.gt('system:time_end', startDate.getTime()))));
 };
 
 // Makes evaluate a promise

@@ -249,7 +249,7 @@ class EarthEngineWorker {
   getCollectionSpan(datasetId) {
     const collection = _ee_api_js_worker.default.ImageCollection(datasetId);
     const first = collection.sort('system:time_start', true).first();
-    const last = collection.sort('system:time_end', false).first();
+    const last = collection.sort('system:time_start', false).first();
     return (0, _ee_worker_utils.getInfo)(_ee_api_js_worker.default.Dictionary({
       first,
       last
