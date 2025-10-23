@@ -278,7 +278,7 @@ const computeMinMaxAndAlign = _ref5 => {
     overrideDate
   } = _ref5;
   const dateRange = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
-  let minDate = _ee_api_js_worker.default.Date(overrideDate.getTime()) ?? _ee_api_js_worker.default.Date(dateRange.get('min'));
+  let minDate = overrideDate ? _ee_api_js_worker.default.Date(overrideDate.getTime()) : _ee_api_js_worker.default.Date(dateRange.get('min'));
   const maxDate = _ee_api_js_worker.default.Date(dateRange.get('max'));
   if (period === 'month') {
     minDate = _ee_api_js_worker.default.Date.fromYMD(minDate.get('year'), minDate.get('month'), 1);
