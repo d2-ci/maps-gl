@@ -60,7 +60,7 @@ export const getPeriodDates = (periodReducer, year) => {
 
 // Filter an ImageCollection to images overlapping a JS Date range
 export const filterCollectionByDateRange = (collection, startDate, endDate) => {
-  return collection.filter(ee.Filter.or(ee.Filter.date(ee.Date(startDate), ee.Date(endDate)), ee.Filter.and(ee.Filter.lt('system:time_start', ee.Date(endDate).millis()), ee.Filter.gt('system:time_end', ee.Date(startDate).millis()))));
+  return collection.filter(ee.Filter.and(ee.Filter.lt('system:time_start', endDate.getTime()), ee.Filter.gt('system:time_end', startDate.getTime())));
 };
 
 // Makes evaluate a promise
@@ -248,7 +248,7 @@ const computeMinMaxAndAlign = ({
   overrideDate
 }) => {
   const dateRange = collection.reduceColumns(ee.Reducer.minMax(), ['system:time_start']);
-  let minDate = overrideDate ?? ee.Date(dateRange.get('min'));
+  let minDate = ee.Date(overrideDate.getTime()) ?? ee.Date(dateRange.get('min'));
   const maxDate = ee.Date(dateRange.get('max'));
   if (period === 'month') {
     minDate = ee.Date.fromYMD(minDate.get('year'), minDate.get('month'), 1);
@@ -306,10 +306,7 @@ export const aggregateTemporal = ({
   periodReducer = EE_MONTHLY,
   overrideDate
 }) => {
-  // Choose temporal reducer within period
   const temporalReducer = reducer === 'sum' ? ee.Reducer.sum() : ee.Reducer.mean();
-
-  // Map periodReducer to period type and compute min/max dates
   const period = mapPeriodReducerToPeriod(periodReducer);
   const {
     minDate,
@@ -319,8 +316,6 @@ export const aggregateTemporal = ({
     period,
     overrideDate
   });
-
-  // Build list of temporal steps and band names
   const {
     steps: stepList,
     bandNames
@@ -330,8 +325,6 @@ export const aggregateTemporal = ({
     period,
     collection
   });
-
-  // Build aggregated images
   const aggregatedImages = ee.ImageCollection.fromImages(stepList.map(i => {
     const startDate = minDate.advance(ee.Number(i), period);
     const endDate = startDate.advance(1, period).advance(-1, 'second');
@@ -343,8 +336,6 @@ export const aggregateTemporal = ({
       const subCollection = collection.filterDate(startDate, endDate);
       image = subCollection.reduce(temporalReducer).rename(bandNames);
     }
-
-    // Build and set period-specific metadata
     const metadata = buildPeriodMetadata({
       startDate,
       endDate,
@@ -382,8 +373,6 @@ export const aggregateTemporalWeighted = ({
     period,
     collection
   });
-
-  // Map over each time step
   const weightedImages = steps.map(s => {
     const startDate = minDate.advance(ee.Number(s), period);
     const endDate = startDate.advance(1, period).advance(-1, 'second');
@@ -424,7 +413,7 @@ export const aggregateTemporalWeighted = ({
         tempYear
       });
       return weightedImage.set(metadata);
-    })(), ee.Image([]));
+    })(), null);
   });
   return ee.ImageCollection.fromImages(weightedImages).sort('system:time_start', false);
 };

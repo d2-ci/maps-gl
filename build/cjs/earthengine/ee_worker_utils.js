@@ -71,7 +71,7 @@ const getPeriodDates = (periodReducer, year) => {
 // Filter an ImageCollection to images overlapping a JS Date range
 exports.getPeriodDates = getPeriodDates;
 const filterCollectionByDateRange = (collection, startDate, endDate) => {
-  return collection.filter(_ee_api_js_worker.default.Filter.or(_ee_api_js_worker.default.Filter.date(_ee_api_js_worker.default.Date(startDate), _ee_api_js_worker.default.Date(endDate)), _ee_api_js_worker.default.Filter.and(_ee_api_js_worker.default.Filter.lt('system:time_start', _ee_api_js_worker.default.Date(endDate).millis()), _ee_api_js_worker.default.Filter.gt('system:time_end', _ee_api_js_worker.default.Date(startDate).millis()))));
+  return collection.filter(_ee_api_js_worker.default.Filter.and(_ee_api_js_worker.default.Filter.lt('system:time_start', endDate.getTime()), _ee_api_js_worker.default.Filter.gt('system:time_end', startDate.getTime())));
 };
 
 // Makes evaluate a promise
@@ -278,7 +278,7 @@ const computeMinMaxAndAlign = _ref5 => {
     overrideDate
   } = _ref5;
   const dateRange = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
-  let minDate = overrideDate ?? _ee_api_js_worker.default.Date(dateRange.get('min'));
+  let minDate = _ee_api_js_worker.default.Date(overrideDate.getTime()) ?? _ee_api_js_worker.default.Date(dateRange.get('min'));
   const maxDate = _ee_api_js_worker.default.Date(dateRange.get('max'));
   if (period === 'month') {
     minDate = _ee_api_js_worker.default.Date.fromYMD(minDate.get('year'), minDate.get('month'), 1);
@@ -339,10 +339,7 @@ const aggregateTemporal = _ref8 => {
     periodReducer = EE_MONTHLY,
     overrideDate
   } = _ref8;
-  // Choose temporal reducer within period
   const temporalReducer = reducer === 'sum' ? _ee_api_js_worker.default.Reducer.sum() : _ee_api_js_worker.default.Reducer.mean();
-
-  // Map periodReducer to period type and compute min/max dates
   const period = mapPeriodReducerToPeriod(periodReducer);
   const {
     minDate,
@@ -352,8 +349,6 @@ const aggregateTemporal = _ref8 => {
     period,
     overrideDate
   });
-
-  // Build list of temporal steps and band names
   const {
     steps: stepList,
     bandNames
@@ -363,8 +358,6 @@ const aggregateTemporal = _ref8 => {
     period,
     collection
   });
-
-  // Build aggregated images
   const aggregatedImages = _ee_api_js_worker.default.ImageCollection.fromImages(stepList.map(i => {
     const startDate = minDate.advance(_ee_api_js_worker.default.Number(i), period);
     const endDate = startDate.advance(1, period).advance(-1, 'second');
@@ -376,8 +369,6 @@ const aggregateTemporal = _ref8 => {
       const subCollection = collection.filterDate(startDate, endDate);
       image = subCollection.reduce(temporalReducer).rename(bandNames);
     }
-
-    // Build and set period-specific metadata
     const metadata = buildPeriodMetadata({
       startDate,
       endDate,
@@ -417,8 +408,6 @@ const aggregateTemporalWeighted = _ref9 => {
     period,
     collection
   });
-
-  // Map over each time step
   const weightedImages = steps.map(s => {
     const startDate = minDate.advance(_ee_api_js_worker.default.Number(s), period);
     const endDate = startDate.advance(1, period).advance(-1, 'second');
@@ -459,7 +448,7 @@ const aggregateTemporalWeighted = _ref9 => {
         tempYear
       });
       return weightedImage.set(metadata);
-    })(), _ee_api_js_worker.default.Image([]));
+    })(), null);
   });
   return _ee_api_js_worker.default.ImageCollection.fromImages(weightedImages).sort('system:time_start', false);
 };

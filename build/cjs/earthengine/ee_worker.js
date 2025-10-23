@@ -115,7 +115,7 @@ class EarthEngineWorker {
           year,
           reducer: periodReducerType,
           periodReducer,
-          overrideDate: _ee_api_js_worker.default.Date(startDate)
+          overrideDate: startDate
         });
       }
 
@@ -207,7 +207,13 @@ class EarthEngineWorker {
   }
 
   // Returns available periods for an image collection
-  getPeriods(datasetId, year, periodReducer) {
+  getPeriods(_ref2) {
+    let {
+      datasetId,
+      year,
+      datesRange,
+      periodReducer
+    } = _ref2;
     let collection = _ee_api_js_worker.default.ImageCollection(datasetId);
     let startDate, endDate;
     if (year) {
@@ -224,9 +230,10 @@ class EarthEngineWorker {
         metadataOnly: true,
         year,
         periodReducer,
-        overrideDate: _ee_api_js_worker.default.Date(startDate)
+        overrideDate: startDate
       });
     }
+    collection = (0, _ee_worker_utils.filterCollectionByDateRange)(collection, datesRange.startDate, datesRange.endDate);
     const featureCollection = _ee_api_js_worker.default.FeatureCollection(collection).select(['system:time_start', 'system:time_end', 'year', 'month', 'week'], null, false);
     return (0, _ee_worker_utils.getInfo)(featureCollection.distinct('system:time_start').sort('system:time_start', false));
   }
@@ -239,17 +246,10 @@ class EarthEngineWorker {
   }
 
   // Returns info for first and last images in collection
-  getCollectionSpan(datasetId, periodReducer) {
-    let collection = _ee_api_js_worker.default.ImageCollection(datasetId);
-    if (periodReducer) {
-      collection = (0, _ee_worker_utils.aggregateTemporal)({
-        collection,
-        metadataOnly: true,
-        periodReducer
-      });
-    }
+  getCollectionSpan(datasetId) {
+    const collection = _ee_api_js_worker.default.ImageCollection(datasetId);
     const first = collection.sort('system:time_start', true).first();
-    const last = collection.sort('system:time_start', false).first();
+    const last = collection.sort('system:time_end', false).first();
     return (0, _ee_worker_utils.getInfo)(_ee_api_js_worker.default.Dictionary({
       first,
       last
