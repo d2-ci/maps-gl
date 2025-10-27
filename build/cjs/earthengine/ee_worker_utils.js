@@ -251,13 +251,11 @@ const applyFilter = function (collection) {
 
 // Resolve variable names to image bands dynamically
 exports.applyFilter = applyFilter;
-const getExpressionArgumentBands = method => {
+const getExpressionArgumentBands = (image, method) => {
   const vars = {};
   for (const key in method.arguments[1]) {
-    if (Object.hasOwn(method.arguments[1], key)) {
-      const bandName = method.arguments[1][key];
-      vars[key] = image.select(bandName);
-    }
+    const bandName = method.arguments[1][key];
+    vars[key] = image.select(bandName);
   }
   return vars;
 };
@@ -269,7 +267,7 @@ const applyMethods = function (eeImage) {
   if (Array.isArray(methods)) {
     for (const m of methods) {
       if (m.name === 'expression' && m.arguments && typeof m.arguments[1] === 'object') {
-        image = image.expression(m.arguments[0], getExpressionArgumentBands(m));
+        image = image.expression(m.arguments[0], getExpressionArgumentBands(image, m));
       } else if (image[m.name]) {
         image = image[m.name].apply(image, m.arguments);
       }
@@ -277,10 +275,8 @@ const applyMethods = function (eeImage) {
   } else {
     // Backward compatibility for format used before 2.40
     for (const m in methods) {
-      if (Object.hasOwn(methods, m)) {
-        if (image[m]) {
-          image = image[m].apply(image, methods[m]);
-        }
+      if (image[m]) {
+        image = image[m].apply(image, methods[m]);
       }
     }
   }
