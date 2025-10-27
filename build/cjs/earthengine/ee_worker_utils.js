@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.hasClasses = exports.getStartOfEpiYear = exports.getScale = exports.getPeriodDates = exports.getInfo = exports.getHistogramStatistics = exports.getFeatureCollectionProperties = exports.getClassifiedImage = exports.getAggregatorFn = exports.filterCollectionByDateRange = exports.combineReducers = exports.applyMethods = exports.applyFilter = exports.applyCloudMask = exports.aggregateTemporalWeighted = exports.aggregateTemporal = void 0;
+exports.selectBand = exports.hasClasses = exports.getStartOfEpiYear = exports.getScale = exports.getPeriodDates = exports.getInfo = exports.getHistogramStatistics = exports.getFeatureCollectionProperties = exports.getClassifiedImage = exports.getAggregatorFn = exports.filterCollectionByDateRange = exports.combineReducers = exports.applyMethods = exports.applyFilter = exports.applyCloudMask = exports.aggregateTemporalWeighted = exports.aggregateTemporal = void 0;
 var _ee_api_js_worker = _interopRequireDefault(require("./ee_api_js_worker.js"));
 var _this = void 0;
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
@@ -95,33 +95,59 @@ const createReducer = (eeReducer, type, unweighted) => {
 // Combine multiple aggregation types/reducers
 // https://developers.google.com/earth-engine/guides/reducers_intro
 const combineReducers = (types, unweighted) => types.reduce((r, t, i) => i === 0 ? createReducer(r, t, unweighted) : r.combine(createReducer(_ee_api_js_worker.default.Reducer, t, unweighted), '', true), _ee_api_js_worker.default.Reducer);
+exports.combineReducers = combineReducers;
+const selectBand = _ref => {
+  let {
+    eeImage,
+    band,
+    bandReducer
+  } = _ref;
+  if (!band) {
+    return {
+      eeImage
+    };
+  }
+  let eeImageBands;
+  eeImage = eeImage.select(band);
+  if (Array.isArray(band) && bandReducer) {
+    // Keep image bands for aggregations
+    eeImageBands = eeImage;
+
+    // Combine multiple bands (e.g. age groups)
+    eeImage = eeImage.reduce(_ee_api_js_worker.default.Reducer[bandReducer]());
+  }
+  return {
+    eeImage,
+    eeImageBands
+  };
+};
 
 // Returns the linear scale in meters of the units of this projection
-exports.combineReducers = combineReducers;
+exports.selectBand = selectBand;
 const getScale = image => image.select(0).projection().nominalScale();
 
 // Returns histogram data (e.g. landcover) in percentage, hectares or acres
 exports.getScale = getScale;
-const getHistogramStatistics = _ref => {
+const getHistogramStatistics = _ref2 => {
   let {
     data,
     scale,
     aggregationType,
     style
-  } = _ref;
-  return data.features.reduce((obj, _ref2) => {
+  } = _ref2;
+  return data.features.reduce((obj, _ref3) => {
     let {
       id,
       properties
-    } = _ref2;
+    } = _ref3;
     const {
       histogram
     } = properties;
     const sum = Object.values(histogram).reduce((a, b) => a + b, 0);
-    obj[id] = style.reduce((values, _ref3) => {
+    obj[id] = style.reduce((values, _ref4) => {
       let {
         value: id
-      } = _ref3;
+      } = _ref4;
       const count = histogram[id] || 0;
       const sqMeters = count * (scale * scale);
       let value;
@@ -151,13 +177,13 @@ const getFeatureCollectionProperties = data => data.features.reduce((obj, f) => 
 
 // Classify image according to style
 exports.getFeatureCollectionProperties = getFeatureCollectionProperties;
-const getClassifiedImage = (eeImage, _ref4) => {
+const getClassifiedImage = (eeImage, _ref5) => {
   let {
     legend = [],
     style,
     band,
     maskOperator
-  } = _ref4;
+  } = _ref5;
   // Use mask operator (e.g. mask out values below a certain threshold)
   // Only used for styling, not aggregations
   if (maskOperator && eeImage[maskOperator]) {
@@ -279,12 +305,12 @@ const mapPeriodReducerToPeriod = periodReducer => {
 };
 
 // Compute min/max dates for a collection and align the minDate for monthly periods
-const computeMinMaxAndAlign = _ref5 => {
+const computeMinMaxAndAlign = _ref6 => {
   let {
     collection,
     period,
     overrideDate
-  } = _ref5;
+  } = _ref6;
   const dateRange = collection.reduceColumns(_ee_api_js_worker.default.Reducer.minMax(), ['system:time_start']);
   let minDate = overrideDate ? _ee_api_js_worker.default.Date(overrideDate.getTime()) : _ee_api_js_worker.default.Date(dateRange.get('min'));
   const maxDate = _ee_api_js_worker.default.Date(dateRange.get('max'));
@@ -298,13 +324,13 @@ const computeMinMaxAndAlign = _ref5 => {
 };
 
 // Build steps sequence and band names for a collection given the period and min/max dates
-const buildStepsAndBandNames = _ref6 => {
+const buildStepsAndBandNames = _ref7 => {
   let {
     minDate,
     maxDate,
     period,
     collection
-  } = _ref6;
+  } = _ref7;
   const steps = _ee_api_js_worker.default.List.sequence(0, maxDate.difference(minDate, period));
   const bandNames = _ee_api_js_worker.default.Image(collection.first()).bandNames();
   return {
@@ -314,13 +340,13 @@ const buildStepsAndBandNames = _ref6 => {
 };
 
 // Build metadata object for a period (shared by temporal aggregators)
-const buildPeriodMetadata = _ref7 => {
+const buildPeriodMetadata = _ref8 => {
   let {
     startDate,
     endDate,
     period,
     tempYear
-  } = _ref7;
+  } = _ref8;
   const metadata = {
     'system:time_start': startDate.millis(),
     'system:time_end': endDate.millis(),
@@ -338,7 +364,7 @@ const buildPeriodMetadata = _ref7 => {
 
 // Generic temporal aggregation function for daily ImageCollections.
 // Supported periods: 'month' and 'week'
-const aggregateTemporal = _ref8 => {
+const aggregateTemporal = _ref9 => {
   let {
     collection,
     metadataOnly = false,
@@ -346,7 +372,7 @@ const aggregateTemporal = _ref8 => {
     reducer = 'mean',
     periodReducer = EE_MONTHLY,
     overrideDate
-  } = _ref8;
+  } = _ref9;
   const temporalReducer = reducer === 'sum' ? _ee_api_js_worker.default.Reducer.sum() : _ee_api_js_worker.default.Reducer.mean();
   const period = mapPeriodReducerToPeriod(periodReducer);
   const {
@@ -391,13 +417,13 @@ const aggregateTemporal = _ref8 => {
 // Aggregates an ImageCollection (with system:time_start and system:time_end)
 // into weighted composites, either monthly or weekly, based on overlap duration.
 exports.aggregateTemporal = aggregateTemporal;
-const aggregateTemporalWeighted = _ref9 => {
+const aggregateTemporalWeighted = _ref10 => {
   let {
     collection,
     year,
     periodReducer = 'EE_MONTHLY_WEIGHTED',
     overrideDate
-  } = _ref9;
+  } = _ref10;
   const period = mapPeriodReducerToPeriod(periodReducer);
   const {
     minDate,

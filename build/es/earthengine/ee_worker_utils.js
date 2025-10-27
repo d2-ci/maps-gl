@@ -82,6 +82,30 @@ const createReducer = (eeReducer, type, unweighted) => {
 // Combine multiple aggregation types/reducers
 // https://developers.google.com/earth-engine/guides/reducers_intro
 export const combineReducers = (types, unweighted) => types.reduce((r, t, i) => i === 0 ? createReducer(r, t, unweighted) : r.combine(createReducer(ee.Reducer, t, unweighted), '', true), ee.Reducer);
+export const selectBand = ({
+  eeImage,
+  band,
+  bandReducer
+}) => {
+  if (!band) {
+    return {
+      eeImage
+    };
+  }
+  let eeImageBands;
+  eeImage = eeImage.select(band);
+  if (Array.isArray(band) && bandReducer) {
+    // Keep image bands for aggregations
+    eeImageBands = eeImage;
+
+    // Combine multiple bands (e.g. age groups)
+    eeImage = eeImage.reduce(ee.Reducer[bandReducer]());
+  }
+  return {
+    eeImage,
+    eeImageBands
+  };
+};
 
 // Returns the linear scale in meters of the units of this projection
 export const getScale = image => image.select(0).projection().nominalScale();

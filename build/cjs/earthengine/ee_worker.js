@@ -91,6 +91,7 @@ class EarthEngineWorker {
       cloudScore
     } = this.options;
     let eeImage;
+    let eeImageBands;
     if (format === IMAGE) {
       // Single image
       eeImage = _ee_api_js_worker.default.Image(datasetId);
@@ -137,26 +138,36 @@ class EarthEngineWorker {
       }
     }
 
-    // Select band (e.g. age group)
-    if (band && !bandSource) {
-      eeImage = eeImage.select(band);
-      if (Array.isArray(band) && bandReducer) {
-        // Keep image bands for aggregations
-        this.eeImageBands = eeImage;
-
-        // Combine multiple bands (e.g. age groups)
-        eeImage = eeImage.reduce(_ee_api_js_worker.default.Reducer[bandReducer]());
-      }
+    // If readily available, select band now (e.g. age group)
+    if (!bandSource) {
+      ;
+      ({
+        eeImage,
+        eeImageBands
+      } = (0, _ee_worker_utils.selectBand)({
+        eeImage,
+        band,
+        bandReducer
+      }));
     }
 
     // Run methods on image
     eeImage = (0, _ee_worker_utils.applyMethods)(eeImage, methods);
 
-    // Select band if output by methods
-    if (band && bandSource === BANDSOURCE_METHODSOUTPUT) {
-      eeImage = eeImage.select(band);
+    // If an output of methods, select band now (e.g. relative humidity)
+    if (bandSource === BANDSOURCE_METHODSOUTPUT) {
+      ;
+      ({
+        eeImage,
+        eeImageBands
+      } = (0, _ee_worker_utils.selectBand)({
+        eeImage,
+        band,
+        bandReducer
+      }));
     }
     this.eeImage = eeImage;
+    this.eeImageBands = eeImageBands;
     return eeImage;
   }
 

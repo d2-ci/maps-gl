@@ -7,7 +7,7 @@ import polygonBuffer from '@turf/buffer';
 import circle from '@turf/circle';
 import { expose } from 'comlink';
 import ee from './ee_api_js_worker.js'; // https://github.com/google/earthengine-api/pull/173
-import { getInfo, getScale, hasClasses, combineReducers, getClassifiedImage, getHistogramStatistics, getFeatureCollectionProperties, applyFilter, filterCollectionByDateRange, applyMethods, applyCloudMask, aggregateTemporal, getPeriodDates, getAggregatorFn } from './ee_worker_utils.js';
+import { getInfo, getScale, hasClasses, combineReducers, selectBand, getClassifiedImage, getHistogramStatistics, getFeatureCollectionProperties, applyFilter, filterCollectionByDateRange, applyMethods, applyCloudMask, aggregateTemporal, getPeriodDates, getAggregatorFn } from './ee_worker_utils.js';
 const IMAGE = 'Image';
 const IMAGE_COLLECTION = 'ImageCollection';
 const FEATURE_COLLECTION = 'FeatureCollection';
@@ -80,6 +80,7 @@ class EarthEngineWorker {
       cloudScore
     } = this.options;
     let eeImage;
+    let eeImageBands;
     if (format === IMAGE) {
       // Single image
       eeImage = ee.Image(datasetId);
@@ -126,26 +127,36 @@ class EarthEngineWorker {
       }
     }
 
-    // Select band (e.g. age group)
-    if (band && !bandSource) {
-      eeImage = eeImage.select(band);
-      if (Array.isArray(band) && bandReducer) {
-        // Keep image bands for aggregations
-        this.eeImageBands = eeImage;
-
-        // Combine multiple bands (e.g. age groups)
-        eeImage = eeImage.reduce(ee.Reducer[bandReducer]());
-      }
+    // If readily available, select band now (e.g. age group)
+    if (!bandSource) {
+      ;
+      ({
+        eeImage,
+        eeImageBands
+      } = selectBand({
+        eeImage,
+        band,
+        bandReducer
+      }));
     }
 
     // Run methods on image
     eeImage = applyMethods(eeImage, methods);
 
-    // Select band if output by methods
-    if (band && bandSource === BANDSOURCE_METHODSOUTPUT) {
-      eeImage = eeImage.select(band);
+    // If an output of methods, select band now (e.g. relative humidity)
+    if (bandSource === BANDSOURCE_METHODSOUTPUT) {
+      ;
+      ({
+        eeImage,
+        eeImageBands
+      } = selectBand({
+        eeImage,
+        band,
+        bandReducer
+      }));
     }
     this.eeImage = eeImage;
+    this.eeImageBands = eeImageBands;
     return eeImage;
   }
 
