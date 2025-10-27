@@ -18,6 +18,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 const IMAGE = 'Image';
 const IMAGE_COLLECTION = 'ImageCollection';
 const FEATURE_COLLECTION = 'FeatureCollection';
+const BANDSOURCE_METHODSOUTPUT = 'methodsOutput';
 const getBufferGeometry = (_ref, buffer) => {
   let {
     geometry
@@ -84,6 +85,7 @@ class EarthEngineWorker {
       periodReducerType,
       mosaic,
       band,
+      bandSource,
       bandReducer,
       methods,
       cloudScore
@@ -136,7 +138,7 @@ class EarthEngineWorker {
     }
 
     // Select band (e.g. age group)
-    if (band) {
+    if (band && !bandSource) {
       eeImage = eeImage.select(band);
       if (Array.isArray(band) && bandReducer) {
         // Keep image bands for aggregations
@@ -149,6 +151,11 @@ class EarthEngineWorker {
 
     // Run methods on image
     eeImage = (0, _ee_worker_utils.applyMethods)(eeImage, methods);
+
+    // Select band if output by methods
+    if (band && bandSource === BANDSOURCE_METHODSOUTPUT) {
+      eeImage = eeImage.select(band);
+    }
     this.eeImage = eeImage;
     return eeImage;
   }

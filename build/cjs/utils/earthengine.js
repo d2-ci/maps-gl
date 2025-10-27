@@ -10,7 +10,7 @@ const defaultOptions = exports.defaultOptions = {
   nullPopup: '{name}: {noValue}',
   noValue: 'no value'
 };
-const workerOptions = ['aggregationType', 'band', 'bandReducer', 'buffer', 'cloudScore', 'data', 'datasetId', 'filter', 'format', 'legend', 'maskOperator', 'methods', 'mosaic', 'periodReducer', 'periodReducerType', 'style', 'tileScale', 'unmaskAggregation', 'useCentroid'];
+const workerOptions = ['aggregationType', 'band', 'bandSource', 'bandReducer', 'buffer', 'cloudScore', 'data', 'datasetId', 'filter', 'format', 'legend', 'maskOperator', 'methods', 'mosaic', 'periodReducer', 'periodReducerType', 'style', 'tileScale', 'unmaskAggregation', 'useCentroid'];
 
 // Returns the layer options that should be passed to the EE worker
 const getWorkerOptions = opts => {

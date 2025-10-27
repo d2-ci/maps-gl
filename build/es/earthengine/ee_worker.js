@@ -11,6 +11,7 @@ import { getInfo, getScale, hasClasses, combineReducers, getClassifiedImage, get
 const IMAGE = 'Image';
 const IMAGE_COLLECTION = 'ImageCollection';
 const FEATURE_COLLECTION = 'FeatureCollection';
+const BANDSOURCE_METHODSOUTPUT = 'methodsOutput';
 const getBufferGeometry = ({
   geometry
 }, buffer) => (geometry.type === 'Point' ? circle(geometry, buffer) : polygonBuffer(geometry, buffer)).geometry;
@@ -73,6 +74,7 @@ class EarthEngineWorker {
       periodReducerType,
       mosaic,
       band,
+      bandSource,
       bandReducer,
       methods,
       cloudScore
@@ -125,7 +127,7 @@ class EarthEngineWorker {
     }
 
     // Select band (e.g. age group)
-    if (band) {
+    if (band && !bandSource) {
       eeImage = eeImage.select(band);
       if (Array.isArray(band) && bandReducer) {
         // Keep image bands for aggregations
@@ -138,6 +140,11 @@ class EarthEngineWorker {
 
     // Run methods on image
     eeImage = applyMethods(eeImage, methods);
+
+    // Select band if output by methods
+    if (band && bandSource === BANDSOURCE_METHODSOUTPUT) {
+      eeImage = eeImage.select(band);
+    }
     this.eeImage = eeImage;
     return eeImage;
   }
