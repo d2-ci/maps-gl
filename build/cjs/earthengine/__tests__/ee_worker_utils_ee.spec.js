@@ -19,6 +19,22 @@ describe('EE-dependent functions (mocked)', () => {
     expect(mockCollection.filter).toHaveBeenCalled();
     expect(_ee_api_js_worker.default.Filter.or).toHaveBeenCalled();
   });
+  test('getAdjustedScale returns correct scale for all scenarios', () => {
+    //  minArea < scale^2 → adjusted scale
+    const fcSmall = _ee_api_js_worker.default.FeatureCollection('small');
+    const resultSmall = (0, _ee_worker_utils.getAdjustedScale)(fcSmall, 10);
+    expect(resultSmall._value).toBeCloseTo(1);
+
+    // minArea > scale^2 → original scale
+    const fcLarge = _ee_api_js_worker.default.FeatureCollection('large');
+    const resultLarge = (0, _ee_worker_utils.getAdjustedScale)(fcLarge, 10);
+    expect(resultLarge._value).toBeCloseTo(10);
+
+    // eeScale > DEFAULT_SCALE → capped at DEFAULT_SCALE
+    const fcDefault = _ee_api_js_worker.default.FeatureCollection('default');
+    const resultDefault = (0, _ee_worker_utils.getAdjustedScale)(fcDefault, _ee_worker_utils.DEFAULT_SCALE * 10);
+    expect(resultDefault._value).toBeCloseTo(_ee_worker_utils.DEFAULT_SCALE);
+  });
   test('combineReducers calls ee.Reducer.combine correctly', () => {
     (0, _ee_worker_utils.combineReducers)(['mean', 'sum'], false);
     expect(_ee_api_js_worker.default.Reducer.mean).toHaveBeenCalled();

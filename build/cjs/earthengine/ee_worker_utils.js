@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.selectBand = exports.hasClasses = exports.getStartOfEpiYear = exports.getScale = exports.getPeriodDates = exports.getInfo = exports.getHistogramStatistics = exports.getFeatureCollectionProperties = exports.getClassifiedImage = exports.getAggregatorFn = exports.filterCollectionByDateRange = exports.combineReducers = exports.applyMethods = exports.applyFilter = exports.applyCloudMask = exports.aggregateTemporalWeighted = exports.aggregateTemporal = void 0;
+exports.selectBand = exports.hasClasses = exports.getStartOfEpiYear = exports.getScale = exports.getPeriodDates = exports.getInfo = exports.getHistogramStatistics = exports.getFeatureCollectionProperties = exports.getClassifiedImage = exports.getAggregatorFn = exports.getAdjustedScale = exports.filterCollectionByDateRange = exports.combineReducers = exports.applyMethods = exports.applyFilter = exports.applyCloudMask = exports.aggregateTemporalWeighted = exports.aggregateTemporal = exports.DEFAULT_SCALE = void 0;
 var _ee_api_js_worker = _interopRequireDefault(require("./ee_api_js_worker.js"));
 var _this = void 0;
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
@@ -20,9 +20,10 @@ const EE_WEEKLY = 'EE_WEEKLY';
 const EE_WEEKLY_WEIGHTED = 'EE_WEEKLY_WEIGHTED';
 const EE_MONTHLY = 'EE_MONTHLY';
 const EE_MONTHLY_WEIGHTED = 'EE_MONTHLY_WEIGHTED';
+const DEFAULT_SCALE = exports.DEFAULT_SCALE = 1000;
 const hasClasses = type => classAggregation.includes(type);
 
-// Get the start date (UTC) of the epidemiological year for a given year
+// Get the start date (UTC) of the epidemiological year (Monday start) for a given year
 exports.hasClasses = hasClasses;
 const getStartOfEpiYear = year => {
   const jan1 = new Date(Date.UTC(year, 0, 1)); // Month is 0-indexed (0 = Jan)
@@ -84,9 +85,24 @@ const getInfo = instance => new Promise((resolve, reject) => instance.evaluate((
   }
 }));
 
+// Increase sampling density for more accurate and stable statistics,
+// especially for coarse-resolution datasets with reduceRegion(s).
+// Further adjusts the scale if necessary to avoid failures on small polygons.
+exports.getInfo = getInfo;
+const getAdjustedScale = (features, eeScale) => {
+  const scale = _ee_api_js_worker.default.Number(eeScale ?? DEFAULT_SCALE);
+  const cappedScale = _ee_api_js_worker.default.Number(scale).min(DEFAULT_SCALE);
+  const featuresWithArea = features.map(f => f.set('area', f.geometry().area()));
+  const minArea = _ee_api_js_worker.default.Number(featuresWithArea.reduceColumns({
+    reducer: _ee_api_js_worker.default.Reducer.min(),
+    selectors: ['area']
+  }).get('min'));
+  return _ee_api_js_worker.default.Algorithms.If(minArea.lt(cappedScale.pow(2)), minArea.sqrt().divide(2), cappedScale);
+};
+
 // Unweighted means that centroids are used for each grid cell
 // https://developers.google.com/earth-engine/guides/reducers_reduce_region#pixels-in-the-region
-exports.getInfo = getInfo;
+exports.getAdjustedScale = getAdjustedScale;
 const createReducer = (eeReducer, type, unweighted) => {
   const reducer = eeReducer[type]();
   return unweighted ? reducer.unweighted() : reducer;
@@ -367,6 +383,8 @@ const buildPeriodMetadata = _ref8 => {
 };
 
 // Generic temporal aggregation function for daily ImageCollections.
+// In use when source periods are granular enough to be fully contained
+// in target periods, eg. daily.
 // Supported periods: 'month' and 'week'
 const aggregateTemporal = _ref9 => {
   let {
@@ -420,6 +438,8 @@ const aggregateTemporal = _ref9 => {
 
 // Aggregates an ImageCollection (with system:time_start and system:time_end)
 // into weighted composites, either monthly or weekly, based on overlap duration.
+// In use when source periods are not granular enough to be fully contained
+// in target periods, eg. 16-day.
 exports.aggregateTemporal = aggregateTemporal;
 const aggregateTemporalWeighted = _ref10 => {
   let {

@@ -34,7 +34,6 @@ const DEFAULT_FEATURE_STYLE = {
   pointRadius: 5
 };
 const DEFAULT_TILE_SCALE = 1;
-const DEFAULT_SCALE = 1000;
 const DEFAULT_UNMASK_VALUE = 0;
 class EarthEngineWorker {
   constructor() {
@@ -290,8 +289,8 @@ class EarthEngineWorker {
     } = this.options;
     const singleAggregation = !Array.isArray(aggregationType);
     const useHistogram = singleAggregation && (0, _ee_worker_utils.hasClasses)(aggregationType) && Array.isArray(style);
-    const scale = this.eeScale?.min?.(DEFAULT_SCALE) ?? DEFAULT_SCALE;
     const collection = this.getFeatureCollection();
+    const scale = (0, _ee_worker_utils.getAdjustedScale)(collection, this.eeScale);
     let image = await this.getImage();
 
     // Used for "constrained" WorldPop layers
