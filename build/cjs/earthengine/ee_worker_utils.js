@@ -339,7 +339,7 @@ const aggregateTemporal = _ref8 => {
     periodReducer = EE_MONTHLY,
     overrideDate
   } = _ref8;
-  const temporalReducer = reducer === 'sum' ? _ee_api_js_worker.default.Reducer.sum() : _ee_api_js_worker.default.Reducer.mean();
+  const temporalReducer = reducer === _ee_api_js_worker.default.Reducer[reducer] ? _ee_api_js_worker.default.Reducer[reducer]() : _ee_api_js_worker.default.Reducer.mean();
   const period = mapPeriodReducerToPeriod(periodReducer);
   const {
     minDate,
