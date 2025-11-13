@@ -132,7 +132,7 @@ ee.Number = jest.fn(n => {
   num._value = Number(value);
   num.pow = jest.fn(x => ee.Number(Math.pow(num._value, x)));
   num.sqrt = jest.fn(() => ee.Number(Math.sqrt(num._value)));
-  num.divide = jest.fn(x => ee.Number(num._value / (x && x._value !== undefined ? x._value : x)));
+  num.divide = jest.fn(x => ee.Number(num._value / (x?._value ?? x)));
   num.lt = jest.fn(other => {
     const otherVal = other && typeof other === 'object' && '_value' in other ? other._value : other;
     return num._value < otherVal;
@@ -152,17 +152,24 @@ const makeFeature = areaValue => ({
     return this;
   })
 });
+const createReduceColumns = features => {
+  const get = jest.fn(() => Math.min(...features.map(f => f.geometry().area())));
+  return jest.fn(() => ({
+    get
+  }));
+};
+const createMapFunction = (fc, features) => {
+  return jest.fn(fn => {
+    const mapped = fc._features.map(fn);
+    mapped.reduceColumns = createReduceColumns(features);
+    return mapped;
+  });
+};
 const makeFeatureCollection = features => {
   const fc = {
     _features: features
   };
-  fc.map = jest.fn(fn => {
-    const mapped = fc._features.map(fn);
-    mapped.reduceColumns = jest.fn(() => ({
-      get: jest.fn(() => Math.min(...features.map(f => f.geometry().area())))
-    }));
-    return mapped;
-  });
+  fc.map = createMapFunction(fc, features);
   return fc;
 };
 const fcSmall = makeFeatureCollection([makeFeature(4), makeFeature(1000)]);
