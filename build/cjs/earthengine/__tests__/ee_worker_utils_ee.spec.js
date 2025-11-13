@@ -63,6 +63,50 @@ describe('EE-dependent functions (mocked)', () => {
     expect(result.params.min).toBe(0);
     expect(result.params.max).toBe(1);
   });
+  test('selectBand handles no band, single band, and multiple bands with reducer', () => {
+    // no band provided → returns original image
+    const mockImage1 = {
+      some: 'image'
+    };
+    const result1 = (0, _ee_worker_utils.selectBand)({
+      eeImage: mockImage1
+    });
+    expect(result1.eeImage).toBe(mockImage1);
+    expect(result1.eeImageBands).toBeUndefined();
+
+    // single band string → selects that band
+    const mockSelected = 'selectedImage';
+    const mockImage2 = {
+      select: jest.fn(() => mockSelected)
+    };
+    const result2 = (0, _ee_worker_utils.selectBand)({
+      eeImage: mockImage2,
+      band: 'B1'
+    });
+    expect(mockImage2.select).toHaveBeenCalledWith('B1');
+    expect(result2.eeImage).toBe(mockSelected);
+    expect(result2.eeImageBands).toBeUndefined();
+
+    // multiple bands with reducer → selects and reduces
+    const reducedImage = 'reducedImage';
+    const mockSelectedMulti = {
+      reduce: jest.fn(() => reducedImage)
+    };
+    const mockImage3 = {
+      select: jest.fn(() => mockSelectedMulti)
+    };
+    const result3 = (0, _ee_worker_utils.selectBand)({
+      eeImage: mockImage3,
+      band: ['B1', 'B2'],
+      bandReducer: 'mean'
+    });
+    expect(mockImage3.select).toHaveBeenCalledWith(['B1', 'B2']);
+    expect(_ee_api_js_worker.default.Reducer.mean).toHaveBeenCalled();
+    const reducerInstance = _ee_api_js_worker.default.Reducer.mean.mock.results[0].value;
+    expect(mockSelectedMulti.reduce).toHaveBeenCalledWith(reducerInstance);
+    expect(result3.eeImageBands).toBe(mockSelectedMulti);
+    expect(result3.eeImage).toBe(reducedImage);
+  });
   test('applyFilter calls ee.Filter and collection.filter', () => {
     const mockCollection = {
       filter: jest.fn()
@@ -91,6 +135,37 @@ describe('EE-dependent functions (mocked)', () => {
     expect(result).toBe(image);
     expect(image.foo).toHaveBeenCalledWith(1, 2);
     expect(image.bar).toHaveBeenCalledWith(3);
+  });
+  test('applyMethods resolves expression argument bands and calls expression with vars', () => {
+    const bandObj1 = {
+      name: 'B1obj'
+    };
+    const bandObj2 = {
+      name: 'B2obj'
+    };
+    const image = {
+      select: jest.fn(name => name === 'B1' ? bandObj1 : bandObj2),
+      expression: jest.fn((expr, vars) => ({
+        expr,
+        vars
+      }))
+    };
+    const methods = [{
+      name: 'expression',
+      arguments: ['b + c', {
+        b: 'B1',
+        c: 'B2'
+      }]
+    }];
+    const result = (0, _ee_worker_utils.applyMethods)(image, methods);
+    expect(image.select).toHaveBeenCalledWith('B1');
+    expect(image.select).toHaveBeenCalledWith('B2');
+    expect(image.expression).toHaveBeenCalled();
+    expect(result.expr).toBe('b + c');
+    expect(result.vars).toEqual({
+      b: bandObj1,
+      c: bandObj2
+    });
   });
   test('applyCloudMask links and maps correctly', () => {
     const collection = {
