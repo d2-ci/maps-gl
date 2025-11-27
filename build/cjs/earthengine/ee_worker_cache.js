@@ -95,5 +95,12 @@ class WorkerCache {
     this._cache = new Map();
     this._ttl = ttl;
   }
+  async init() {
+    try {
+      await this.flushExpired();
+    } catch (err) {
+      console.warn('Error flushing expired cache:', err);
+    }
+  }
 }
 exports.WorkerCache = WorkerCache;

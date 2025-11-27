@@ -41,9 +41,7 @@ class EarthEngineWorker {
     let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     this.options = options;
     this._cache = new _ee_worker_cache.WorkerCache();
-    this._cache.flushExpired().catch(err => {
-      console.warn('Error flushing expired cache:', err);
-    });
+    this._cache.init();
   }
 
   // Set EE API auth token if needed and run ee.initialize
@@ -302,6 +300,9 @@ class EarthEngineWorker {
       const singleAggregation = !Array.isArray(aggregationType);
       const useHistogram = singleAggregation && (0, _ee_worker_utils.hasClasses)(aggregationType) && Array.isArray(style);
       const collection = this.getFeatureCollection();
+      if (!collection) {
+        throw new Error('Missing org unit features');
+      }
       const scale = (0, _ee_worker_utils.getAdjustedScale)(collection, this.eeScale);
       let image = await this.getImage();
 
@@ -314,62 +315,102 @@ class EarthEngineWorker {
           this.eeImageBands = this.eeImageBands.unmask(fillValue);
         }
       }
-      if (collection) {
-        if (format === FEATURE_COLLECTION) {
-          const {
-            datasetId,
-            filter
-          } = this.options;
-          let dataset = _ee_api_js_worker.default.FeatureCollection(datasetId);
-          dataset = (0, _ee_worker_utils.applyFilter)(dataset, filter);
-          const aggFeatures = collection.map(feature => {
-            feature = _ee_api_js_worker.default.Feature(feature);
-            const count = dataset.filterBounds(feature.geometry()).size();
-            return feature.set('count', count);
-          }).select(['count'], null, false);
-          return (0, _ee_worker_utils.getInfo)(aggFeatures).then(_ee_worker_utils.getFeatureCollectionProperties);
-        } else if (useHistogram) {
-          // Used for landcover
-          const reducer = _ee_api_js_worker.default.Reducer.frequencyHistogram();
-          const scaleValue = await (0, _ee_worker_utils.getInfo)(scale);
-          return (0, _ee_worker_utils.getInfo)(image.reduceRegions({
-            collection,
-            reducer,
-            scale,
-            tileScale
-          }).select(['histogram'], null, false)).then(data => (0, _ee_worker_utils.getHistogramStatistics)({
-            data,
-            scale: scaleValue,
-            aggregationType,
-            style
-          }));
-        } else if (!singleAggregation && aggregationType.length) {
-          const reducer = (0, _ee_worker_utils.combineReducers)(aggregationType, useCentroid);
-          const props = [...aggregationType];
-          let aggFeatures = image.reduceRegions({
-            collection,
-            reducer,
-            scale,
-            tileScale
-          });
-          if (this.eeImageBands) {
-            aggFeatures = this.eeImageBands.reduceRegions({
-              collection: aggFeatures,
-              reducer,
-              scale,
-              tileScale
-            });
-            band.forEach(band => aggregationType.forEach(type => props.push(aggregationType.length === 1 ? band : `${band}_${type}`)));
-          }
-          aggFeatures = aggFeatures.select(props, null, false);
-          return (0, _ee_worker_utils.getInfo)(aggFeatures).then(_ee_worker_utils.getFeatureCollectionProperties);
-        } else {
-          throw new Error('Aggregation type is not valid');
-        }
+      if (format === FEATURE_COLLECTION) {
+        return this._aggregateFeatureCollection({
+          collection
+        });
+      } else if (useHistogram) {
+        return this._aggregateImageCollectionHistogram({
+          collection,
+          image,
+          scale,
+          aggregationType,
+          style
+        }); // Used for landcover
+      } else if (!singleAggregation && aggregationType.length) {
+        return this._aggregateImageCollection({
+          collection,
+          image,
+          scale,
+          tileScale,
+          aggregationType,
+          useCentroid,
+          band
+        });
       } else {
-        throw new Error('Missing org unit features');
+        throw new Error('Aggregation type is not valid');
       }
     });
+  }
+  async _aggregateFeatureCollection(_ref2) {
+    let {
+      collection
+    } = _ref2;
+    const {
+      datasetId,
+      filter
+    } = this.options;
+    let dataset = _ee_api_js_worker.default.FeatureCollection(datasetId);
+    dataset = (0, _ee_worker_utils.applyFilter)(dataset, filter);
+    const aggFeatures = collection.map(feature => {
+      feature = _ee_api_js_worker.default.Feature(feature);
+      const count = dataset.filterBounds(feature.geometry()).size();
+      return feature.set('count', count);
+    }).select(['count'], null, false);
+    return (0, _ee_worker_utils.getInfo)(aggFeatures).then(_ee_worker_utils.getFeatureCollectionProperties);
+  }
+  async _aggregateImageCollectionHistogram(_ref3) {
+    let {
+      collection,
+      image,
+      scale,
+      tileScale,
+      aggregationType,
+      style
+    } = _ref3;
+    const reducer = _ee_api_js_worker.default.Reducer.frequencyHistogram();
+    const scaleValue = await (0, _ee_worker_utils.getInfo)(scale);
+    return (0, _ee_worker_utils.getInfo)(image.reduceRegions({
+      collection,
+      reducer,
+      scale,
+      tileScale
+    }).select(['histogram'], null, false)).then(data => (0, _ee_worker_utils.getHistogramStatistics)({
+      data,
+      scale: scaleValue,
+      aggregationType,
+      style
+    }));
+  }
+  async _aggregateImageCollection(_ref4) {
+    let {
+      collection,
+      image,
+      scale,
+      tileScale,
+      aggregationType,
+      useCentroid,
+      band
+    } = _ref4;
+    const reducer = (0, _ee_worker_utils.combineReducers)(aggregationType, useCentroid);
+    const props = [...aggregationType];
+    let aggFeatures = image.reduceRegions({
+      collection,
+      reducer,
+      scale,
+      tileScale
+    });
+    if (this.eeImageBands) {
+      aggFeatures = this.eeImageBands.reduceRegions({
+        collection: aggFeatures,
+        reducer,
+        scale,
+        tileScale
+      });
+      band.forEach(band => aggregationType.forEach(type => props.push(aggregationType.length === 1 ? band : `${band}_${type}`)));
+    }
+    aggFeatures = aggFeatures.select(props, null, false);
+    return (0, _ee_worker_utils.getInfo)(aggFeatures).then(_ee_worker_utils.getFeatureCollectionProperties);
   }
 }
 
