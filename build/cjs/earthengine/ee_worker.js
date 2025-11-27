@@ -8,6 +8,7 @@ var _buffer = _interopRequireDefault(require("@turf/buffer"));
 var _circle = _interopRequireDefault(require("@turf/circle"));
 var _comlink = require("comlink");
 var _ee_api_js_worker = _interopRequireDefault(require("./ee_api_js_worker.js"));
+var _ee_worker_cache = require("./ee_worker_cache.js");
 var _ee_worker_utils = require("./ee_worker_utils.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
@@ -39,6 +40,10 @@ class EarthEngineWorker {
   constructor() {
     let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     this.options = options;
+    this._cache = new _ee_worker_cache.WorkerCache();
+    this._cache.flushExpired().catch(err => {
+      console.warn('Error flushing expired cache:', err);
+    });
   }
 
   // Set EE API auth token if needed and run ee.initialize
@@ -224,35 +229,37 @@ class EarthEngineWorker {
   }
 
   // Returns available periods for an image collection
-  getPeriods(_ref2) {
-    let {
-      datasetId,
-      year,
-      datesRange,
-      periodReducer
-    } = _ref2;
-    let collection = _ee_api_js_worker.default.ImageCollection(datasetId);
-    let startDate, endDate;
-    if (year) {
-      ;
-      ({
-        startDate,
-        endDate
-      } = (0, _ee_worker_utils.getPeriodDates)(periodReducer, year));
-      collection = (0, _ee_worker_utils.filterCollectionByDateRange)(collection, startDate, endDate);
-    }
-    if (periodReducer) {
-      collection = (0, _ee_worker_utils.aggregateTemporal)({
-        collection,
-        metadataOnly: true,
+  getPeriods(params) {
+    return this._cache.wrap('getPeriods', params, async () => {
+      const {
+        datasetId,
         year,
-        periodReducer,
-        overrideDate: startDate
-      });
-    }
-    collection = (0, _ee_worker_utils.filterCollectionByDateRange)(collection, datesRange.startDate, datesRange.endDate);
-    const featureCollection = _ee_api_js_worker.default.FeatureCollection(collection).select(['system:time_start', 'system:time_end', 'year', 'month', 'week'], null, false);
-    return (0, _ee_worker_utils.getInfo)(featureCollection.distinct('system:time_start').sort('system:time_start', false));
+        datesRange,
+        periodReducer
+      } = params;
+      let collection = _ee_api_js_worker.default.ImageCollection(datasetId);
+      let startDate, endDate;
+      if (year) {
+        ;
+        ({
+          startDate,
+          endDate
+        } = (0, _ee_worker_utils.getPeriodDates)(periodReducer, year));
+        collection = (0, _ee_worker_utils.filterCollectionByDateRange)(collection, startDate, endDate);
+      }
+      if (periodReducer) {
+        collection = (0, _ee_worker_utils.aggregateTemporal)({
+          collection,
+          metadataOnly: true,
+          year,
+          periodReducer,
+          overrideDate: startDate
+        });
+      }
+      collection = (0, _ee_worker_utils.filterCollectionByDateRange)(collection, datesRange.startDate, datesRange.endDate);
+      const featureCollection = _ee_api_js_worker.default.FeatureCollection(collection).select(['system:time_start', 'system:time_end', 'year', 'month', 'week'], null, false);
+      return (0, _ee_worker_utils.getInfo)(featureCollection.distinct('system:time_start').sort('system:time_start', false));
+    });
   }
 
   // Returns min and max timestamp for an image collection
@@ -264,13 +271,17 @@ class EarthEngineWorker {
 
   // Returns info for first and last images in collection
   getCollectionSpan(datasetId) {
-    const collection = _ee_api_js_worker.default.ImageCollection(datasetId);
-    const first = collection.sort('system:time_start', true).first();
-    const last = collection.sort('system:time_start', false).first();
-    return (0, _ee_worker_utils.getInfo)(_ee_api_js_worker.default.Dictionary({
-      first,
-      last
-    }));
+    return this._cache.wrap('getCollectionSpan', {
+      datasetId
+    }, async () => {
+      const collection = _ee_api_js_worker.default.ImageCollection(datasetId);
+      const first = collection.sort('system:time_start', true).first();
+      const last = collection.sort('system:time_start', false).first();
+      return (0, _ee_worker_utils.getInfo)(_ee_api_js_worker.default.Dictionary({
+        first,
+        last
+      }));
+    });
   }
 
   // Returns aggregated values for org unit features
@@ -278,85 +289,87 @@ class EarthEngineWorker {
     if (config) {
       this.setOptions(config);
     }
-    const {
-      format,
-      aggregationType,
-      band,
-      useCentroid,
-      style,
-      tileScale = DEFAULT_TILE_SCALE,
-      unmaskAggregation
-    } = this.options;
-    const singleAggregation = !Array.isArray(aggregationType);
-    const useHistogram = singleAggregation && (0, _ee_worker_utils.hasClasses)(aggregationType) && Array.isArray(style);
-    const collection = this.getFeatureCollection();
-    const scale = (0, _ee_worker_utils.getAdjustedScale)(collection, this.eeScale);
-    let image = await this.getImage();
+    return this._cache.wrap('getAggregations', this.options, async () => {
+      const {
+        format,
+        aggregationType,
+        band,
+        useCentroid,
+        style,
+        tileScale = DEFAULT_TILE_SCALE,
+        unmaskAggregation
+      } = this.options;
+      const singleAggregation = !Array.isArray(aggregationType);
+      const useHistogram = singleAggregation && (0, _ee_worker_utils.hasClasses)(aggregationType) && Array.isArray(style);
+      const collection = this.getFeatureCollection();
+      const scale = (0, _ee_worker_utils.getAdjustedScale)(collection, this.eeScale);
+      let image = await this.getImage();
 
-    // Used for "constrained" WorldPop layers
-    // We need to unmask the image to get the correct population density
-    if (unmaskAggregation || typeof unmaskAggregation === 'number') {
-      const fillValue = typeof unmaskAggregation === 'number' ? unmaskAggregation : DEFAULT_UNMASK_VALUE;
-      image = image.unmask(fillValue);
-      if (this.eeImageBands) {
-        this.eeImageBands = this.eeImageBands.unmask(fillValue);
-      }
-    }
-    if (collection) {
-      if (format === FEATURE_COLLECTION) {
-        const {
-          datasetId,
-          filter
-        } = this.options;
-        let dataset = _ee_api_js_worker.default.FeatureCollection(datasetId);
-        dataset = (0, _ee_worker_utils.applyFilter)(dataset, filter);
-        const aggFeatures = collection.map(feature => {
-          feature = _ee_api_js_worker.default.Feature(feature);
-          const count = dataset.filterBounds(feature.geometry()).size();
-          return feature.set('count', count);
-        }).select(['count'], null, false);
-        return (0, _ee_worker_utils.getInfo)(aggFeatures).then(_ee_worker_utils.getFeatureCollectionProperties);
-      } else if (useHistogram) {
-        // Used for landcover
-        const reducer = _ee_api_js_worker.default.Reducer.frequencyHistogram();
-        const scaleValue = await (0, _ee_worker_utils.getInfo)(scale);
-        return (0, _ee_worker_utils.getInfo)(image.reduceRegions({
-          collection,
-          reducer,
-          scale,
-          tileScale
-        }).select(['histogram'], null, false)).then(data => (0, _ee_worker_utils.getHistogramStatistics)({
-          data,
-          scale: scaleValue,
-          aggregationType,
-          style
-        }));
-      } else if (!singleAggregation && aggregationType.length) {
-        const reducer = (0, _ee_worker_utils.combineReducers)(aggregationType, useCentroid);
-        const props = [...aggregationType];
-        let aggFeatures = image.reduceRegions({
-          collection,
-          reducer,
-          scale,
-          tileScale
-        });
+      // Used for "constrained" WorldPop layers
+      // We need to unmask the image to get the correct population density
+      if (unmaskAggregation || typeof unmaskAggregation === 'number') {
+        const fillValue = typeof unmaskAggregation === 'number' ? unmaskAggregation : DEFAULT_UNMASK_VALUE;
+        image = image.unmask(fillValue);
         if (this.eeImageBands) {
-          aggFeatures = this.eeImageBands.reduceRegions({
-            collection: aggFeatures,
+          this.eeImageBands = this.eeImageBands.unmask(fillValue);
+        }
+      }
+      if (collection) {
+        if (format === FEATURE_COLLECTION) {
+          const {
+            datasetId,
+            filter
+          } = this.options;
+          let dataset = _ee_api_js_worker.default.FeatureCollection(datasetId);
+          dataset = (0, _ee_worker_utils.applyFilter)(dataset, filter);
+          const aggFeatures = collection.map(feature => {
+            feature = _ee_api_js_worker.default.Feature(feature);
+            const count = dataset.filterBounds(feature.geometry()).size();
+            return feature.set('count', count);
+          }).select(['count'], null, false);
+          return (0, _ee_worker_utils.getInfo)(aggFeatures).then(_ee_worker_utils.getFeatureCollectionProperties);
+        } else if (useHistogram) {
+          // Used for landcover
+          const reducer = _ee_api_js_worker.default.Reducer.frequencyHistogram();
+          const scaleValue = await (0, _ee_worker_utils.getInfo)(scale);
+          return (0, _ee_worker_utils.getInfo)(image.reduceRegions({
+            collection,
+            reducer,
+            scale,
+            tileScale
+          }).select(['histogram'], null, false)).then(data => (0, _ee_worker_utils.getHistogramStatistics)({
+            data,
+            scale: scaleValue,
+            aggregationType,
+            style
+          }));
+        } else if (!singleAggregation && aggregationType.length) {
+          const reducer = (0, _ee_worker_utils.combineReducers)(aggregationType, useCentroid);
+          const props = [...aggregationType];
+          let aggFeatures = image.reduceRegions({
+            collection,
             reducer,
             scale,
             tileScale
           });
-          band.forEach(band => aggregationType.forEach(type => props.push(aggregationType.length === 1 ? band : `${band}_${type}`)));
+          if (this.eeImageBands) {
+            aggFeatures = this.eeImageBands.reduceRegions({
+              collection: aggFeatures,
+              reducer,
+              scale,
+              tileScale
+            });
+            band.forEach(band => aggregationType.forEach(type => props.push(aggregationType.length === 1 ? band : `${band}_${type}`)));
+          }
+          aggFeatures = aggFeatures.select(props, null, false);
+          return (0, _ee_worker_utils.getInfo)(aggFeatures).then(_ee_worker_utils.getFeatureCollectionProperties);
+        } else {
+          throw new Error('Aggregation type is not valid');
         }
-        aggFeatures = aggFeatures.select(props, null, false);
-        return (0, _ee_worker_utils.getInfo)(aggFeatures).then(_ee_worker_utils.getFeatureCollectionProperties);
       } else {
-        throw new Error('Aggregation type is not valid');
+        throw new Error('Missing org unit features');
       }
-    } else {
-      throw new Error('Missing org unit features');
-    }
+    });
   }
 }
 
