@@ -10,6 +10,7 @@ var _comlink = require("comlink");
 var _ee_api_js_worker = _interopRequireDefault(require("./ee_api_js_worker.js"));
 var _ee_worker_cache = require("./ee_worker_cache.js");
 var _ee_worker_utils = require("./ee_worker_utils.js");
+var _EarthEngineWorker;
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -41,7 +42,6 @@ class EarthEngineWorker {
     let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     this.options = options;
     this._cache = new _ee_worker_cache.WorkerCache();
-    this._cache.init();
   }
 
   // Set EE API auth token if needed and run ee.initialize
@@ -415,27 +415,31 @@ class EarthEngineWorker {
 }
 
 // Service Worker not supported in Safari
-_defineProperty(EarthEngineWorker, "setAuthToken", getAuthToken => new Promise((resolve, reject) => {
-  if (_ee_api_js_worker.default.data.getAuthToken()) {
-    // Already authenticated
-    _ee_api_js_worker.default.initialize(null, null, resolve, reject);
-  } else {
-    getAuthToken().then(token => {
-      const {
-        client_id,
-        tokenType = 'Bearer',
-        access_token,
-        expires_in
-      } = token;
-      const extraScopes = null;
-      const updateAuthLibrary = false;
-      _ee_api_js_worker.default.data.setAuthToken(client_id, tokenType, access_token, expires_in, extraScopes, () => _ee_api_js_worker.default.initialize(null, null, resolve, reject), updateAuthLibrary);
-      _ee_api_js_worker.default.data.setAuthTokenRefresher(async (authArgs, callback) => callback(_objectSpread(_objectSpread({}, await getAuthToken()), {}, {
-        state: authArgs.scope
-      })));
-    }).catch(reject);
-  }
-}));
+_EarthEngineWorker = EarthEngineWorker;
+_defineProperty(EarthEngineWorker, "setAuthToken", getAuthToken => {
+  _EarthEngineWorker._cache.init();
+  new Promise((resolve, reject) => {
+    if (_ee_api_js_worker.default.data.getAuthToken()) {
+      // Already authenticated
+      _ee_api_js_worker.default.initialize(null, null, resolve, reject);
+    } else {
+      getAuthToken().then(token => {
+        const {
+          client_id,
+          tokenType = 'Bearer',
+          access_token,
+          expires_in
+        } = token;
+        const extraScopes = null;
+        const updateAuthLibrary = false;
+        _ee_api_js_worker.default.data.setAuthToken(client_id, tokenType, access_token, expires_in, extraScopes, () => _ee_api_js_worker.default.initialize(null, null, resolve, reject), updateAuthLibrary);
+        _ee_api_js_worker.default.data.setAuthTokenRefresher(async (authArgs, callback) => callback(_objectSpread(_objectSpread({}, await getAuthToken()), {}, {
+          state: authArgs.scope
+        })));
+      }).catch(reject);
+    }
+  });
+});
 if (typeof onconnect !== 'undefined') {
   // eslint-disable-next-line no-undef
   onconnect = evt => (0, _comlink.expose)(EarthEngineWorker, evt.ports[0]);
