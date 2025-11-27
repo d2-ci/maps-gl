@@ -41,6 +41,7 @@ class EarthEngineWorker {
     let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     this.options = options;
     this._cache = new _ee_worker_cache.WorkerCache();
+    _ee_worker_cache.WorkerCache.flushExpired();
   }
 
   // Set EE API auth token if needed and run ee.initialize
@@ -415,8 +416,7 @@ class EarthEngineWorker {
 
 // Service Worker not supported in Safari
 _defineProperty(EarthEngineWorker, "setAuthToken", getAuthToken => {
-  _ee_worker_cache.WorkerCache.flushExpired();
-  new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     if (_ee_api_js_worker.default.data.getAuthToken()) {
       // Already authenticated
       _ee_api_js_worker.default.initialize(null, null, resolve, reject);

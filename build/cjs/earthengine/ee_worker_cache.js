@@ -74,27 +74,22 @@ class WorkerCache {
   }
 }
 exports.WorkerCache = WorkerCache;
-_defineProperty(WorkerCache, "flushExpired", async function () {
+_defineProperty(WorkerCache, "flushExpired", function () {
   let ttl = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DEFAULT_TTL_MS;
-  const db = await openDB();
-  const tx = db.transaction(STORE_NAME, 'readwrite');
-  const store = tx.objectStore(STORE_NAME);
-  return new Promise(resolve => {
-    const request = store.openCursor();
-    request.onsuccess = event => {
-      const cursor = event.target.result;
-      if (cursor) {
-        const {
-          timestamp
-        } = cursor.value;
-        if (Date.now() - timestamp > ttl) {
-          store.delete(cursor.key);
-        }
-        cursor.continue();
-      } else {
-        resolve();
+  ;
+  (async () => {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    let cursor = await store.openCursor();
+    while (cursor) {
+      const {
+        timestamp
+      } = cursor.value;
+      if (Date.now() - timestamp > ttl) {
+        await store.delete(cursor.key);
       }
-    };
-    request.onerror = () => resolve();
-  });
+      cursor = await cursor.continue();
+    }
+  })();
 });

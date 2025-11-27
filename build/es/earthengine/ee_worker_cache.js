@@ -66,26 +66,21 @@ export class WorkerCache {
     this._ttl = ttl;
   }
 }
-_defineProperty(WorkerCache, "flushExpired", async (ttl = DEFAULT_TTL_MS) => {
-  const db = await openDB();
-  const tx = db.transaction(STORE_NAME, 'readwrite');
-  const store = tx.objectStore(STORE_NAME);
-  return new Promise(resolve => {
-    const request = store.openCursor();
-    request.onsuccess = event => {
-      const cursor = event.target.result;
-      if (cursor) {
-        const {
-          timestamp
-        } = cursor.value;
-        if (Date.now() - timestamp > ttl) {
-          store.delete(cursor.key);
-        }
-        cursor.continue();
-      } else {
-        resolve();
+_defineProperty(WorkerCache, "flushExpired", (ttl = DEFAULT_TTL_MS) => {
+  ;
+  (async () => {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    let cursor = await store.openCursor();
+    while (cursor) {
+      const {
+        timestamp
+      } = cursor.value;
+      if (Date.now() - timestamp > ttl) {
+        await store.delete(cursor.key);
       }
-    };
-    request.onerror = () => resolve();
-  });
+      cursor = await cursor.continue();
+    }
+  })();
 });
