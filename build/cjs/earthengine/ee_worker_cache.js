@@ -18,18 +18,24 @@ const openDB = () => new Promise((resolve, reject) => {
 });
 const getFromDB = async key => {
   const db = await openDB();
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readonly');
-    const req = tx.objectStore(STORE_NAME).get(key);
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.get(key);
     req.onsuccess = () => resolve(req.result);
-    req.onerror = () => resolve(null);
+    req.onerror = () => reject(req.error);
   });
 };
 const setToDB = async (key, value) => {
   const db = await openDB();
-  const tx = db.transaction(STORE_NAME, 'readwrite');
-  tx.objectStore(STORE_NAME).put(value, key);
-  return tx.complete;
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    store.put(value, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  });
 };
 class WorkerCache {
   constructor() {
@@ -89,17 +95,19 @@ _defineProperty(WorkerCache, "flushExpired", function () {
           timestamp
         } = cursor.value;
         if (Date.now() - timestamp > ttl) {
-          cursor.delete();
+          const deleteRequest = cursor.delete();
+          deleteRequest.onerror = e => console.error('Failed to flush ee_worker cache entry', e.target.error);
         }
         cursor.continue();
       }
     };
     cursorRequest.onerror = event => {
-      console.error('Failed to flush ee_worker cache entry:', event.target.error);
+      console.error('Failed to flush ee_worker cache', event.target.error);
     };
     return new Promise((resolve, reject) => {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
     });
   })();
 });
