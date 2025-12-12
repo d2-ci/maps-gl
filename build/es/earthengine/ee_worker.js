@@ -403,29 +403,27 @@ class EarthEngineWorker {
 }
 
 // Service Worker not supported in Safari
-_defineProperty(EarthEngineWorker, "setAuthToken", getAuthToken => {
-  return new Promise((resolve, reject) => {
-    if (ee.data.getAuthToken()) {
-      // Already authenticated
-      ee.initialize(null, null, resolve, reject);
-    } else {
-      getAuthToken().then(token => {
-        const {
-          client_id,
-          tokenType = 'Bearer',
-          access_token,
-          expires_in
-        } = token;
-        const extraScopes = null;
-        const updateAuthLibrary = false;
-        ee.data.setAuthToken(client_id, tokenType, access_token, expires_in, extraScopes, () => ee.initialize(null, null, resolve, reject), updateAuthLibrary);
-        ee.data.setAuthTokenRefresher(async (authArgs, callback) => callback(_objectSpread(_objectSpread({}, await getAuthToken()), {}, {
-          state: authArgs.scope
-        })));
-      }).catch(reject);
-    }
-  });
-});
+_defineProperty(EarthEngineWorker, "setAuthToken", getAuthToken => new Promise((resolve, reject) => {
+  if (ee.data.getAuthToken()) {
+    // Already authenticated
+    ee.initialize(null, null, resolve, reject);
+  } else {
+    getAuthToken().then(token => {
+      const {
+        client_id,
+        tokenType = 'Bearer',
+        access_token,
+        expires_in
+      } = token;
+      const extraScopes = null;
+      const updateAuthLibrary = false;
+      ee.data.setAuthToken(client_id, tokenType, access_token, expires_in, extraScopes, () => ee.initialize(null, null, resolve, reject), updateAuthLibrary);
+      ee.data.setAuthTokenRefresher(async (authArgs, callback) => callback(_objectSpread(_objectSpread({}, await getAuthToken()), {}, {
+        state: authArgs.scope
+      })));
+    }).catch(reject);
+  }
+}));
 if (typeof onconnect !== 'undefined') {
   // eslint-disable-next-line no-undef
   onconnect = evt => expose(EarthEngineWorker, evt.ports[0]);
