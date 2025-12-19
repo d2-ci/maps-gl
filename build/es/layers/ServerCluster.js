@@ -74,8 +74,8 @@ class ServerCluster extends Cluster {
         }
       }
     });
-    _defineProperty(this, "onMoveEnd", async () => {
-      const tiles = await this.getVisibleTiles();
+    _defineProperty(this, "onMoveEnd", () => {
+      const tiles = this.getVisibleTiles();
       if (tiles.join('-') !== this.currentTiles.join('-')) {
         this.currentTiles = tiles;
         const cachedTiles = tiles.filter(id => Array.isArray(this.tileClusters[id]));
@@ -89,26 +89,13 @@ class ServerCluster extends Cluster {
       this.tileClusters[tileId] = clusters;
 
       // Check if tile is still visible after loading
-      const visibleTiles = await this.getVisibleTiles();
+      const visibleTiles = this.getVisibleTiles();
       if (visibleTiles.includes(tileId)) {
         this.updateClusters([tileId]);
       }
       this._isLoading = false;
     });
     _defineProperty(this, "getBounds", () => this.options.bounds);
-    // Returns true if all tiles aligns with the zoom level
-    _defineProperty(this, "areTilesUpdated", () => {
-      const mapgl = this._map.getMapGL();
-      const zoom = Math.floor(mapgl.getZoom());
-      return this.getSourceCacheTiles().every(({
-        tileID
-      }) => tileID.canonical.z === zoom);
-    });
-    _defineProperty(this, "getSourceCacheTiles", () => {
-      const mapgl = this._map.getMapGL();
-      const sourceCache = mapgl.style.sourceCaches[this.getId()];
-      return sourceCache ? Object.values(sourceCache._tiles) : [];
-    });
     // Called by parent class
     _defineProperty(this, "getClusterFeatures", clusterId => {
       const cluster = this.currentClusters.find(c => c.id === clusterId);
@@ -133,18 +120,28 @@ class ServerCluster extends Cluster {
       const [lng, lat] = coordinates;
       return lng <= bounds[0] || lng >= bounds[2] || lat <= bounds[1] || lat >= bounds[3];
     });
-    _defineProperty(this, "getVisibleTiles", async () => {
-      while (!this.areTilesUpdated()) {
-        await new Promise(r => setTimeout(r, 100));
+    _defineProperty(this, "getVisibleTiles", () => {
+      const map = this._map.getMapGL();
+      const bbox = map.getBounds().toArray().flat();
+      const zoom = Math.floor(map.getZoom());
+      const merc = new SphericalMercator({
+        size: this.options.tileSize
+      });
+      const min = merc.xyz(bbox, zoom);
+      const tiles = [];
+      for (let x = min.minX; x <= min.maxX; x++) {
+        for (let y = min.minY; y <= min.maxY; y++) {
+          tiles.push(`${zoom}/${x}/${y}`);
+        }
       }
-      return this.getSourceCacheTiles().map(this.getTileId).sort();
+      return tiles.sort();
     });
     // Returns sorted array of cluster ids
     _defineProperty(this, "getClusterIds", clusters => clusters.map(c => c.id).sort((a, b) => a - b).join());
-    const merc = new SphericalMercator({
+    const _merc = new SphericalMercator({
       size: this.options.tileSize
     });
-    this.getTileBounds = (x, y, z) => merc.bbox(x, y, z);
+    this.getTileBounds = (x, y, z) => _merc.bbox(x, y, z);
   }
   createSource() {
     super.createSource({

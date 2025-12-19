@@ -13,21 +13,21 @@ import Spider from './Spider.js';
 class Cluster extends Layer {
   constructor(options) {
     super(options);
-    _defineProperty(this, "zoomToCluster", (clusterId, center) => {
+    _defineProperty(this, "zoomToCluster", async (clusterId, center) => {
       if (this.isMaxZoom()) {
         this.spiderfy(clusterId, center);
       } else {
         const mapgl = this.getMapGL();
         const source = mapgl.getSource(this.getId());
-        source.getClusterExpansionZoom(clusterId, (error, zoom) => {
-          if (error) {
-            return;
-          }
-          mapgl.easeTo({
+        try {
+          const zoom = await source.getClusterExpansionZoom(clusterId);
+          mapgl.flyTo({
             center,
             zoom: zoom + 1
           });
-        });
+        } catch (err) {
+          console.warn('Cluster zoom failed', err);
+        }
       }
     });
     _defineProperty(this, "unspiderfy", () => {
@@ -40,11 +40,20 @@ class Cluster extends Layer {
       }
     });
     // Returns all features in a cluster
-    _defineProperty(this, "getClusterFeatures", clusterId => new Promise((resolve, reject) => {
+    _defineProperty(this, "getClusterFeatures", async clusterId => {
       const mapgl = this.getMapGL();
       const source = mapgl.getSource(this.getId());
-      source.getClusterLeaves(clusterId, null, null, (error, features) => error ? reject(error) : resolve(this.sortClusterFeatures(features)));
-    }));
+      if (!source) {
+        return [];
+      }
+      try {
+        const features = await source.getClusterLeaves(clusterId);
+        return this.sortClusterFeatures(features);
+      } catch (err) {
+        console.error('Error fetching cluster leaves:', err);
+        return [];
+      }
+    });
     // Overrided in DonutCluster
     _defineProperty(this, "sortClusterFeatures", features => features);
     _defineProperty(this, "updatePolygons", () => {

@@ -103,7 +103,9 @@ const spiderifier = (map, userOptions) => {
     const spiderLegs = util.map(features, (feature, index) => {
       const param = spiderLegParams[index];
       const elements = createMarkerElements(param, feature);
-      const marker = new _maplibreGl.Marker(elements.container).setLngLat(latLng);
+      const marker = new _maplibreGl.Marker({
+        element: elements.container
+      }).setLngLat(latLng);
       const spiderLeg = {
         feature,
         elements,
