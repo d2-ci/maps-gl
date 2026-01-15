@@ -53,7 +53,7 @@ export const getPeriodDates = (periodReducer, year) => {
         // can work consistently with native dates (UTC midnight)
         return {
           startDate: new Date(Date.UTC(year, 0, 1)),
-          endDate: new Date(Date.UTC(year, 11, 31))
+          endDate: new Date(Date.UTC(year, 11, 31, 23, 59, 59))
         };
       }
   }
@@ -319,7 +319,9 @@ const buildStepsAndBandNames = ({
   period,
   collection
 }) => {
-  const steps = ee.List.sequence(0, maxDate.difference(minDate, period));
+  let nSteps = maxDate.difference(minDate, period);
+  nSteps = ee.Algorithms.If(period === 'month', nSteps.min(ee.Number(11)), nSteps);
+  const steps = ee.List.sequence(0, ee.Number(nSteps));
   const bandNames = ee.Image(collection.first()).bandNames();
   return {
     steps,

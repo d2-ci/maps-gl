@@ -62,7 +62,7 @@ const getPeriodDates = (periodReducer, year) => {
         // can work consistently with native dates (UTC midnight)
         return {
           startDate: new Date(Date.UTC(year, 0, 1)),
-          endDate: new Date(Date.UTC(year, 11, 31))
+          endDate: new Date(Date.UTC(year, 11, 31, 23, 59, 59))
         };
       }
   }
@@ -341,7 +341,9 @@ const buildStepsAndBandNames = ({
   period,
   collection
 }) => {
-  const steps = _ee_api_js_worker.default.List.sequence(0, maxDate.difference(minDate, period));
+  let nSteps = maxDate.difference(minDate, period);
+  nSteps = _ee_api_js_worker.default.Algorithms.If(period === 'month', nSteps.min(_ee_api_js_worker.default.Number(11)), nSteps);
+  const steps = _ee_api_js_worker.default.List.sequence(0, _ee_api_js_worker.default.Number(nSteps));
   const bandNames = _ee_api_js_worker.default.Image(collection.first()).bandNames();
   return {
     steps,
