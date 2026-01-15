@@ -110,7 +110,11 @@ export class MapGL extends Evented {
       },
       attributionControl: false,
       locale: controlsLocale,
-      transformRequest
+      transformRequest,
+      // Preserve consumer-provided interaction options (e.g. scrollZoom)
+      // so callers can enable/disable handlers like scrollZoom when
+      // creating the map (used by plugin mode to disable scrollZoom).
+      scrollZoom: options.scrollZoom !== undefined ? options.scrollZoom : undefined
     });
     this._mapgl = mapgl;
     this._glyphs = glyphs;
