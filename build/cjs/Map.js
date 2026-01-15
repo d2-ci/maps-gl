@@ -104,7 +104,8 @@ class MapGL extends _maplibreGl.Evented {
     });
     const {
       locale,
-      glyphs
+      glyphs,
+      scrollZoom
     } = options;
     const mapgl = new _maplibreGl.Map({
       container: el,
@@ -118,10 +119,7 @@ class MapGL extends _maplibreGl.Evented {
       attributionControl: false,
       locale: _controlsLocale.default,
       transformRequest: _images.transformRequest,
-      // Preserve consumer-provided interaction options (e.g. scrollZoom)
-      // so callers can enable/disable handlers like scrollZoom when
-      // creating the map (used by plugin mode to disable scrollZoom).
-      scrollZoom: options.scrollZoom !== undefined ? options.scrollZoom : undefined
+      scrollZoom
     });
     this._mapgl = mapgl;
     this._glyphs = glyphs;
