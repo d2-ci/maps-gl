@@ -341,7 +341,9 @@ const buildStepsAndBandNames = ({
   period,
   collection
 }) => {
-  const steps = _ee_api_js_worker.default.List.sequence(0, maxDate.difference(minDate, period));
+  let nSteps = maxDate.difference(minDate, period);
+  nSteps = _ee_api_js_worker.default.Algorithms.If(period === 'month', nSteps.min(_ee_api_js_worker.default.Number(11)), nSteps);
+  const steps = _ee_api_js_worker.default.List.sequence(0, _ee_api_js_worker.default.Number(nSteps));
   const bandNames = _ee_api_js_worker.default.Image(collection.first()).bandNames();
   return {
     steps,
