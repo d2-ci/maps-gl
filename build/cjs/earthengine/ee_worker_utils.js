@@ -48,7 +48,7 @@ const getPeriodDates = (periodReducer, year) => {
     case EE_WEEKLY_WEIGHTED:
       {
         const start = getStartOfEpiYear(year);
-        const end = new Date(getStartOfEpiYear(year + 1).getTime() - 24 * 60 * 60 * 1000);
+        const end = new Date(getStartOfEpiYear(year + 1).getTime() - 1000);
         return {
           startDate: start,
           endDate: end
@@ -339,11 +339,18 @@ const buildStepsAndBandNames = ({
   minDate,
   maxDate,
   period,
+  year,
   collection
 }) => {
-  let nSteps = maxDate.difference(minDate, period);
-  nSteps = _ee_api_js_worker.default.Algorithms.If(period === 'month', nSteps.min(_ee_api_js_worker.default.Number(11)), nSteps);
-  const steps = _ee_api_js_worker.default.List.sequence(0, _ee_api_js_worker.default.Number(nSteps));
+  const isJan1Thursday = _ee_api_js_worker.default.Number.parse(_ee_api_js_worker.default.Date.fromYMD(year, 1, 1).format('e')).eq(4);
+  const maxSteps = _ee_api_js_worker.default.Algorithms.If(period === 'month', _ee_api_js_worker.default.Number(11),
+  // 12 months (0-indexed)
+  _ee_api_js_worker.default.Algorithms.If(period === 'week', _ee_api_js_worker.default.Algorithms.If(isJan1Thursday, _ee_api_js_worker.default.Number(52), _ee_api_js_worker.default.Number(51)),
+  // 53 or 52 weeks (0-indexed)
+  maxDate.difference(minDate, period) // other periods
+  ));
+  const nSteps = _ee_api_js_worker.default.Number(maxDate.difference(minDate, period)).min(maxSteps);
+  const steps = _ee_api_js_worker.default.List.sequence(0, nSteps);
   const bandNames = _ee_api_js_worker.default.Image(collection.first()).bandNames();
   return {
     steps,
@@ -365,10 +372,10 @@ const buildPeriodMetadata = ({
   };
   if (period === 'month') {
     metadata.month = startDate.get('month');
-    metadata['system:index'] = _ee_api_js_worker.default.String(tempYear.toString()).cat(startDate.format('MM'));
+    metadata['system:index'] = _ee_api_js_worker.default.String(tempYear).cat(startDate.format('MM'));
   } else {
     metadata.week = startDate.format('w');
-    metadata['system:index'] = _ee_api_js_worker.default.String(tempYear.toString()).cat(_ee_api_js_worker.default.String('W')).cat(startDate.format('w'));
+    metadata['system:index'] = _ee_api_js_worker.default.String(tempYear).cat(_ee_api_js_worker.default.String('W')).cat(startDate.format('w'));
   }
   return metadata;
 };
@@ -402,12 +409,13 @@ const aggregateTemporal = ({
     minDate,
     maxDate,
     period,
+    year,
     collection
   });
   const aggregatedImages = _ee_api_js_worker.default.ImageCollection.fromImages(stepList.map(i => {
     const startDate = minDate.advance(_ee_api_js_worker.default.Number(i), period);
     const endDate = startDate.advance(1, period).advance(-1, 'second');
-    const tempYear = year || startDate.get('year');
+    const tempYear = year.toString() || startDate.get('year');
     let image;
     if (metadataOnly) {
       image = _ee_api_js_worker.default.Image(0);
@@ -453,6 +461,7 @@ const aggregateTemporalWeighted = ({
     minDate,
     maxDate,
     period,
+    year,
     collection
   });
   const weightedImages = steps.map(s => {
@@ -487,7 +496,7 @@ const aggregateTemporalWeighted = ({
 
       // Weighted mean
       const weightedImage = weightedSum.divide(totalDuration).rename(bandNames.add('duration')).select(bandNames);
-      const tempYear = year || startDate.get('year');
+      const tempYear = year.toString() || startDate.get('year');
       const metadata = buildPeriodMetadata({
         startDate,
         endDate,
