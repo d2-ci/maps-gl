@@ -115,7 +115,7 @@ export class MapGL extends Evented {
       transformRequest,
       scrollZoom
     });
-    if (globalThis.Cypress) {
+    if (isCypress) {
       mapgl.scrollZoom.disable();
       mapgl.dragPan.disable();
       mapgl.dragRotate.disable();
