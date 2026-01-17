@@ -121,7 +121,7 @@ class MapGL extends _maplibreGl.Evented {
       transformRequest: _images.transformRequest,
       scrollZoom
     });
-    if (window.Cypress) {
+    if (globalThis.Cypress) {
       mapgl.scrollZoom.disable();
       mapgl.dragPan.disable();
       mapgl.dragRotate.disable();
