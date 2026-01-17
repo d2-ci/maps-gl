@@ -148,6 +148,15 @@ ee.Number = jest.fn(n => {
     const otherVal = other && typeof other === 'object' && '_value' in other ? other._value : other;
     return ee.Number(Math.min(num._value, otherVal));
   });
+  num.eq = jest.fn(other => {
+    const otherVal = other && typeof other === 'object' && '_value' in other ? other._value : other;
+    return num._value === otherVal;
+  });
+  return num;
+});
+ee.Number.parse = jest.fn(str => {
+  const value = str?._str ?? String(str);
+  const num = ee.Number(Number(value));
   return num;
 });
 const makeFeature = areaValue => ({
