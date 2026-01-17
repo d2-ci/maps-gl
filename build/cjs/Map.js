@@ -104,9 +104,10 @@ class MapGL extends _maplibreGl.Evented {
     });
     const {
       locale,
-      glyphs,
-      scrollZoom
+      glyphs
     } = options;
+    const isCypress = !!globalThis.Cypress;
+    const scrollZoom = isCypress ? false : options.scrollZoom ?? true;
     const mapgl = new _maplibreGl.Map({
       container: el,
       style: (0, _style.mapStyle)({

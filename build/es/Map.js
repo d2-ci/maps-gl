@@ -97,9 +97,10 @@ export class MapGL extends Evented {
     });
     const {
       locale,
-      glyphs,
-      scrollZoom
+      glyphs
     } = options;
+    const isCypress = !!globalThis.Cypress;
+    const scrollZoom = isCypress ? false : options.scrollZoom ?? true;
     const mapgl = new Map({
       container: el,
       style: mapStyle({
