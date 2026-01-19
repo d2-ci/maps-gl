@@ -97,7 +97,8 @@ export class MapGL extends Evented {
     });
     const {
       locale,
-      glyphs
+      glyphs,
+      scrollZoom
     } = options;
     const mapgl = new Map({
       container: el,
@@ -110,7 +111,8 @@ export class MapGL extends Evented {
       },
       attributionControl: false,
       locale: controlsLocale,
-      transformRequest
+      transformRequest,
+      scrollZoom
     });
     this._mapgl = mapgl;
     this._glyphs = glyphs;

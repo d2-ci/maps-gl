@@ -104,7 +104,8 @@ class MapGL extends _maplibreGl.Evented {
     });
     const {
       locale,
-      glyphs
+      glyphs,
+      scrollZoom
     } = options;
     const mapgl = new _maplibreGl.Map({
       container: el,
@@ -117,7 +118,8 @@ class MapGL extends _maplibreGl.Evented {
       },
       attributionControl: false,
       locale: _controlsLocale.default,
-      transformRequest: _images.transformRequest
+      transformRequest: _images.transformRequest,
+      scrollZoom
     });
     this._mapgl = mapgl;
     this._glyphs = glyphs;
