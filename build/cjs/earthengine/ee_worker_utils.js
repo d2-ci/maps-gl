@@ -342,7 +342,7 @@ const buildStepsAndBandNames = ({
   year,
   collection
 }) => {
-  const isJan1Thursday = _ee_api_js_worker.default.Number.parse(_ee_api_js_worker.default.Date.fromYMD(parseInt(year), 1, 1).format('e')).eq(4);
+  const isJan1Thursday = _ee_api_js_worker.default.Number.parse(_ee_api_js_worker.default.Date.fromYMD(Number.parseInt(year), 1, 1).format('e')).eq(4);
   const maxSteps = _ee_api_js_worker.default.Algorithms.If(period === 'month', _ee_api_js_worker.default.Number(11),
   // 12 months (0-indexed)
   _ee_api_js_worker.default.Algorithms.If(period === 'week', _ee_api_js_worker.default.Algorithms.If(isJan1Thursday, _ee_api_js_worker.default.Number(52), _ee_api_js_worker.default.Number(51)),
