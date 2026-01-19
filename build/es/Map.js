@@ -97,10 +97,9 @@ export class MapGL extends Evented {
     });
     const {
       locale,
-      glyphs
+      glyphs,
+      scrollZoom
     } = options;
-    const isCypress = !!globalThis.Cypress;
-    const scrollZoom = isCypress ? false : options.scrollZoom ?? true;
     const mapgl = new Map({
       container: el,
       style: mapStyle({
@@ -115,12 +114,6 @@ export class MapGL extends Evented {
       transformRequest,
       scrollZoom
     });
-    if (isCypress) {
-      mapgl.scrollZoom.disable();
-      mapgl.dragPan.disable();
-      mapgl.dragRotate.disable();
-      mapgl.doubleClickZoom.disable();
-    }
     this._mapgl = mapgl;
     this._glyphs = glyphs;
     this._renderTimeout = null;
