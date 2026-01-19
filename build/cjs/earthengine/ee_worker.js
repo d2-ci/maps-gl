@@ -244,13 +244,16 @@ class EarthEngineWorker {
         collection = (0, _ee_worker_utils.filterCollectionByDateRange)(collection, startDate, endDate);
       }
       if (periodReducer) {
-        collection = (0, _ee_worker_utils.aggregateTemporal)({
-          collection,
-          metadataOnly: true,
-          year,
-          periodReducer,
-          overrideDate: startDate
-        });
+        const collectionSize = await collection.size().getInfo();
+        if (collectionSize > 0) {
+          collection = (0, _ee_worker_utils.aggregateTemporal)({
+            collection,
+            metadataOnly: true,
+            year,
+            periodReducer,
+            overrideDate: startDate
+          });
+        }
       }
       collection = (0, _ee_worker_utils.filterCollectionByDateRange)(collection, datesRange.startDate, datesRange.endDate);
       const featureCollection = _ee_api_js_worker.default.FeatureCollection(collection).select(['system:time_start', 'system:time_end', 'year', 'month', 'week'], null, false);
