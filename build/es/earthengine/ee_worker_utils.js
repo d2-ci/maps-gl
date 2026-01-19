@@ -320,7 +320,7 @@ const buildStepsAndBandNames = ({
   year,
   collection
 }) => {
-  const isJan1Thursday = ee.Number.parse(ee.Date.fromYMD(year, 1, 1).format('e')).eq(4);
+  const isJan1Thursday = ee.Number.parse(ee.Date.fromYMD(parseInt(year), 1, 1).format('e')).eq(4);
   const maxSteps = ee.Algorithms.If(period === 'month', ee.Number(11),
   // 12 months (0-indexed)
   ee.Algorithms.If(period === 'week', ee.Algorithms.If(isJan1Thursday, ee.Number(52), ee.Number(51)),
