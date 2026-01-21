@@ -7,8 +7,7 @@ exports.default = void 0;
 var _maplibreGl = require("maplibre-gl");
 // Extended to include map name and legend in fullscreen for dashboard maps
 class Fullscreen extends _maplibreGl.FullscreenControl {
-  constructor() {
-    let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  constructor(options = {}) {
     super(options);
     this.options = options;
   }

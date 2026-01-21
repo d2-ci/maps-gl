@@ -10,8 +10,7 @@ function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" 
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 // Creates a donut marker component
 class DonutMarker extends _maplibreGl.Marker {
-  constructor(segments) {
-    let options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  constructor(segments, options = {}) {
     const element = donutChart(segments);
     super({
       element
@@ -61,14 +60,13 @@ const donutChart = segments => {
 
 // Returns a SVG donut chart segment
 exports.donutChart = donutChart;
-const donutSegment = _ref => {
-  let {
-    start,
-    end,
-    r,
-    r0,
-    color
-  } = _ref;
+const donutSegment = ({
+  start,
+  end,
+  r,
+  r0,
+  color
+}) => {
   if (end - start === 1) {
     end -= 0.00001;
   }

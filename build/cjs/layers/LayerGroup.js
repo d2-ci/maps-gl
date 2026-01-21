@@ -83,8 +83,7 @@ class LayerGroup extends _maplibreGl.Evented {
   isInteractive() {
     return this._layers.some(layer => layer.isInteractive());
   }
-  setIndex() {
-    let index = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+  setIndex(index = 0) {
     this.options.index = index;
     this._layers.forEach(layer => layer.setIndex(index));
   }

@@ -8,8 +8,7 @@ var _maplibreGl = require("maplibre-gl");
 var _layers = require("../utils/layers.js");
 var _style = require("../utils/style.js");
 class VectorStyle extends _maplibreGl.Evented {
-  constructor() {
-    let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  constructor(options = {}) {
     super();
     this.options = options;
     this._visibleLayers = [];
@@ -107,8 +106,7 @@ class VectorStyle extends _maplibreGl.Evented {
   mapHasVectorStyle() {
     return this._map.getLayers().some(layer => layer instanceof VectorStyle);
   }
-  setIndex() {
-    let index = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _layers.BASEMAP_POSITION;
+  setIndex(index = _layers.BASEMAP_POSITION) {
     this.options.index = index;
   }
 

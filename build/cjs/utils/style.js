@@ -21,15 +21,12 @@ const hoverStrokeMultiplier = exports.hoverStrokeMultiplier = 3;
 const eventStrokeColor = exports.eventStrokeColor = '#333333';
 const clusterCountColor = exports.clusterCountColor = '#000000';
 const defaultGlyphs = exports.defaultGlyphs = 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf';
-const mapStyle = _ref => {
-  let {
-    glyphs = defaultGlyphs
-  } = _ref;
-  return {
-    version: 8,
-    sources: {},
-    layers: [],
-    glyphs
-  };
-};
+const mapStyle = ({
+  glyphs = defaultGlyphs
+}) => ({
+  version: 8,
+  sources: {},
+  layers: [],
+  glyphs
+});
 exports.mapStyle = mapStyle;

@@ -7,8 +7,7 @@ exports.isPoint = exports.getBoundsFromLayers = exports.featureCollection = void
 var _maplibreGl = require("maplibre-gl");
 const isPoint = feature => feature.geometry.type === 'Point';
 exports.isPoint = isPoint;
-const getBoundsFromLayers = function () {
-  let layers = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+const getBoundsFromLayers = (layers = []) => {
   const bounds = layers.reduce((b, l) => {
     if (l.getBounds) {
       const layerBounds = l.getBounds();
@@ -21,11 +20,8 @@ const getBoundsFromLayers = function () {
   return bounds.isEmpty() ? null : bounds.toArray();
 };
 exports.getBoundsFromLayers = getBoundsFromLayers;
-const featureCollection = function () {
-  let features = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-  return {
-    type: 'FeatureCollection',
-    features
-  };
-};
+const featureCollection = (features = []) => ({
+  type: 'FeatureCollection',
+  features
+});
 exports.featureCollection = featureCollection;

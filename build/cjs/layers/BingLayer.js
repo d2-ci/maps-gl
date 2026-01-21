@@ -14,8 +14,8 @@ function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" 
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 // https://docs.microsoft.com/en-us/bingmaps/rest-services/directly-accessing-the-bing-maps-tiles
 class BingLayer extends _Layer.default {
-  constructor() {
-    super(...arguments);
+  constructor(...args) {
+    super(...args);
     _defineProperty(this, "createLayer", () => {
       const id = this.getId();
       this.addLayer({
@@ -109,19 +109,13 @@ class BingLayer extends _Layer.default {
     const mapZoom = mapgl.getZoom() < 1 ? 1 : mapgl.getZoom();
 
     // TODO: boxIntersect or bboxOverlaps?
-    const providers = this._imageryProviders.filter(_ref => {
-      let {
-        coverageAreas
-      } = _ref;
-      return coverageAreas.some(_ref2 => {
-        let {
-          bbox,
-          zoomMin,
-          zoomMax
-        } = _ref2;
-        return (0, _geo.bboxIntersect)(bbox, mapBbox) && mapZoom >= zoomMin && mapZoom <= zoomMax;
-      });
-    });
+    const providers = this._imageryProviders.filter(({
+      coverageAreas
+    }) => coverageAreas.some(({
+      bbox,
+      zoomMin,
+      zoomMax
+    }) => (0, _geo.bboxIntersect)(bbox, mapBbox) && mapZoom >= zoomMin && mapZoom <= zoomMax));
     return providers.map(p => p.attribution).join(', ');
   }
 }

@@ -18,51 +18,40 @@ const fonts = {
 };
 
 // Returns offset in ems
-const getOffsetEms = function (type) {
-  let radius = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 5;
-  let fontSize = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 11;
-  return type === 'Point' ? radius / parseInt(fontSize, 10) + 0.4 : 0;
-};
-const labelSource = (features, _ref, isBoundary) => {
-  let {
-    fontSize,
-    labelNoData = ''
-  } = _ref;
-  return {
-    type: 'geojson',
-    data: (0, _geometry.featureCollection)(features.map(_ref2 => {
-      let {
-        geometry,
-        properties
-      } = _ref2;
-      return {
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: getLabelPosition(geometry)
-        },
-        properties: {
-          name: properties.name,
-          anchor: geometry.type === 'Point' ? 'top' : 'center',
-          offset: [0, getOffsetEms(geometry.type, properties.radius, fontSize)],
-          color: isBoundary ? properties.color : '#333',
-          value: properties.value ?? labelNoData
-        }
-      };
-    }))
-  };
-};
+const getOffsetEms = (type, radius = 5, fontSize = 11) => type === 'Point' ? radius / parseInt(fontSize, 10) + 0.4 : 0;
+const labelSource = (features, {
+  fontSize,
+  labelNoData = ''
+}, isBoundary) => ({
+  type: 'geojson',
+  data: (0, _geometry.featureCollection)(features.map(({
+    geometry,
+    properties
+  }) => ({
+    type: 'Feature',
+    geometry: {
+      type: 'Point',
+      coordinates: getLabelPosition(geometry)
+    },
+    properties: {
+      name: properties.name,
+      anchor: geometry.type === 'Point' ? 'top' : 'center',
+      offset: [0, getOffsetEms(geometry.type, properties.radius, fontSize)],
+      color: isBoundary ? properties.color : '#333',
+      value: properties.value ?? labelNoData
+    }
+  })))
+});
 exports.labelSource = labelSource;
-const labelLayer = _ref3 => {
-  let {
-    id,
-    label,
-    fontSize,
-    fontStyle,
-    fontWeight,
-    color,
-    opacity
-  } = _ref3;
+const labelLayer = ({
+  id,
+  label,
+  fontSize,
+  fontStyle,
+  fontWeight,
+  color,
+  opacity
+}) => {
   const font = `${fontStyle || 'normal'}-${fontWeight || 'normal'}`;
   const size = fontSize ? parseInt(fontSize, 10) : 12;
   return {
@@ -83,11 +72,10 @@ const labelLayer = _ref3 => {
   };
 };
 exports.labelLayer = labelLayer;
-const getLabelPosition = _ref4 => {
-  let {
-    type,
-    coordinates
-  } = _ref4;
+const getLabelPosition = ({
+  type,
+  coordinates
+}) => {
   if (type === 'Point') {
     return coordinates;
   }

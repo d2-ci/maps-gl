@@ -11,10 +11,7 @@ const colorExpr = color => ['case', ['has', 'color'], ['get', 'color'], color];
 
 // Returns width (weight) from feature with fallback and hover support
 exports.colorExpr = colorExpr;
-const widthExpr = function () {
-  let width = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _style.strokeWidth;
-  return ['*', ['case', ['has', 'weight'], ['get', 'weight'], width], ['case', _filters.isHover, _style.hoverStrokeMultiplier, 1]];
-};
+const widthExpr = (width = _style.strokeWidth) => ['*', ['case', ['has', 'weight'], ['get', 'weight'], width], ['case', _filters.isHover, _style.hoverStrokeMultiplier, 1]];
 
 // Returns radius from feature with fallback
 exports.widthExpr = widthExpr;

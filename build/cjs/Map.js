@@ -20,12 +20,7 @@ var _layers = require("./utils/layers.js");
 var _style = require("./utils/style.js");
 var _sync = _interopRequireDefault(require("./utils/sync.js"));
 require("./Map.css");
-const _excluded = ["locale", "glyphs"];
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _objectWithoutProperties(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], t.indexOf(o) >= 0 || {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (e.indexOf(n) >= 0) continue; t[n] = r[n]; } return t; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
@@ -41,8 +36,7 @@ class MapGL extends _maplibreGl.Evented {
   static hasControlSupport(type) {
     return !!_controlTypes.default[type];
   }
-  constructor(el) {
-    let options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  constructor(el, options = {}) {
     super();
     _defineProperty(this, "onLoad", () => {
       this.fire('ready', this);
@@ -109,22 +103,24 @@ class MapGL extends _maplibreGl.Evented {
       }
     });
     const {
-        locale,
-        glyphs
-      } = options,
-      opts = _objectWithoutProperties(options, _excluded);
-    const mapgl = new _maplibreGl.Map(_objectSpread({
+      locale,
+      glyphs,
+      scrollZoom
+    } = options;
+    const mapgl = new _maplibreGl.Map({
       container: el,
       style: (0, _style.mapStyle)({
         glyphs
       }),
       maxZoom: 18,
-      preserveDrawingBuffer: true,
-      // TODO: requred for map download, but reduced performance
+      canvasContextAttributes: {
+        preserveDrawingBuffer: true // TODO: required for map download, but reduced performance
+      },
       attributionControl: false,
       locale: _controlsLocale.default,
-      transformRequest: _images.transformRequest
-    }, opts));
+      transformRequest: _images.transformRequest,
+      scrollZoom
+    });
     this._mapgl = mapgl;
     this._glyphs = glyphs;
     this._renderTimeout = null;
@@ -291,9 +287,7 @@ class MapGL extends _maplibreGl.Evented {
   }
 
   // Helper function to set feature state for source
-  setFeatureState() {
-    let feature = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    let state = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  setFeatureState(feature = {}, state = {}) {
     const mapgl = this.getMapGL();
     const {
       source

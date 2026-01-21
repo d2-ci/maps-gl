@@ -5,7 +5,7 @@ function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" 
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 import bbox from '@turf/bbox';
 import { Evented } from 'maplibre-gl';
-import { v4 as uuid } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import { bufferSource } from '../utils/buffers.js';
 import { featureCollection } from '../utils/geometry.js';
 import { addImages } from '../utils/images.js';
@@ -16,7 +16,7 @@ class Layer extends Evented {
     super();
     // "Normalise" event before passing back to app
     _defineProperty(this, "onClick", evt => this.fire('click', evt));
-    this._id = uuid();
+    this._id = uuidv4();
     this._source = {};
     this._layers = [];
     this._features = [];
@@ -201,8 +201,20 @@ class Layer extends Evented {
 
   // Adds integer id for each feature (required by Feature State)
   setFeatures(data = []) {
+    // MapLibre properties must be primitives; objects/arrays are not supported
+    const sanitizeProps = (props = {}) => Object.fromEntries(Object.entries(props).filter(([, v]) => v !== undefined && typeof v !== 'function').map(([k, v]) => {
+      if (v === null || typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+        return [k, v];
+      }
+      try {
+        return [k, JSON.stringify(v)];
+      } catch {
+        return [k, String(v)];
+      }
+    }));
     this._features = data.map((f, i) => _objectSpread(_objectSpread({}, f), {}, {
-      id: i + 1
+      id: i + 1,
+      properties: sanitizeProps(f.properties)
     }));
   }
   getImages() {

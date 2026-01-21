@@ -19,8 +19,7 @@ function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 class Layer extends _maplibreGl.Evented {
-  constructor() {
-    let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  constructor(options = {}) {
     super();
     // "Normalise" event before passing back to app
     _defineProperty(this, "onClick", evt => this.fire('click', evt));
@@ -169,8 +168,7 @@ class Layer extends _maplibreGl.Evented {
   getInteractiveIds() {
     return this.isInteractive() ? this._interactiveIds : [];
   }
-  addLayer(layer) {
-    let layerOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  addLayer(layer, layerOptions = {}) {
     const {
       isInteractive,
       opacityFactor
@@ -209,10 +207,21 @@ class Layer extends _maplibreGl.Evented {
   }
 
   // Adds integer id for each feature (required by Feature State)
-  setFeatures() {
-    let data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  setFeatures(data = []) {
+    // MapLibre properties must be primitives; objects/arrays are not supported
+    const sanitizeProps = (props = {}) => Object.fromEntries(Object.entries(props).filter(([, v]) => v !== undefined && typeof v !== 'function').map(([k, v]) => {
+      if (v === null || typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+        return [k, v];
+      }
+      try {
+        return [k, JSON.stringify(v)];
+      } catch {
+        return [k, String(v)];
+      }
+    }));
     this._features = data.map((f, i) => _objectSpread(_objectSpread({}, f), {}, {
-      id: i + 1
+      id: i + 1,
+      properties: sanitizeProps(f.properties)
     }));
   }
   getImages() {
@@ -224,8 +233,7 @@ class Layer extends _maplibreGl.Evented {
   setImages(images) {
     this._images = images || [...new Set(this.getFeatures().filter(f => f.properties.iconUrl).map(f => f.properties.iconUrl))];
   }
-  setIndex() {
-    let index = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+  setIndex(index = 0) {
     this.options.index = index;
     const map = this.getMap();
     if (map) {

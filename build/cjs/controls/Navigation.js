@@ -16,8 +16,7 @@ const defaultOptions = {
 
 // Extended to reset pitch
 class Navigation extends _maplibreGl.NavigationControl {
-  constructor() {
-    let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  constructor(options = {}) {
     super(_objectSpread(_objectSpread({}, defaultOptions), options));
   }
 }

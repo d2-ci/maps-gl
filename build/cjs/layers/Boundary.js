@@ -20,8 +20,7 @@ class Boundary extends _Layer.default {
   }
 
   // TODO: Find better way keep style
-  setFeatures() {
-    let data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  setFeatures(data = []) {
     const {
       radius = 6
     } = this.options.style;

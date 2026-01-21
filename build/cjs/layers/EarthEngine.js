@@ -157,8 +157,7 @@ class EarthEngine extends _Layer.default {
       }));
     }
   }
-  setFeatures() {
-    let data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  setFeatures(data = []) {
     // Set layer source for org unit point (facilities)
     this.setSource(`${this.getId()}-points`, {
       type: 'geojson',

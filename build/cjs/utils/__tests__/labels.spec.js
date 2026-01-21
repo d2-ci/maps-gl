@@ -46,14 +46,13 @@ const features = [{
     radius: 1
   }
 }];
-const generateLabelSourceItem = _ref => {
-  let {
-    coordinates,
-    name,
-    anchor,
-    offset,
-    value
-  } = _ref;
+const generateLabelSourceItem = ({
+  coordinates,
+  name,
+  anchor,
+  offset,
+  value
+}) => {
   return {
     type: 'Feature',
     geometry: {

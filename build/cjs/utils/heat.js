@@ -10,10 +10,7 @@ const setLayersOpacity = (mapgl, id, heatOpacity) => {
   });
 };
 exports.setLayersOpacity = setLayersOpacity;
-const makeHeatmapIntensity = function () {
-  let i = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0.5;
-  return Math.pow(i, 2) * 2;
-};
+const makeHeatmapIntensity = (i = 0.5) => Math.pow(i, 2) * 2;
 exports.makeHeatmapIntensity = makeHeatmapIntensity;
 const setLayersIntensity = (mapgl, id, heatIntensity) => {
   mapgl.getStyle().layers.filter(layer => layer.id.startsWith(id)).forEach(layer => {
@@ -21,10 +18,7 @@ const setLayersIntensity = (mapgl, id, heatIntensity) => {
   });
 };
 exports.setLayersIntensity = setLayersIntensity;
-const makeHeatmapRadius = function () {
-  let r = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0.5;
-  return ['interpolate', ['linear'], ['zoom'], 7, 50 * r, 20, 1000 * r];
-};
+const makeHeatmapRadius = (r = 0.5) => ['interpolate', ['linear'], ['zoom'], 7, 50 * r, 20, 1000 * r];
 exports.makeHeatmapRadius = makeHeatmapRadius;
 const setLayersRadius = (mapgl, id, heatRadius) => {
   mapgl.getStyle().layers.filter(layer => layer.id.startsWith(id)).forEach(layer => {
