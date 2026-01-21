@@ -104,6 +104,6 @@ describe('Layer', () => {
     }]);
     layer.highlight('abc');
     expect(mockFn).toHaveBeenCalledTimes(3);
-    expect(mockFn).lastCalledWith([]);
+    expect(mockFn).toHaveBeenLastCalledWith([]);
   });
 });
