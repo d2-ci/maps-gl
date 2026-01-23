@@ -117,7 +117,7 @@ class MapGL extends _maplibreGl.Evented {
         contextType: 'webgl',
         preserveDrawingBuffer: true,
         // TODO: required for map download, but reduced performance
-        powerPreference: 'low‑power'
+        powerPreference: 'low-power'
       },
       attributionControl: false,
       locale: _controlsLocale.default,
