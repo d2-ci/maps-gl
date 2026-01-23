@@ -106,6 +106,7 @@ export class MapGL extends Evented {
         glyphs
       }),
       maxZoom: 18,
+      antialias: false,
       canvasContextAttributes: {
         preserveDrawingBuffer: true // TODO: required for map download, but reduced performance
       },
