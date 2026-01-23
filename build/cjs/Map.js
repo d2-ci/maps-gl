@@ -113,9 +113,11 @@ class MapGL extends _maplibreGl.Evented {
         glyphs
       }),
       maxZoom: 18,
-      antialias: false,
       canvasContextAttributes: {
-        preserveDrawingBuffer: true // TODO: required for map download, but reduced performance
+        contextType: 'webgl',
+        preserveDrawingBuffer: true,
+        // TODO: required for map download, but reduced performance
+        powerPreference: 'low‑power'
       },
       attributionControl: false,
       locale: _controlsLocale.default,
