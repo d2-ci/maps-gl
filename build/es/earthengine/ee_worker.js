@@ -4,7 +4,7 @@ function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 import polygonBuffer from '@turf/buffer';
-import { circle } from '@turf/circle';
+import circle from '@turf/circle';
 import { expose } from 'comlink';
 import ee from './ee_api_js_worker.js'; // https://github.com/google/earthengine-api/pull/173
 import { WorkerCache } from './ee_worker_cache.js';
@@ -237,13 +237,16 @@ class EarthEngineWorker {
         collection = filterCollectionByDateRange(collection, startDate, endDate);
       }
       if (periodReducer) {
-        collection = aggregateTemporal({
-          collection,
-          metadataOnly: true,
-          year,
-          periodReducer,
-          overrideDate: startDate
-        });
+        const collectionSize = await collection.size().getInfo();
+        if (collectionSize > 0) {
+          collection = aggregateTemporal({
+            collection,
+            metadataOnly: true,
+            year,
+            periodReducer,
+            overrideDate: startDate
+          });
+        }
       }
       collection = filterCollectionByDateRange(collection, datesRange.startDate, datesRange.endDate);
       const featureCollection = ee.FeatureCollection(collection).select(['system:time_start', 'system:time_end', 'year', 'month', 'week'], null, false);

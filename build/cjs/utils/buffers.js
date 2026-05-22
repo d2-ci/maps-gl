@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.getBufferGeometry = exports.bufferSource = exports.bufferOutlineLayer = exports.bufferLayer = void 0;
 var _buffer = _interopRequireDefault(require("@turf/buffer"));
-var _circle = require("@turf/circle");
+var _circle = _interopRequireDefault(require("@turf/circle"));
 var _expressions = require("./expressions.js");
 var _geometry = require("./geometry.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
@@ -22,7 +22,7 @@ const defaults = {
 // Buffer in km
 const getBufferGeometry = ({
   geometry
-}, buffer) => (geometry.type === 'Point' ? (0, _circle.circle)(geometry, buffer) : (0, _buffer.default)(geometry, buffer)).geometry;
+}, buffer) => (geometry.type === 'Point' ? (0, _circle.default)(geometry, buffer) : (0, _buffer.default)(geometry, buffer)).geometry;
 
 // Buffer in km
 exports.getBufferGeometry = getBufferGeometry;

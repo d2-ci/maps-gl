@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 var _buffer = _interopRequireDefault(require("@turf/buffer"));
-var _circle = require("@turf/circle");
+var _circle = _interopRequireDefault(require("@turf/circle"));
 var _comlink = require("comlink");
 var _ee_api_js_worker = _interopRequireDefault(require("./ee_api_js_worker.js"));
 var _ee_worker_cache = require("./ee_worker_cache.js");
@@ -22,7 +22,7 @@ const FEATURE_COLLECTION = 'FeatureCollection';
 const BANDSOURCE_METHODSOUTPUT = 'methodsOutput';
 const getBufferGeometry = ({
   geometry
-}, buffer) => (geometry.type === 'Point' ? (0, _circle.circle)(geometry, buffer) : (0, _buffer.default)(geometry, buffer)).geometry;
+}, buffer) => (geometry.type === 'Point' ? (0, _circle.default)(geometry, buffer) : (0, _buffer.default)(geometry, buffer)).geometry;
 
 // Options are defined here:
 // https://developers.google.com/earth-engine/apidocs/ee-featurecollection-draw
@@ -244,13 +244,16 @@ class EarthEngineWorker {
         collection = (0, _ee_worker_utils.filterCollectionByDateRange)(collection, startDate, endDate);
       }
       if (periodReducer) {
-        collection = (0, _ee_worker_utils.aggregateTemporal)({
-          collection,
-          metadataOnly: true,
-          year,
-          periodReducer,
-          overrideDate: startDate
-        });
+        const collectionSize = await collection.size().getInfo();
+        if (collectionSize > 0) {
+          collection = (0, _ee_worker_utils.aggregateTemporal)({
+            collection,
+            metadataOnly: true,
+            year,
+            periodReducer,
+            overrideDate: startDate
+          });
+        }
       }
       collection = (0, _ee_worker_utils.filterCollectionByDateRange)(collection, datesRange.startDate, datesRange.endDate);
       const featureCollection = _ee_api_js_worker.default.FeatureCollection(collection).select(['system:time_start', 'system:time_end', 'year', 'month', 'week'], null, false);
