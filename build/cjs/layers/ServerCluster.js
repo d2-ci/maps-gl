@@ -181,6 +181,7 @@ class ServerCluster extends _Cluster.default {
     }), {
       isInteractive
     });
+    this.addLabelLayer();
 
     // Non-clustered polygons
     this.addLayer((0, _layers.polygonLayer)({

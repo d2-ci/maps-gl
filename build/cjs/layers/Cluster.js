@@ -7,6 +7,7 @@ exports.default = void 0;
 var _centerOfMass = _interopRequireDefault(require("@turf/center-of-mass"));
 var _filters = require("../utils/filters.js");
 var _geometry = require("../utils/geometry.js");
+var _labels = require("../utils/labels.js");
 var _layers = require("../utils/layers.js");
 var _style = require("../utils/style.js");
 var _Layer = _interopRequireDefault(require("./Layer.js"));
@@ -145,6 +146,7 @@ class Cluster extends _Layer.default {
     }), {
       isInteractive
     });
+    this.addLabelLayer();
 
     // Non-clustered polygons
     this.addLayer((0, _layers.polygonLayer)({
@@ -159,6 +161,24 @@ class Cluster extends _Layer.default {
       color: strokeColor,
       source: `${id}-polygons`
     }));
+  }
+
+  // Shared by Cluster and ServerCluster (label layer reads from `id`,
+  // whichever way that source's cluster/leaf split is produced)
+  addLabelLayer() {
+    const id = this.getId();
+    const {
+      label,
+      labelStyle,
+      radius
+    } = this.options;
+    if (label) {
+      this.addLayer((0, _labels.pointLabelLayer)(_objectSpread(_objectSpread({}, labelStyle), {}, {
+        id,
+        label,
+        radius
+      })));
+    }
   }
   setOpacity(opacity) {
     super.setOpacity(opacity);

@@ -11,9 +11,9 @@ var _style = require("../utils/style.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const labelTextStyle = ({
   color,
-  size,
-  weight,
-  style
+  fontSize,
+  fontWeight,
+  fontStyle
 } = {}) => ({
   position: 'absolute',
   top: '100%',
@@ -21,9 +21,9 @@ const labelTextStyle = ({
   transform: 'translateX(-50%)',
   paddingTop: '2px',
   color: color || '#333333',
-  fontSize: size ? `${size}px` : '12px',
-  fontWeight: weight || 'normal',
-  fontStyle: style || 'normal',
+  fontSize: fontSize ? `${fontSize}px` : '12px',
+  fontWeight: fontWeight || 'normal',
+  fontStyle: fontStyle || 'normal',
   whiteSpace: 'nowrap',
   pointerEvents: 'none',
   textShadow: '0 1px 2px rgba(255,255,255,0.8)'
