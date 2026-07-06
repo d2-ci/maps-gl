@@ -1,5 +1,6 @@
 "use strict";
 
+var _filters = require("../filters.js");
 var _labels = require("../labels.js");
 var _style = require("../style.js");
 const id = 'abc';
@@ -123,6 +124,77 @@ describe('labels', () => {
   });
   it('Should set default opacity for label layer', () => {
     expect((0, _labels.labelLayer)({
+      id
+    }).paint['text-opacity']).toBe(_style.textOpacity);
+  });
+  it('Should read from the point source with the cluster filter', () => {
+    const layer = (0, _labels.labelClusterLayer)({
+      id
+    });
+    expect(layer.source).toBe(id);
+    expect(layer.filter).toEqual(_filters.isClusterPoint);
+  });
+  it('Should use a custom filter instead of the cluster default', () => {
+    const filter = ['==', ['get', 'foo'], 'bar'];
+    expect((0, _labels.labelClusterLayer)({
+      id,
+      filter
+    }).filter).toEqual(filter);
+  });
+  it('Should default text-field to a {name} expression', () => {
+    const layer = (0, _labels.labelClusterLayer)({
+      id
+    });
+    expect(layer.layout['text-field']).toEqual(['case', ['has', 'name'], ['get', 'name'], '']);
+  });
+  it('Should fall back to labelNoData for a missing {value} token', () => {
+    const layer = (0, _labels.labelClusterLayer)({
+      id,
+      label: '{name}: {value}',
+      labelNoData
+    });
+    expect(layer.layout['text-field']).toEqual(['concat', ['case', ['has', 'name'], ['get', 'name'], ''], ': ', ['case', ['has', 'value'], ['get', 'value'], labelNoData]]);
+  });
+  it('Should default text-offset from circleRadius and labelFontSize', () => {
+    const layer = (0, _labels.labelClusterLayer)({
+      id
+    });
+    expect(layer.layout['text-offset']).toEqual([0, _style.circleRadius / _style.labelFontSize + 0.4]);
+  });
+  it('Should compute text-offset from a custom radius and fontSize', () => {
+    const layer = (0, _labels.labelClusterLayer)({
+      id,
+      radius: 10,
+      fontSize: 20
+    });
+    expect(layer.layout['text-offset']).toEqual([0, 10 / 20 + 0.4]);
+  });
+  it('Should always anchor text to top', () => {
+    expect((0, _labels.labelClusterLayer)({
+      id
+    }).layout['text-anchor']).toBe('top');
+  });
+  it('Should default text-color to a labelColor expression', () => {
+    const layer = (0, _labels.labelClusterLayer)({
+      id
+    });
+    expect(layer.paint['text-color']).toEqual(['case', ['has', 'color'], ['get', 'color'], _style.labelColor]);
+  });
+  it('Should use a custom color instead of the default expression', () => {
+    const color = '#ff0000';
+    expect((0, _labels.labelClusterLayer)({
+      id,
+      color
+    }).paint['text-color']).toBe(color);
+  });
+  it('Should set opacity for label cluster layer', () => {
+    expect((0, _labels.labelClusterLayer)({
+      id,
+      opacity
+    }).paint['text-opacity']).toBe(opacity);
+  });
+  it('Should set default opacity for label cluster layer', () => {
+    expect((0, _labels.labelClusterLayer)({
       id
     }).paint['text-opacity']).toBe(_style.textOpacity);
   });

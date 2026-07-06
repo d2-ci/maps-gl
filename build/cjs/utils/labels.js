@@ -75,6 +75,11 @@ const labelSource = (features, {
     }
   })))
 });
+
+// Unlike labelClusterLayer, this reads precomputed per-feature values from
+// labelSource — including a polylabel-based interior point for Polygon
+// labels — which only a static, precomputed source can provide; a live
+// source has no room for that kind of per-feature JS-side geometry math.
 exports.labelSource = labelSource;
 const labelLayer = ({
   id,

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.labelTextStyle = exports.default = void 0;
 var _maplibreGl = require("maplibre-gl");
 var _core = require("../utils/core.js");
 var _spiderifier = _interopRequireDefault(require("../utils/spiderifier.js"));
@@ -28,6 +28,7 @@ const labelTextStyle = ({
   pointerEvents: 'none',
   textShadow: '0 1px 2px rgba(255,255,255,0.8)'
 });
+exports.labelTextStyle = labelTextStyle;
 const Spider = function (map, options) {
   const initializeLeg = leg => {
     const {

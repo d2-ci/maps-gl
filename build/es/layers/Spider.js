@@ -2,7 +2,7 @@ import { Point } from 'maplibre-gl';
 import { setTemplate } from '../utils/core.js';
 import spiderifier from '../utils/spiderifier.js';
 import { eventStrokeColor as strokeColor, labelColor, labelFontSize, labelFontStyle, labelFontWeight, strokeWidth } from '../utils/style.js';
-const labelTextStyle = ({
+export const labelTextStyle = ({
   color,
   fontSize,
   fontWeight,
