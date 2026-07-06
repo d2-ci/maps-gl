@@ -63,7 +63,7 @@ const generateLabelSourceItem = ({
       name,
       anchor,
       offset,
-      color: '#333',
+      color: _style.labelColor,
       value
     }
   };

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.pointLabelLayer = exports.labelSource = exports.labelLayer = exports.getLabelPosition = void 0;
+exports.labelSource = exports.labelLayer = exports.labelClusterLayer = exports.getLabelPosition = void 0;
 var _area = _interopRequireDefault(require("@turf/area"));
 var _polylabel = _interopRequireDefault(require("polylabel"));
 var _expressions = require("./expressions.js");
@@ -20,17 +20,20 @@ const fonts = {
 };
 
 // Returns font and size for a label layer
-const getFontConfig = (fontStyle, fontWeight, fontSize) => ({
-  font: fonts[`${fontStyle || 'normal'}-${fontWeight || 'normal'}`],
-  size: fontSize ? Number.parseInt(fontSize, 10) : 12
-});
+const getFontConfig = (fontStyle, fontWeight, fontSize) => {
+  const style = fontStyle || _style.labelFontStyle;
+  const weight = fontWeight || _style.labelFontWeight;
+  return {
+    font: fonts[`${style}-${weight}`],
+    size: fontSize ? Number.parseInt(fontSize, 10) : _style.labelFontSize
+  };
+};
 
 // Returns offset in ems
-const getOffsetEms = (type, radius = 5, fontSize = 11) => type === 'Point' ? radius / parseInt(fontSize, 10) + 0.4 : 0;
+const getOffsetEms = (type, radius = _style.circleRadius, fontSize = _style.labelFontSize) => type === 'Point' ? radius / Number.parseInt(fontSize, 10) + 0.4 : 0;
 
-// Compiles a "{name}: {value}" style template into a MapLibre text-field
-// expression, substituting labelNoData for a missing {value} token —
-// mirrors the token syntax/semantics of Layer#onMouseMove's hover label
+// Builds a text-field expression instead of a plain token string, so a
+// missing {value} token can fall back to labelNoData
 const templateExpr = (template, labelNoData = '') => {
   const regex = /\{ *([\w-]+) *\}/g;
   const parts = [];
@@ -67,7 +70,7 @@ const labelSource = (features, {
       name: properties.name,
       anchor: geometry.type === 'Point' ? 'top' : 'center',
       offset: [0, getOffsetEms(geometry.type, properties.radius, fontSize)],
-      color: isBoundary ? properties.color : '#333',
+      color: isBoundary ? properties.color : _style.labelColor,
       value: properties.value ?? labelNoData
     }
   })))
@@ -104,10 +107,12 @@ const labelLayer = ({
   };
 };
 
-// Label layer reading directly off a (potentially clustered) point source,
-// so it stays in sync with which points are currently clustered vs leaves
+// Unlike labelLayer, this reads straight off the point layer's own source
+// instead of a separate precomputed one: MapLibre clusters/unclusters that
+// source live as you zoom, and a second, unclustered source has no way to
+// mirror that split — it would label points that are currently clustered.
 exports.labelLayer = labelLayer;
-const pointLabelLayer = ({
+const labelClusterLayer = ({
   id,
   label,
   fontSize,
@@ -137,12 +142,12 @@ const pointLabelLayer = ({
       'text-offset': [0, offset]
     },
     paint: {
-      'text-color': color || (0, _expressions.colorExpr)('#333'),
+      'text-color': color || (0, _expressions.colorExpr)(_style.labelColor),
       'text-opacity': opacity ?? _style.textOpacity
     }
   };
 };
-exports.pointLabelLayer = pointLabelLayer;
+exports.labelClusterLayer = labelClusterLayer;
 const getLabelPosition = ({
   type,
   coordinates

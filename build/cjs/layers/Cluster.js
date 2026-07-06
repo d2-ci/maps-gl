@@ -162,9 +162,6 @@ class Cluster extends _Layer.default {
       source: `${id}-polygons`
     }));
   }
-
-  // Shared by Cluster and ServerCluster (label layer reads from `id`,
-  // whichever way that source's cluster/leaf split is produced)
   addLabelLayer() {
     const id = this.getId();
     const {
@@ -173,7 +170,7 @@ class Cluster extends _Layer.default {
       radius
     } = this.options;
     if (label) {
-      this.addLayer((0, _labels.pointLabelLayer)(_objectSpread(_objectSpread({}, labelStyle), {}, {
+      this.addLayer((0, _labels.labelClusterLayer)(_objectSpread(_objectSpread({}, labelStyle), {}, {
         id,
         label,
         radius
