@@ -290,8 +290,8 @@ class MapGL extends _maplibreGl.Evented {
     return typeof layer.getSubLayerFromId === 'function' && layer.getSubLayerFromId(feature.layer.id) || layer;
   }
   _hideLabelUnlessOverOverlay(evt) {
-    const target = evt && evt.originalEvent && evt.originalEvent.target;
-    const isOverOverlay = target && target.closest && OVERLAY_SELECTORS.some(sel => target.closest(sel));
+    const target = evt?.originalEvent?.target;
+    const isOverOverlay = target?.closest && OVERLAY_SELECTORS.some(sel => target.closest(sel));
     if (!isOverOverlay) {
       this.hideLabel();
     }
