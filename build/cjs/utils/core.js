@@ -16,7 +16,12 @@ const getFeaturesString = features => Array.isArray(features) ? features.sort((a
 
 // Normalizes a scalar id, array of ids, or null/undefined into an array
 exports.getFeaturesString = getFeaturesString;
-const normalizeIds = ids => Array.isArray(ids) ? ids : ids ? [ids] : [];
+const normalizeIds = ids => {
+  if (Array.isArray(ids)) {
+    return ids;
+  }
+  return ids ? [ids] : [];
+};
 exports.normalizeIds = normalizeIds;
 const dropHiddenIds = (hoverIds, selectedIds, visibleIds) => {
   if (!visibleIds) {

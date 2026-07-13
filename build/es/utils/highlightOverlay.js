@@ -8,7 +8,7 @@ import { featureCollection } from './geometry.js';
 
 // Only circle/line paint reacts to hover/selected feature-state
 // Cloning a fill layer would double-render the same fill
-const CLONEABLE_TYPES = ['circle', 'line'];
+const CLONEABLE_TYPES = new Set(['circle', 'line']);
 
 // Icon layers have no paint property that reacts to feature-state
 // Instead we add a colored halo behind a plain clone of the icon
@@ -62,7 +62,7 @@ export const createHighlightOverlay = (map, {
         id: `${layer.id}-highlight-icon`
       }))];
     }
-    if (CLONEABLE_TYPES.includes(layer.type)) {
+    if (CLONEABLE_TYPES.has(layer.type)) {
       return [addOverlayLayer(_objectSpread(_objectSpread({}, layer), {}, {
         id: `${layer.id}-highlight`
       }))];

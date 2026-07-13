@@ -69,34 +69,11 @@ class MapGL extends _maplibreGl.Evented {
         return;
       }
       const feature = this.getEventFeature(evt);
-      let layer;
-      let hoverTarget = null;
-      if (feature) {
-        layer = this.getLayerFromId(feature.layer.id);
-        if (layer) {
-          layer.onMouseMove(evt, feature);
-          hoverTarget = typeof layer.getSubLayerFromId === 'function' && layer.getSubLayerFromId(feature.layer.id) || layer;
-        }
-      } else {
-        const target = evt && evt.originalEvent && evt.originalEvent.target;
-        if (!target || !target.closest || !OVERLAY_SELECTORS.some(sel => target.closest(sel))) {
-          this.hideLabel();
-        }
+      const hoverTarget = feature ? this._resolveHoverTarget(evt, feature) : null;
+      if (!feature) {
+        this._hideLabelUnlessOverOverlay(evt);
       }
-      const featureId = feature?.properties?.id ?? null;
-      const nextHover = hoverTarget && featureId !== null ? hoverTarget : null;
-      if (nextHover !== this._hoveredLayer || featureId !== this._hoveredFeatureId) {
-        if (this._hoveredLayer) {
-          this._hoveredLayer.fire('mouseleave');
-        }
-        if (nextHover) {
-          nextHover.fire('mouseenter', {
-            feature
-          });
-        }
-        this._hoveredLayer = nextHover;
-        this._hoveredFeatureId = nextHover ? featureId : null;
-      }
+      this._updateHoveredLayer(hoverTarget, feature);
       this.getMapGL().getCanvas().style.cursor = feature ? 'pointer' : '';
     });
     // Remove rendered class if rendering is happening
@@ -303,6 +280,38 @@ class MapGL extends _maplibreGl.Evented {
   }
   setMouseMoveEnabled(val) {
     this._mouseMoveEnabled = val;
+  }
+  _resolveHoverTarget(evt, feature) {
+    const layer = this.getLayerFromId(feature.layer.id);
+    if (!layer) {
+      return null;
+    }
+    layer.onMouseMove(evt, feature);
+    return typeof layer.getSubLayerFromId === 'function' && layer.getSubLayerFromId(feature.layer.id) || layer;
+  }
+  _hideLabelUnlessOverOverlay(evt) {
+    const target = evt && evt.originalEvent && evt.originalEvent.target;
+    const isOverOverlay = target && target.closest && OVERLAY_SELECTORS.some(sel => target.closest(sel));
+    if (!isOverOverlay) {
+      this.hideLabel();
+    }
+  }
+  _updateHoveredLayer(hoverTarget, feature) {
+    const featureId = feature?.properties?.id ?? null;
+    const nextHover = hoverTarget && featureId !== null ? hoverTarget : null;
+    if (nextHover === this._hoveredLayer && featureId === this._hoveredFeatureId) {
+      return;
+    }
+    if (this._hoveredLayer) {
+      this._hoveredLayer.fire('mouseleave');
+    }
+    if (nextHover) {
+      nextHover.fire('mouseenter', {
+        feature
+      });
+    }
+    this._hoveredLayer = nextHover;
+    this._hoveredFeatureId = nextHover ? featureId : null;
   }
   // Set hover state for features
   setHoverState(features, color) {

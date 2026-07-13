@@ -8,7 +8,12 @@ export const getFeaturesString = features => Array.isArray(features) ? features.
 }) => `${id}-${source}`).join('-') : '';
 
 // Normalizes a scalar id, array of ids, or null/undefined into an array
-export const normalizeIds = ids => Array.isArray(ids) ? ids : ids ? [ids] : [];
+export const normalizeIds = ids => {
+  if (Array.isArray(ids)) {
+    return ids;
+  }
+  return ids ? [ids] : [];
+};
 export const dropHiddenIds = (hoverIds, selectedIds, visibleIds) => {
   if (!visibleIds) {
     return null;
