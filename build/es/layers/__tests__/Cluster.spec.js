@@ -220,4 +220,24 @@ describe('Cluster', () => {
       expect(mockMapGL.off).toHaveBeenCalledWith('idle', cluster.updatePolygons);
     });
   });
+  describe('getFeaturesById', () => {
+    it('Should resolve against the post-polygon-to-point-conversion features, not a stale reference', () => {
+      const polygonData = [{
+        type: 'Feature',
+        properties: {
+          id: 'p'
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[[0, 0], [0, 1], [1, 1], [0, 0]]]
+        }
+      }];
+      const cluster = new Cluster({
+        data: polygonData
+      });
+      const [feature] = cluster.getFeaturesById('p');
+      expect(feature.geometry.type).toBe('Point');
+      expect(feature.properties.isPolygon).toBe(true);
+    });
+  });
 });
