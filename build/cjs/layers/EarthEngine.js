@@ -226,7 +226,7 @@ class EarthEngine extends _Layer.default {
   }
   _updateMask() {
     const mapgl = this.getMapGL();
-    const maskSource = mapgl && mapgl.getSource(`${this.getId()}-mask`);
+    const maskSource = mapgl?.getSource(`${this.getId()}-mask`);
     if (!maskSource) {
       return;
     }
@@ -234,10 +234,12 @@ class EarthEngine extends _Layer.default {
       _filteredFeatureIds: filteredIds,
       _visibleIds: visibleIds
     } = this;
+    const filteredIdSet = Array.isArray(filteredIds) ? new Set(filteredIds) : null;
+    const visibleIdSet = Array.isArray(visibleIds) ? new Set(visibleIds) : null;
     const hidden = this.getFeatures().filter(feature => {
       const id = feature.properties.id;
-      const passesFilter = !Array.isArray(filteredIds) || filteredIds.includes(id);
-      const passesVisible = !Array.isArray(visibleIds) || visibleIds.includes(id);
+      const passesFilter = !filteredIdSet || filteredIdSet.has(id);
+      const passesVisible = !visibleIdSet || visibleIdSet.has(id);
       return !(passesFilter && passesVisible);
     });
     maskSource.setData((0, _geometry.featureCollection)(hidden));
