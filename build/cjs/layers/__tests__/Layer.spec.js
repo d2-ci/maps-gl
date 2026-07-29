@@ -312,6 +312,24 @@ describe('Layer', () => {
     expect(mockMapGL.setFilter).toHaveBeenCalledWith('layer-1', ['==', '$type', 'Polygon']);
     expect(mockMapGL.setFilter).toHaveBeenCalledWith('layer-1-points', null);
   });
+  it('Should skip a layer registered with excludeFromVisibleIdsFilter, leaving its own filter untouched', () => {
+    const layer = new _Layer.default({
+      data
+    });
+    layer.addLayer({
+      id: 'layer-1'
+    });
+    layer.addLayer({
+      id: 'layer-1-mask'
+    }, {
+      excludeFromVisibleIdsFilter: true
+    });
+    layer.addTo(mockMap);
+    mockMapGL.setFilter.mockClear();
+    layer.setVisibleIds(['O6uvpzGd5pu']);
+    expect(mockMapGL.setFilter).toHaveBeenCalledWith('layer-1', expect.anything());
+    expect(mockMapGL.setFilter).not.toHaveBeenCalledWith('layer-1-mask', expect.anything());
+  });
   it('Should invalidate the map interactive-layer cache when visibility changes, so a re-shown layer stays clickable/hoverable', () => {
     const layer = new _Layer.default();
     layer.addLayer({

@@ -216,6 +216,7 @@ describe('EarthEngine', () => {
     };
     beforeEach(() => {
       mockMapGL.getSource.mockReset();
+      mockMapGL.setFilter.mockClear();
       mockMapGL.getStyle.mockReturnValue({
         layers: []
       });
@@ -263,6 +264,14 @@ describe('EarthEngine', () => {
       await layer.addTo(mockMap);
       expect(() => layer.filter(['O6uvpzGd5pu'])).not.toThrow();
       expect(() => layer.setVisibleIds(['O6uvpzGd5pu'])).not.toThrow();
+    });
+    it('does not narrow the mask layer itself via setVisibleIds, since its data is already the complement', async () => {
+      const {
+        layer
+      } = await addLayerWithMaskSource();
+      layer.setVisibleIds(['O6uvpzGd5pu']);
+      const maskFilterCalls = mockMapGL.setFilter.mock.calls.filter(([layerId]) => layerId === `${layer.getId()}-mask`);
+      expect(maskFilterCalls).toHaveLength(0);
     });
   });
 });

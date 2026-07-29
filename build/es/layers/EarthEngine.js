@@ -144,6 +144,8 @@ class EarthEngine extends Layer {
           'fill-color': noDataColor,
           'fill-opacity': 0.6
         }
+      }, {
+        excludeFromVisibleIdsFilter: true
       });
       this.addLayer(polygonLayer({
         id,
