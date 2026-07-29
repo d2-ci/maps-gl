@@ -1,0 +1,74 @@
+"use strict";
+
+var _expressions = require("../expressions.js");
+var _layers = require("../layers.js");
+var _style = require("../style.js");
+const id = 'abc';
+const color = '#000000';
+const opacity = 0.5;
+describe('layers', () => {
+  it('Should set opacity for different layer types', () => {
+    expect((0, _layers.pointLayer)({
+      id,
+      color,
+      opacity
+    }).paint['circle-opacity']).toBe(opacity);
+    expect((0, _layers.lineLayer)({
+      id,
+      opacity
+    }).paint['line-opacity']).toBe(opacity);
+    expect((0, _layers.polygonLayer)({
+      id,
+      color,
+      opacity
+    }).paint['fill-opacity']).toBe(opacity);
+    expect((0, _layers.outlineLayer)({
+      id,
+      opacity
+    }).paint['line-opacity']).toBe(opacity);
+    expect((0, _layers.symbolLayer)({
+      id,
+      opacity
+    }).paint['icon-opacity']).toBe(opacity);
+    expect((0, _layers.clusterLayer)({
+      id,
+      opacity
+    }).paint['circle-opacity']).toBe(opacity);
+    expect((0, _layers.clusterCountLayer)({
+      id,
+      opacity
+    }).paint['text-opacity']).toBe(opacity);
+  });
+  it('Should set default opacity for different layer types', () => {
+    expect((0, _layers.pointLayer)({
+      id,
+      color
+    }).paint['circle-opacity']).toBe(_style.circleOpacity);
+    expect((0, _layers.lineLayer)({
+      id
+    }).paint['line-opacity']).toBe(_style.lineOpacity);
+    expect((0, _layers.polygonLayer)({
+      id,
+      color
+    }).paint['fill-opacity']).toBe(_style.fillOpacity);
+    expect((0, _layers.outlineLayer)({
+      id
+    }).paint['line-opacity']).toBe(_style.lineOpacity);
+    expect((0, _layers.symbolLayer)({
+      id
+    }).paint['icon-opacity']).toBe(_style.iconOpacity);
+    expect((0, _layers.clusterLayer)({
+      id
+    }).paint['circle-opacity']).toBe(_style.circleOpacity);
+    expect((0, _layers.clusterCountLayer)({
+      id
+    }).paint['text-opacity']).toBe(_style.textOpacity);
+  });
+  it('Should recolor the cluster bubble stroke on hover/selection, like the other layer builders', () => {
+    const strokeColor = '#333333';
+    expect((0, _layers.clusterLayer)({
+      id,
+      strokeColor
+    }).paint['circle-stroke-color']).toEqual((0, _expressions.highlightColorExpr)(strokeColor));
+  });
+});
