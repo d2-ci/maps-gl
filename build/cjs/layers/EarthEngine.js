@@ -11,6 +11,7 @@ var _earthengine = require("../utils/earthengine.js");
 var _geometry = require("../utils/geometry.js");
 var _layers = require("../utils/layers.js");
 var _numbers = require("../utils/numbers.js");
+var _style = require("../utils/style.js");
 var _Layer = _interopRequireDefault(require("./Layer.js"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
@@ -124,6 +125,10 @@ class EarthEngine extends _Layer.default {
         type: 'geojson',
         data: (0, _geometry.featureCollection)(this.getFilteredFeatures())
       });
+      this.setSource(`${id}-mask`, {
+        type: 'geojson',
+        data: (0, _geometry.featureCollection)([])
+      });
     }
   }
 
@@ -138,6 +143,15 @@ class EarthEngine extends _Layer.default {
       source: `${id}-raster`
     });
     if (this.options.data) {
+      this.addLayer({
+        id: `${id}-mask`,
+        type: 'fill',
+        source: `${id}-mask`,
+        paint: {
+          'fill-color': _style.noDataColor,
+          'fill-opacity': 0.6
+        }
+      });
       this.addLayer((0, _layers.polygonLayer)({
         id,
         source,
@@ -203,6 +217,30 @@ class EarthEngine extends _Layer.default {
     if (source) {
       source.setData((0, _geometry.featureCollection)(this.getFilteredFeatures()));
     }
+    this._updateMask();
+  }
+  setVisibleIds(ids) {
+    super.setVisibleIds(ids);
+    this._visibleIds = ids;
+    this._updateMask();
+  }
+  _updateMask() {
+    const mapgl = this.getMapGL();
+    const maskSource = mapgl && mapgl.getSource(`${this.getId()}-mask`);
+    if (!maskSource) {
+      return;
+    }
+    const {
+      _filteredFeatureIds: filteredIds,
+      _visibleIds: visibleIds
+    } = this;
+    const hidden = this.getFeatures().filter(feature => {
+      const id = feature.properties.id;
+      const passesFilter = !Array.isArray(filteredIds) || filteredIds.includes(id);
+      const passesVisible = !Array.isArray(visibleIds) || visibleIds.includes(id);
+      return !(passesFilter && passesVisible);
+    });
+    maskSource.setData((0, _geometry.featureCollection)(hidden));
   }
 }
 var _default = exports.default = EarthEngine;
