@@ -72,10 +72,14 @@ const clearVectorStyleOpacityCache = mapgl => {
   _baseValueCache.delete(mapgl);
 };
 exports.clearVectorStyleOpacityCache = clearVectorStyleOpacityCache;
-const setVectorStyleOpacity = (mapgl, opacity, layers) => {
+const setVectorStyleOpacity = (mapgl, layers, {
+  opacity = 1,
+  labelOpacity = 1
+} = {}) => {
   layers.forEach(layer => {
     opacityProperties[layer.type]?.forEach(property => {
-      const baseValue = getBaseValue(mapgl, layer.id, property);
+      const rawBaseValue = getBaseValue(mapgl, layer.id, property);
+      const baseValue = layer.type === 'symbol' ? scaleValue(rawBaseValue, labelOpacity) : rawBaseValue;
       const value = scaleValue(baseValue, opacity);
       try {
         mapgl.setPaintProperty(layer.id, property, value);

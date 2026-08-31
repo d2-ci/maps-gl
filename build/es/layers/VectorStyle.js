@@ -40,8 +40,10 @@ class VectorStyle extends Evented {
 
       // Store id of all style layers that are visible
       this._visibleLayers = this._styleLayers.filter(l => l.layout?.visibility !== 'none').map(l => l.id);
-      if ((this.options.opacity ?? 1) !== 1) {
-        this.setOpacity(this.options.opacity);
+      const opacity = this.options.opacity ?? 1;
+      const labelOpacity = this.options.labelOpacity ?? 1;
+      if (opacity !== 1 || labelOpacity !== 1) {
+        this.setOpacity(opacity);
       }
     }
     await this.addOtherLayers();
@@ -128,7 +130,10 @@ class VectorStyle extends Evented {
     this.options.opacity = opacity;
     const mapgl = this._map?.getMapGL();
     if (mapgl && this.isOnMap() && this._styleLayers) {
-      setVectorStyleOpacity(mapgl, opacity, this._styleLayers);
+      setVectorStyleOpacity(mapgl, this._styleLayers, {
+        opacity,
+        labelOpacity: this.options.labelOpacity ?? 1
+      });
     }
   }
   setVisibility(isVisible) {

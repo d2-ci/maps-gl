@@ -16,7 +16,9 @@ describe('opacityVectorStyle', () => {
       id: 'water',
       type: 'fill'
     }];
-    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, 0.5, layers);
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5
+    });
     expect(mapgl.setPaintProperty).toHaveBeenCalledWith('water', 'fill-opacity', 0.4);
   });
   it('defaults to a base value of 1 when the style has no explicit value', () => {
@@ -25,7 +27,9 @@ describe('opacityVectorStyle', () => {
       id: 'roads',
       type: 'line'
     }];
-    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, 0.5, layers);
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5
+    });
     expect(mapgl.setPaintProperty).toHaveBeenCalledWith('roads', 'line-opacity', 0.5);
   });
   it('scales the output values of a zoom-based interpolate expression in place', () => {
@@ -39,7 +43,9 @@ describe('opacityVectorStyle', () => {
       id: 'roads',
       type: 'line'
     }];
-    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, 0.5, layers);
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5
+    });
     expect(mapgl.setPaintProperty).toHaveBeenCalledWith('roads', 'line-opacity', ['interpolate', ['linear'], ['zoom'], 5, 0, 10, 0.5]);
   });
   it('scales the output values of a zoom-based step expression in place', () => {
@@ -53,7 +59,9 @@ describe('opacityVectorStyle', () => {
       id: 'roads',
       type: 'line'
     }];
-    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, 0.5, layers);
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5
+    });
     expect(mapgl.setPaintProperty).toHaveBeenCalledWith('roads', 'line-opacity', ['step', ['zoom'], 0, 10, 0.5]);
   });
   it('wraps a non-zoom-curve expression instead of overwriting it', () => {
@@ -67,7 +75,9 @@ describe('opacityVectorStyle', () => {
       id: 'roads',
       type: 'line'
     }];
-    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, 0.5, layers);
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5
+    });
     expect(mapgl.setPaintProperty).toHaveBeenCalledWith('roads', 'line-opacity', ['*', expression, 0.5]);
   });
   it('leaves legacy stops/function opacity values untouched', () => {
@@ -83,7 +93,9 @@ describe('opacityVectorStyle', () => {
       id: 'roads',
       type: 'line'
     }];
-    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, 0.5, layers);
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5
+    });
     expect(mapgl.setPaintProperty).toHaveBeenCalledWith('roads', 'line-opacity', legacyFunction);
   });
   it('applies opacity across every supported layer type', () => {
@@ -113,7 +125,9 @@ describe('opacityVectorStyle', () => {
       id: 'density',
       type: 'heatmap'
     }];
-    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, 0.5, layers);
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5
+    });
     expect(mapgl.setPaintProperty).toHaveBeenCalledWith('bg', 'background-opacity', 0.5);
     expect(mapgl.setPaintProperty).toHaveBeenCalledWith('water', 'fill-opacity', 0.5);
     expect(mapgl.setPaintProperty).toHaveBeenCalledWith('roads', 'line-opacity', 0.5);
@@ -131,7 +145,9 @@ describe('opacityVectorStyle', () => {
       id: 'hills',
       type: 'hillshade'
     }];
-    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, 0.5, layers);
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5
+    });
     expect(mapgl.setPaintProperty).not.toHaveBeenCalled();
   });
   it('only applies opacity to the layers it is given', () => {
@@ -140,7 +156,9 @@ describe('opacityVectorStyle', () => {
       id: 'water',
       type: 'fill'
     }];
-    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, 0.5, layers);
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5
+    });
     expect(mapgl.setPaintProperty).toHaveBeenCalledTimes(1);
     expect(mapgl.setPaintProperty).toHaveBeenCalledWith('water', 'fill-opacity', 0.5);
   });
@@ -154,8 +172,12 @@ describe('opacityVectorStyle', () => {
       id: 'water',
       type: 'fill'
     }];
-    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, 0.5, layers);
-    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, 1, layers);
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5
+    });
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 1
+    });
     expect(mapgl.getPaintProperty).toHaveBeenCalledTimes(1);
     expect(mapgl.setPaintProperty).toHaveBeenLastCalledWith('water', 'fill-opacity', 0.8);
   });
@@ -169,10 +191,80 @@ describe('opacityVectorStyle', () => {
       id: 'water',
       type: 'fill'
     }];
-    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, 0.5, layers);
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5
+    });
     (0, _opacityVectorStyle.clearVectorStyleOpacityCache)(mapgl);
-    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, 0.5, layers);
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5
+    });
     expect(mapgl.getPaintProperty).toHaveBeenCalledTimes(2);
+  });
+  it('dims a symbol layer by labelOpacity even at the default opacity', () => {
+    const mapgl = createMapGL({
+      labels: {
+        'text-opacity': 1
+      }
+    });
+    const layers = [{
+      id: 'labels',
+      type: 'symbol'
+    }];
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 1,
+      labelOpacity: 0.9
+    });
+    expect(mapgl.setPaintProperty).toHaveBeenCalledWith('labels', 'text-opacity', 0.9);
+    expect(mapgl.setPaintProperty).toHaveBeenCalledWith('labels', 'icon-opacity', 0.9);
+  });
+  it('composes labelOpacity with the basemap opacity, rather than one replacing the other', () => {
+    const mapgl = createMapGL({
+      labels: {
+        'text-opacity': 1
+      }
+    });
+    const layers = [{
+      id: 'labels',
+      type: 'symbol'
+    }];
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5,
+      labelOpacity: 0.9
+    });
+    expect(mapgl.setPaintProperty).toHaveBeenCalledWith('labels', 'text-opacity', 0.45);
+  });
+  it('does not apply labelOpacity to non-symbol layers', () => {
+    const mapgl = createMapGL({
+      water: {
+        'fill-opacity': 1
+      }
+    });
+    const layers = [{
+      id: 'water',
+      type: 'fill'
+    }];
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5,
+      labelOpacity: 0.9
+    });
+    expect(mapgl.setPaintProperty).toHaveBeenCalledWith('water', 'fill-opacity', 0.5);
+  });
+  it('composes labelOpacity with a zoom-based interpolate, staying a valid top-level expression', () => {
+    const expression = ['interpolate', ['linear'], ['zoom'], 5, 0, 10, 1];
+    const mapgl = createMapGL({
+      labels: {
+        'text-opacity': expression
+      }
+    });
+    const layers = [{
+      id: 'labels',
+      type: 'symbol'
+    }];
+    (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5,
+      labelOpacity: 0.9
+    });
+    expect(mapgl.setPaintProperty).toHaveBeenCalledWith('labels', 'text-opacity', ['interpolate', ['linear'], ['zoom'], 5, 0, 10, 0.45]);
   });
   it('logs, rather than throwing, when setPaintProperty rejects a value', () => {
     const mapgl = createMapGL({
@@ -189,7 +281,9 @@ describe('opacityVectorStyle', () => {
       throw error;
     });
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, 0.5, layers)).not.toThrow();
+    expect(() => (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, layers, {
+      opacity: 0.5
+    })).not.toThrow();
     expect(console.error).toHaveBeenCalledWith(error);
     console.error.mockRestore();
   });
