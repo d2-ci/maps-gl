@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.labelSource = exports.labelLayer = exports.labelClusterLayer = exports.getLabelPosition = void 0;
+exports.labelSource = exports.labelLayer = exports.labelClusterLayer = exports.getLabelPosition = exports.fonts = void 0;
 var _area = _interopRequireDefault(require("@turf/area"));
 var _polylabel = _interopRequireDefault(require("polylabel"));
 var _expressions = require("./expressions.js");
@@ -12,7 +12,7 @@ var _geometry = require("./geometry.js");
 var _style = require("./style.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 // Default fonts
-const fonts = {
+const fonts = exports.fonts = {
   'normal-normal': 'Open Sans Regular',
   'normal-bold': 'Open Sans Bold',
   'italic-normal': 'Open Sans Italic',

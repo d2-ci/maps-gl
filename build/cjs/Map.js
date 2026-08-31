@@ -15,6 +15,7 @@ var _Label = _interopRequireDefault(require("./ui/Label.js"));
 var _Popup = _interopRequireDefault(require("./ui/Popup.js"));
 var _core = require("./utils/core.js");
 var _geometry = require("./utils/geometry.js");
+var _glyphs = require("./utils/glyphs.js");
 var _images = require("./utils/images.js");
 var _layers = require("./utils/layers.js");
 var _style = require("./utils/style.js");
@@ -128,7 +129,7 @@ class MapGL extends _maplibreGl.Evented {
       },
       attributionControl: false,
       locale: _controlsLocale.default,
-      transformRequest: _images.transformRequest,
+      transformRequest: (0, _images.composeTransformRequest)(_images.transformRequest, (0, _glyphs.createFontTransformRequest)(glyphs)),
       scrollZoom
     });
     this._mapgl = mapgl;
