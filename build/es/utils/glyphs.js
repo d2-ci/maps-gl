@@ -18,7 +18,8 @@ export const createFontTransformRequest = glyphsUrl => {
     }
     const range = url.slice(url.lastIndexOf('/') + 1);
     return {
-      url: `${ownGlyphsBaseUrl}${font}/${range}`
+      url: `${ownGlyphsBaseUrl}${font}/${range}`,
+      credentials: 'include'
     };
   };
 };

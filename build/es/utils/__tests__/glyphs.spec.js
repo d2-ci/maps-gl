@@ -6,25 +6,29 @@ describe('createFontTransformRequest', () => {
   it('redirects a request for one of our own label fonts, regardless of source host', () => {
     const transformRequest = createFontTransformRequest(ownGlyphsUrl);
     expect(transformRequest(otherGlyphUrl('Open Sans Regular'), 'Glyphs')).toEqual({
-      url: ownGlyphUrl('Open Sans Regular')
+      url: ownGlyphUrl('Open Sans Regular'),
+      credentials: 'include'
     });
   });
   it('redirects Open Sans Bold, preserving the requested range', () => {
     const transformRequest = createFontTransformRequest(ownGlyphsUrl);
     expect(transformRequest(otherGlyphUrl('Open Sans Bold', '256-511'), 'Glyphs')).toEqual({
-      url: ownGlyphUrl('Open Sans Bold', '256-511')
+      url: ownGlyphUrl('Open Sans Bold', '256-511'),
+      credentials: 'include'
     });
   });
   it('redirects Open Sans Italic', () => {
     const transformRequest = createFontTransformRequest(ownGlyphsUrl);
     expect(transformRequest(otherGlyphUrl('Open Sans Italic'), 'Glyphs')).toEqual({
-      url: ownGlyphUrl('Open Sans Italic')
+      url: ownGlyphUrl('Open Sans Italic'),
+      credentials: 'include'
     });
   });
   it('redirects Open Sans Bold Italic without matching the shorter "Bold" name', () => {
     const transformRequest = createFontTransformRequest(ownGlyphsUrl);
     expect(transformRequest(otherGlyphUrl('Open Sans Bold Italic'), 'Glyphs')).toEqual({
-      url: ownGlyphUrl('Open Sans Bold Italic')
+      url: ownGlyphUrl('Open Sans Bold Italic'),
+      credentials: 'include'
     });
   });
   it("leaves a request for a font we don't render with untouched", () => {
