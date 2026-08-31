@@ -17,8 +17,14 @@ const createFontTransformRequest = glyphsUrl => {
     if (resourceType !== 'Glyphs' || !ownGlyphsBaseUrl) {
       return null;
     }
+    if (url.startsWith(ownGlyphsBaseUrl)) {
+      return {
+        url,
+        credentials: 'include'
+      };
+    }
     const font = ownFontNames.find(name => url.includes(name));
-    if (!font || url.startsWith(ownGlyphsBaseUrl)) {
+    if (!font) {
       return null;
     }
     const range = url.slice(url.lastIndexOf('/') + 1);

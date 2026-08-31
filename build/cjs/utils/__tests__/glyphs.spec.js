@@ -37,9 +37,12 @@ describe('createFontTransformRequest', () => {
     const transformRequest = (0, _glyphs.createFontTransformRequest)(ownGlyphsUrl);
     expect(transformRequest(otherGlyphUrl('Noto Sans Regular'), 'Glyphs')).toBeNull();
   });
-  it('does not re-redirect a request already going to our own server', () => {
+  it('adds credentials, without rewriting the url, when already going to our own server', () => {
     const transformRequest = (0, _glyphs.createFontTransformRequest)(ownGlyphsUrl);
-    expect(transformRequest(ownGlyphUrl('Open Sans Regular'), 'Glyphs')).toBeNull();
+    expect(transformRequest(ownGlyphUrl('Open Sans Regular'), 'Glyphs')).toEqual({
+      url: ownGlyphUrl('Open Sans Regular'),
+      credentials: 'include'
+    });
   });
   it('does not touch other resource types', () => {
     const transformRequest = (0, _glyphs.createFontTransformRequest)(ownGlyphsUrl);
