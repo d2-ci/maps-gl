@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 var _maplibreGl = require("maplibre-gl");
 var _layers = require("../utils/layers.js");
+var _opacityVectorStyle = require("../utils/opacityVectorStyle.js");
 var _style = require("../utils/style.js");
 class VectorStyle extends _maplibreGl.Evented {
   constructor(options = {}) {
@@ -22,16 +23,33 @@ class VectorStyle extends _maplibreGl.Evented {
     await this.removeOtherLayers();
     this._map.setBeforeLayerId(beforeId);
 
+    // Set eagerly (rather than after the style loads below) so that
+    // setOpacity(), called once the new style is ready, treats this
+    // layer as on the map and actually applies the opacity
+    this._isOnMap = isOnMap;
+
     // (Re)set map style if user is not switching to a new one
     if (isOnMap || !this.mapHasVectorStyle()) {
       this._map._styleIsLoading = true;
       await this.setStyle(style);
       this._map._styleIsLoading = false;
+      const mapgl = this._map.getMapGL();
+
+      // Style layers/ids are brand new after a style change, so any
+      // cached "original" opacity values from the previous style are
+      // stale and must not be reused
+      (0, _opacityVectorStyle.clearVectorStyleOpacityCache)(mapgl);
+
+      // Overlay layers share this same mapgl style, so this snapshot
+      // is what scopes opacity to the vector style's own layers
+      this._styleLayers = mapgl.getStyle().layers;
 
       // Store id of all style layers that are visible
-      this._visibleLayers = this._map.getMapGL().getStyle().layers.filter(l => l.layout?.visibility !== 'none').map(l => l.id);
+      this._visibleLayers = this._styleLayers.filter(l => l.layout?.visibility !== 'none').map(l => l.id);
+      if ((this.options.opacity ?? 1) !== 1) {
+        this.setOpacity(this.options.opacity);
+      }
     }
-    this._isOnMap = isOnMap;
     await this.addOtherLayers();
   }
 
@@ -109,10 +127,15 @@ class VectorStyle extends _maplibreGl.Evented {
   setIndex(index = _layers.BASEMAP_POSITION) {
     this.options.index = index;
   }
-
-  // No opacity support for vector style
-  setOpacity() {
-    return;
+  setOpacity(opacity) {
+    if (typeof opacity !== 'number') {
+      return;
+    }
+    this.options.opacity = opacity;
+    const mapgl = this._map?.getMapGL();
+    if (mapgl && this.isOnMap() && this._styleLayers) {
+      (0, _opacityVectorStyle.setVectorStyleOpacity)(mapgl, opacity, this._styleLayers);
+    }
   }
   setVisibility(isVisible) {
     if (this.isOnMap()) {
