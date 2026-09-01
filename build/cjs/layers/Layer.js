@@ -246,8 +246,9 @@ class Layer extends _maplibreGl.Evented {
   }
   setOpacity(opacity) {
     const mapgl = this.getMapGL();
+    const map = this.getMap();
     const opacityFactor = this._opacityFactor !== undefined ? this._opacityFactor : 1;
-    if (mapgl) {
+    if (mapgl && map?.styleIsLoaded()) {
       (0, _opacity.setLayersOpacity)(mapgl, this.getId(), opacity * opacityFactor);
     }
     this.options.opacity = opacity;

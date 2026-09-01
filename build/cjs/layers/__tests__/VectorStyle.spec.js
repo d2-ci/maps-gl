@@ -270,6 +270,15 @@ describe('VectorStyle opacity', () => {
     await expect(vectorStyle.addTo(map)).rejects.toBeDefined();
     expect(otherLayer.addTo).toHaveBeenCalledWith(map);
   });
+  it('is not considered on the map after a failed load', async () => {
+    const mapgl = createFailingMapGL();
+    const map = createMap(mapgl);
+    const vectorStyle = new _VectorStyle.default({
+      url: 'https://example.com/a.json'
+    });
+    await expect(vectorStyle.addTo(map)).rejects.toBeDefined();
+    expect(vectorStyle.isOnMap()).toBe(false);
+  });
   it('suppresses an error from a load superseded by a newer basemap switch', async () => {
     const {
       mapgl,
@@ -309,13 +318,24 @@ describe('VectorStyle opacity', () => {
       opacity: 0.5
     });
     vectorStyle._map = map;
+
+    // The superseded call gets its own, distinct, non-empty layers -
+    // if isCurrent() didn't gate this call's own opacity re-application,
+    // this is what would leak into setPaintProperty
+    mapgl.getStyle.mockReturnValue({
+      layers: [{
+        id: 'lake',
+        type: 'fill'
+      }]
+    });
     const firstCall = vectorStyle.toggleVectorStyle(true, 'https://example.com/a.json');
     await flushMicrotasks();
     const secondCall = vectorStyle.toggleVectorStyle(true, 'https://example.com/b.json');
     await flushMicrotasks();
 
     // The first call already settled (superseded) - its own opacity
-    // re-application must not run
+    // re-application must not run, even though real, non-empty layer
+    // data was available to it
     await expect(firstCall).resolves.toBeUndefined();
     expect(mapgl.setPaintProperty).not.toHaveBeenCalled();
     mapgl.getStyle.mockReturnValue({
@@ -329,6 +349,7 @@ describe('VectorStyle opacity', () => {
 
     // Only the current (second) call's opacity should have been applied
     expect(mapgl.setPaintProperty).toHaveBeenCalledWith('ocean', 'fill-opacity', 0.5);
+    expect(mapgl.setPaintProperty).not.toHaveBeenCalledWith('lake', 'fill-opacity', expect.anything());
   });
   it('suppresses a stale result across two different VectorStyle instances sharing a map', async () => {
     // Switching basemaps creates a new VectorStyle instance rather than
@@ -359,6 +380,38 @@ describe('VectorStyle opacity', () => {
     // The new basemap's load succeeds normally
     fireIdle();
     await expect(addCall).resolves.toBeUndefined();
+  });
+  it('settles an earlier pending load and clears the loading flag when a later call skips setStyle() entirely', async () => {
+    // A call takes the "skip" branch (isOnMap false, another vector
+    // style already registered) when it doesn't need to reset the
+    // shared style - it never calls setStyle() itself, so nothing else
+    // would settle an earlier, still-pending call or clear the flag
+    const {
+      mapgl,
+      fireError
+    } = createControllableMapGL();
+    const map = createMap(mapgl);
+    const vectorStyle = new _VectorStyle.default({
+      url: 'https://example.com/a.json'
+    });
+    vectorStyle._map = map;
+    const firstCall = vectorStyle.toggleVectorStyle(true, 'https://example.com/a.json');
+    await flushMicrotasks();
+    expect(map._styleIsLoading).toBe(true);
+    map.getLayers = jest.fn(() => [vectorStyle]);
+    const secondCall = vectorStyle.toggleVectorStyle(false, 'https://example.com/default.json');
+    await flushMicrotasks();
+    expect(map._styleIsLoading).toBe(false);
+    await expect(firstCall).resolves.toBeUndefined();
+    await expect(secondCall).resolves.toBeUndefined();
+
+    // Confirms fireError is unused by the first call at this point -
+    // its listeners were already detached by the skip branch above
+    expect(() => fireError({
+      error: {
+        message: 'x'
+      }
+    })).not.toThrow();
   });
   it('does not apply opacity while the layer is being removed from the map', async () => {
     const mapgl = createMapGL();
