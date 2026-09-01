@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.transformRequest = exports.addImages = void 0;
+exports.transformRequest = exports.composeTransformRequest = exports.addImages = void 0;
 const credentials = 'include';
 
 // Add image to map sprite if not exist
@@ -32,4 +32,17 @@ const transformRequest = (url, resourceType) => resourceType === 'Image' ? {
   url,
   credentials
 } : null;
+
+// Tries each function in turn, so several transformRequests (e.g. image
+// credentials, a font redirect) can be layered without replacing each other
 exports.transformRequest = transformRequest;
+const composeTransformRequest = (...transformRequestFns) => (url, resourceType) => {
+  for (const fn of transformRequestFns) {
+    const result = fn?.(url, resourceType);
+    if (result) {
+      return result;
+    }
+  }
+  return null;
+};
+exports.composeTransformRequest = composeTransformRequest;
