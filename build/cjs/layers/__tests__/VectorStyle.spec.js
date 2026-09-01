@@ -430,4 +430,27 @@ describe('VectorStyle opacity', () => {
     await vectorStyle.removeFrom();
     expect(vectorStyle.isOnMap()).toBe(false);
   });
+  it('only lets the current call manage overlays after overlapping basemap switches', async () => {
+    const {
+      mapgl,
+      fireIdle
+    } = createControllableMapGL();
+    const map = createMap(mapgl);
+    const vectorStyle = new _VectorStyle.default({
+      url: 'https://example.com/a.json'
+    });
+    vectorStyle._map = map;
+    const addOtherLayersSpy = jest.spyOn(vectorStyle, 'addOtherLayers');
+    const firstCall = vectorStyle.toggleVectorStyle(true, 'https://example.com/a.json');
+    await flushMicrotasks();
+    const secondCall = vectorStyle.toggleVectorStyle(true, 'https://example.com/b.json');
+    await flushMicrotasks();
+    await expect(firstCall).resolves.toBeUndefined();
+    // The superseded call must not touch overlays at all - only the
+    // current call is responsible for managing them
+    expect(addOtherLayersSpy).not.toHaveBeenCalled();
+    fireIdle();
+    await expect(secondCall).resolves.toBeUndefined();
+    expect(addOtherLayersSpy).toHaveBeenCalledTimes(1);
+  });
 });
