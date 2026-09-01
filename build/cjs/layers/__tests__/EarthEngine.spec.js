@@ -183,13 +183,10 @@ describe('EarthEngine', () => {
   it('Should not create layers twice when a newer addTo() call supersedes an in-flight one', async () => {
     const layer = new _EarthEngine.default(options);
     const firstAdd = layer.addTo(mockMap);
-    // Superseded before the worker/tile URL resolution for the first
-    // call has settled
     const secondAdd = layer.addTo(mockMap);
     await Promise.all([firstAdd, secondAdd]);
 
-    // The stale first call must not have run createLayers() too,
-    // duplicating entries in the local bookkeeping array
+    // 4, not 8 - a duplicate createLayers() call would double this
     expect(layer.getLayers().length).toBe(4);
   });
   it('Should not add the layer back after being removed while an addTo() call is still in flight', async () => {

@@ -47,16 +47,18 @@ class Layer extends Evented {
         this.onError(error);
       }
     }
-    Object.keys(source).forEach(id => {
-      if (map.styleIsLoaded() && !mapgl.getSource(id)) {
-        mapgl.addSource(id, source[id]);
-      }
-    });
-    layers.forEach(layer => {
-      if (map.styleIsLoaded() && !mapgl.getLayer(layer.id)) {
-        mapgl.addLayer(layer, beforeId);
-      }
-    });
+    if (map.styleIsLoaded()) {
+      Object.keys(source).forEach(id => {
+        if (!mapgl.getSource(id)) {
+          mapgl.addSource(id, source[id]);
+        }
+      });
+      layers.forEach(layer => {
+        if (!mapgl.getLayer(layer.id)) {
+          mapgl.addLayer(layer, beforeId);
+        }
+      });
+    }
     if (!this.isVisible()) {
       this.setVisibility(false);
     }
@@ -82,16 +84,18 @@ class Layer extends Evented {
     this.onRemove();
     if (mapgl) {
       clearLayerOpacityCache(mapgl, this.getId());
-      layers.forEach(layer => {
-        if (map.styleIsLoaded() && mapgl.getLayer(layer.id)) {
-          mapgl.removeLayer(layer.id);
-        }
-      });
-      Object.keys(source).forEach(id => {
-        if (map.styleIsLoaded() && mapgl.getSource(id)) {
-          mapgl.removeSource(id);
-        }
-      });
+      if (map.styleIsLoaded()) {
+        layers.forEach(layer => {
+          if (mapgl.getLayer(layer.id)) {
+            mapgl.removeLayer(layer.id);
+          }
+        });
+        Object.keys(source).forEach(id => {
+          if (mapgl.getSource(id)) {
+            mapgl.removeSource(id);
+          }
+        });
+      }
     }
     if (onClick) {
       this.off('click', onClick);

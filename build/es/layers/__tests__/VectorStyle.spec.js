@@ -238,8 +238,6 @@ describe('VectorStyle opacity', () => {
     await vectorStyle.addTo(map);
     vectorStyle.setOpacity(0.5);
     mapgl.setPaintProperty.mockClear();
-
-    // Switch to a different style with a layer of its own base opacity
     mapgl.getStyle.mockReturnValue({
       layers: [{
         id: 'ocean',
@@ -288,17 +286,11 @@ describe('VectorStyle opacity', () => {
     vectorStyle._map = map;
     const firstCall = vectorStyle.toggleVectorStyle(true, 'https://example.com/a.json');
     await flushMicrotasks();
-
-    // Starting a second call detaches and settles the first one - it
-    // never gets a chance to see a stray idle/error event
     const secondCall = vectorStyle.toggleVectorStyle(true, 'https://example.com/b.json');
     await flushMicrotasks();
     await expect(firstCall).resolves.toBeUndefined();
-    // The superseded call's own finally must not clear this while the
-    // current call is still loading
+    // Superseded call's finally must not clear this while still loading
     expect(map._styleIsLoading).toBe(true);
-
-    // The second (current) load succeeds normally
     fireIdle();
     await expect(secondCall).resolves.toBeUndefined();
     expect(map._styleIsLoading).toBe(false);
@@ -316,9 +308,8 @@ describe('VectorStyle opacity', () => {
     });
     vectorStyle._map = map;
 
-    // The superseded call gets its own, distinct, non-empty layers -
-    // if isCurrent() didn't gate this call's own opacity re-application,
-    // this is what would leak into setPaintProperty
+    // Gives the superseded call its own non-empty layers to leak into
+    // setPaintProperty, if isCurrent() didn't gate its opacity re-apply
     mapgl.getStyle.mockReturnValue({
       layers: [{
         id: 'lake',
@@ -329,10 +320,6 @@ describe('VectorStyle opacity', () => {
     await flushMicrotasks();
     const secondCall = vectorStyle.toggleVectorStyle(true, 'https://example.com/b.json');
     await flushMicrotasks();
-
-    // The first call already settled (superseded) - its own opacity
-    // re-application must not run, even though real, non-empty layer
-    // data was available to it
     await expect(firstCall).resolves.toBeUndefined();
     expect(mapgl.setPaintProperty).not.toHaveBeenCalled();
     mapgl.getStyle.mockReturnValue({
@@ -343,15 +330,12 @@ describe('VectorStyle opacity', () => {
     });
     fireIdle();
     await expect(secondCall).resolves.toBeUndefined();
-
-    // Only the current (second) call's opacity should have been applied
     expect(mapgl.setPaintProperty).toHaveBeenCalledWith('ocean', 'fill-opacity', 0.5);
     expect(mapgl.setPaintProperty).not.toHaveBeenCalledWith('lake', 'fill-opacity', expect.anything());
   });
   it('suppresses a stale result across two different VectorStyle instances sharing a map', async () => {
-    // Switching basemaps creates a new VectorStyle instance rather than
-    // reusing the old one, but both still contend for the same
-    // underlying map style - staleness must be tracked map-wide
+    // Basemap switches use a new instance each time, but staleness is
+    // tracked map-wide, since both contend for the same style
     const {
       mapgl,
       fireIdle
@@ -369,20 +353,14 @@ describe('VectorStyle opacity', () => {
     await flushMicrotasks();
     const addCall = newBasemap.toggleVectorStyle(true, 'https://example.com/b.json');
     await flushMicrotasks();
-
-    // The old basemap's own load was detached and settled the moment
-    // the new one started - it never sees a stray idle/error event
     await expect(removeCall).resolves.toBeUndefined();
-
-    // The new basemap's load succeeds normally
     fireIdle();
     await expect(addCall).resolves.toBeUndefined();
   });
   it('settles an earlier pending load and clears the loading flag when a later call skips setStyle() entirely', async () => {
-    // A call takes the "skip" branch (isOnMap false, another vector
-    // style already registered) when it doesn't need to reset the
-    // shared style - it never calls setStyle() itself, so nothing else
-    // would settle an earlier, still-pending call or clear the flag
+    // The "skip" branch (isOnMap false, another vector style already
+    // registered) never calls setStyle(), so it must settle/clear on
+    // its own behalf instead
     const {
       mapgl,
       fireError
@@ -402,8 +380,7 @@ describe('VectorStyle opacity', () => {
     await expect(firstCall).resolves.toBeUndefined();
     await expect(secondCall).resolves.toBeUndefined();
 
-    // Confirms fireError is unused by the first call at this point -
-    // its listeners were already detached by the skip branch above
+    // First call's listeners were already detached by the skip branch
     expect(() => fireError({
       error: {
         message: 'x'
@@ -443,18 +420,14 @@ describe('VectorStyle opacity', () => {
     const secondCall = vectorStyle.toggleVectorStyle(true, 'https://example.com/b.json');
     await flushMicrotasks();
     await expect(firstCall).resolves.toBeUndefined();
-    // The superseded call must not touch overlays at all - only the
-    // current call is responsible for managing them
     expect(addOtherLayersSpy).not.toHaveBeenCalled();
     fireIdle();
     await expect(secondCall).resolves.toBeUndefined();
     expect(addOtherLayersSpy).toHaveBeenCalledTimes(1);
   });
   it('ignores a second, redundant removeFrom() call on the same instance', async () => {
-    // Map.js's addLayer() can call removeFrom() a second time on the
-    // same instance as its own "layer removed while being created"
-    // cleanup - this must not contend with a different, genuinely
-    // in-progress basemap load as if it were a new request
+    // Map.js's addLayer() can call removeFrom() again on the same
+    // instance as its own "layer removed while being created" cleanup
     const {
       mapgl,
       fireIdle
@@ -471,19 +444,15 @@ describe('VectorStyle opacity', () => {
     const firstRemove = oldBasemap.removeFrom();
     await flushMicrotasks();
 
-    // The new basemap's own load is genuinely still in progress
+    // The new basemap's load is genuinely still in progress
     map.getLayers = jest.fn(() => [newBasemap]);
     const addNew = newBasemap.toggleVectorStyle(true, 'https://example.com/new.json');
     await flushMicrotasks();
     await expect(firstRemove).resolves.toBeUndefined();
-
-    // A second, redundant removeFrom() call on the already-removed
-    // old basemap instance
     const secondRemove = oldBasemap.removeFrom();
     await flushMicrotasks();
 
-    // The new basemap's genuinely in-progress load must not have been
-    // force-settled by the redundant cleanup call
+    // Must not have force-settled the still-in-progress new load
     expect(map._styleIsLoading).toBe(true);
     await expect(secondRemove).resolves.toBeUndefined();
     fireIdle();
