@@ -193,10 +193,16 @@ class Layer extends _maplibreGl.Evented {
     return this.getLayers().some(layer => layer.id === id);
   }
   move() {
+    const map = this.getMap();
+    if (!map?.styleIsLoaded()) {
+      return;
+    }
     const mapgl = this.getMapGL();
-    const beforeId = this._map.getBeforeLayerId();
+    const beforeId = map.getBeforeLayerId();
     this.getLayers().forEach(layer => {
-      mapgl.moveLayer(layer.id, beforeId);
+      if (mapgl.getLayer(layer.id)) {
+        mapgl.moveLayer(layer.id, beforeId);
+      }
     });
   }
   getFeatures() {

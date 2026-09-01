@@ -347,7 +347,7 @@ export class MapGL extends Evented {
 
   // Returns before layer id if exists among layers
   getBeforeLayerId() {
-    return this._beforeId && this.getMapGL().getStyle().layers.find(layer => layer.id === this._beforeId) ? this._beforeId : undefined;
+    return this._beforeId && this.styleIsLoaded() && this.getMapGL().getStyle().layers.find(layer => layer.id === this._beforeId) ? this._beforeId : undefined;
   }
   styleIsLoaded() {
     return !this._styleIsLoading;
