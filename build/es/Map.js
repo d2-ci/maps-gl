@@ -12,7 +12,8 @@ import Label from './ui/Label.js';
 import Popup from './ui/Popup.js';
 import { getFeaturesString } from './utils/core.js';
 import { getBoundsFromLayers } from './utils/geometry.js';
-import { transformRequest } from './utils/images.js';
+import { createFontTransformRequest } from './utils/glyphs.js';
+import { transformRequest as imageTransformRequest, composeTransformRequest } from './utils/images.js';
 import { OVERLAY_START_POSITION, MAP_MAX_ZOOM } from './utils/layers.js';
 import { mapStyle } from './utils/style.js';
 import syncMaps from './utils/sync.js';
@@ -118,7 +119,7 @@ export class MapGL extends Evented {
       },
       attributionControl: false,
       locale: controlsLocale,
-      transformRequest,
+      transformRequest: composeTransformRequest(imageTransformRequest, createFontTransformRequest(glyphs)),
       scrollZoom
     });
     this._mapgl = mapgl;
