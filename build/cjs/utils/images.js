@@ -1,0 +1,48 @@
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.transformRequest = exports.composeTransformRequest = exports.addImages = void 0;
+const credentials = 'include';
+
+// Add image to map sprite if not exist
+const addImage = async (map, url) => {
+  try {
+    if (map.hasImage(url)) {
+      return map.getImage(url);
+    } else {
+      const img = await map.loadImage(url);
+      map.addImage(url, img.data);
+      return img;
+    }
+  } catch {
+    throw new Error(`Symbol not found: ${url}`);
+  }
+};
+
+// Load and add images to map sprite
+const addImages = async (map, images) => {
+  return await Promise.all(images.map(url => addImage(map, url)));
+};
+
+// Include cookies for cross-origin image requests
+exports.addImages = addImages;
+const transformRequest = (url, resourceType) => resourceType === 'Image' ? {
+  url,
+  credentials
+} : null;
+
+// Tries each function in turn, so several transformRequests (e.g. image
+// credentials, a font redirect) can be layered without replacing each other
+exports.transformRequest = transformRequest;
+const composeTransformRequest = (...transformRequestFns) => (url, resourceType) => {
+  for (const fn of transformRequestFns) {
+    const result = fn?.(url, resourceType);
+    if (result) {
+      return result;
+    }
+  }
+  return null;
+};
+exports.composeTransformRequest = composeTransformRequest;
