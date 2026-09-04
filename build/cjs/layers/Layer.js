@@ -69,16 +69,18 @@ class Layer extends _maplibreGl.Evented {
         this.onError(error);
       }
     }
-    Object.keys(source).forEach(id => {
-      if (map.styleIsLoaded() && !mapgl.getSource(id)) {
-        mapgl.addSource(id, source[id]);
-      }
-    });
-    layers.forEach(layer => {
-      if (map.styleIsLoaded() && !mapgl.getLayer(layer.id)) {
-        mapgl.addLayer(layer, beforeId);
-      }
-    });
+    if (map.styleIsLoaded()) {
+      Object.keys(source).forEach(id => {
+        if (!mapgl.getSource(id)) {
+          mapgl.addSource(id, source[id]);
+        }
+      });
+      layers.forEach(layer => {
+        if (!mapgl.getLayer(layer.id)) {
+          mapgl.addLayer(layer, beforeId);
+        }
+      });
+    }
     if (map.styleIsLoaded()) {
       this._overlayLayerIds = (0, _highlightOverlay.createHighlightOverlay)(map, {
         id: this.getId(),
@@ -124,17 +126,19 @@ class Layer extends _maplibreGl.Evented {
     this.onRemove();
     if (mapgl) {
       (0, _opacity.clearLayerOpacityCache)(mapgl, this.getId());
-      layers.forEach(layer => {
-        if (mapgl.getLayer(layer.id)) {
-          mapgl.removeLayer(layer.id);
-        }
-      });
-      Object.keys(source).forEach(id => {
-        if (mapgl.getSource(id)) {
-          mapgl.removeSource(id);
-        }
-      });
-      (0, _highlightOverlay.removeHighlightOverlay)(map, this.getId(), this._overlayLayerIds);
+      if (map.styleIsLoaded()) {
+        layers.forEach(layer => {
+          if (mapgl.getLayer(layer.id)) {
+            mapgl.removeLayer(layer.id);
+          }
+        });
+        Object.keys(source).forEach(id => {
+          if (mapgl.getSource(id)) {
+            mapgl.removeSource(id);
+          }
+        });
+        (0, _highlightOverlay.removeHighlightOverlay)(map, this.getId(), this._overlayLayerIds);
+      }
       this._overlayLayerIds = [];
     }
     if (onClick) {
@@ -176,10 +180,18 @@ class Layer extends _maplibreGl.Evented {
       const value = isVisible ? 'visible' : 'none';
       const layers = this.getLayers();
       if (mapgl && layers) {
-        layers.forEach(layer => mapgl.setLayoutProperty(layer.id, 'visibility', value));
+        layers.forEach(layer => {
+          if (mapgl.getLayer(layer.id)) {
+            mapgl.setLayoutProperty(layer.id, 'visibility', value);
+          }
+        });
 
         // Hide the overlay's cloned layers too
-        this._overlayLayerIds.forEach(layerId => mapgl.setLayoutProperty(layerId, 'visibility', value));
+        this._overlayLayerIds.forEach(layerId => {
+          if (mapgl.getLayer(layerId)) {
+            mapgl.setLayoutProperty(layerId, 'visibility', value);
+          }
+        });
       }
 
       // isInteractive() depends on isVisible(), so a visibility change
@@ -239,10 +251,16 @@ class Layer extends _maplibreGl.Evented {
     return this.getLayers().some(layer => layer.id === id);
   }
   move() {
+    const map = this.getMap();
+    if (!map?.styleIsLoaded()) {
+      return;
+    }
     const mapgl = this.getMapGL();
-    const beforeId = this._map.getBeforeLayerId();
+    const beforeId = map.getBeforeLayerId();
     this.getLayers().forEach(layer => {
-      mapgl.moveLayer(layer.id, beforeId);
+      if (mapgl.getLayer(layer.id)) {
+        mapgl.moveLayer(layer.id, beforeId);
+      }
     });
 
     // The highlight overlay must stay drawn above these base layers
@@ -302,8 +320,9 @@ class Layer extends _maplibreGl.Evented {
   }
   setOpacity(opacity) {
     const mapgl = this.getMapGL();
+    const map = this.getMap();
     const opacityFactor = this._opacityFactor !== undefined ? this._opacityFactor : 1;
-    if (mapgl) {
+    if (mapgl && map?.styleIsLoaded()) {
       (0, _opacity.setLayersOpacity)(mapgl, this.getId(), opacity * opacityFactor);
     }
     this.options.opacity = opacity;
