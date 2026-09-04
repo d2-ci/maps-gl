@@ -30,6 +30,7 @@ const data = [{
 describe('Layer', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    mockMap.styleIsLoaded.mockReturnValue(true);
   });
   it('Should initialize', () => {
     const layer = new _Layer.default();
@@ -54,6 +55,7 @@ describe('Layer', () => {
     layer.addTo(mockMap);
     layer._overlayLayerIds = ['layer-1-highlight'];
     mockMap.getBeforeLayerId.mockReturnValue('before-id');
+    mockMapGL.getLayer.mockReturnValue(true);
     mockMapGL.moveLayer.mockClear();
     layer.move();
     expect(mockMapGL.moveLayer).toHaveBeenCalledWith('layer-1', 'before-id');
@@ -366,5 +368,105 @@ describe('Layer', () => {
     layer._overlayLayerIds = ['layer-1-highlight'];
     layer.removeFrom(mockMap);
     expect(layer._overlayLayerIds).toEqual([]);
+  });
+  it('Should apply opacity once the style is loaded', () => {
+    const layer = new _Layer.default();
+    const layerId = `${layer.getId()}-polygon`;
+    mockMapGL.getStyle.mockReturnValue({
+      layers: [{
+        id: layerId,
+        type: 'polygon'
+      }]
+    });
+    layer.addTo(mockMap);
+    layer.setOpacity(0.5);
+    expect(mockMapGL.setPaintProperty).toHaveBeenCalledWith(layerId, 'fill-opacity', 0.5);
+    expect(layer.options.opacity).toBe(0.5);
+  });
+  it('Should not touch paint properties while the style is loading', () => {
+    const layer = new _Layer.default();
+    mockMap.styleIsLoaded.mockReturnValue(false);
+    layer.addTo(mockMap);
+    expect(() => layer.setOpacity(0.5)).not.toThrow();
+    expect(mockMapGL.getStyle).not.toHaveBeenCalled();
+    expect(mockMapGL.setPaintProperty).not.toHaveBeenCalled();
+    // The value is still kept, so it applies once re-added later
+    expect(layer.options.opacity).toBe(0.5);
+  });
+  it('Should not remove layers or sources while the style is loading', () => {
+    const layer = new _Layer.default();
+    layer.addLayer({
+      id: 'x-polygon'
+    });
+    layer.setSource('x', {
+      type: 'geojson',
+      data: {}
+    });
+    mockMapGL.getLayer.mockReturnValue(true);
+    mockMapGL.getSource.mockReturnValue(true);
+    mockMap.styleIsLoaded.mockReturnValue(false);
+    expect(() => layer.removeFrom(mockMap)).not.toThrow();
+    expect(mockMapGL.removeLayer).not.toHaveBeenCalled();
+    expect(mockMapGL.removeSource).not.toHaveBeenCalled();
+  });
+  it('Should remove layers and sources once the style is loaded', () => {
+    const layer = new _Layer.default();
+    layer.addLayer({
+      id: 'x-polygon'
+    });
+    layer.setSource('x', {
+      type: 'geojson',
+      data: {}
+    });
+    mockMapGL.getLayer.mockReturnValue(true);
+    mockMapGL.getSource.mockReturnValue(true);
+    layer.removeFrom(mockMap);
+    expect(mockMapGL.removeLayer).toHaveBeenCalledWith('x-polygon');
+    expect(mockMapGL.removeSource).toHaveBeenCalledWith('x');
+  });
+  it('Should only style sub-layers that actually exist', () => {
+    const layer = new _Layer.default();
+    layer.addLayer({
+      id: 'x-polygon'
+    });
+    layer.addLayer({
+      id: 'x-point'
+    });
+    // Simulates a partially added/removed set of sub-layers
+    mockMapGL.getLayer.mockImplementation(id => id === 'x-polygon');
+    layer.addTo(mockMap);
+    // createHighlightOverlay is mocked here and returns undefined by default
+    layer._overlayLayerIds = [];
+    layer.setVisibility(false);
+    expect(mockMapGL.setLayoutProperty).toHaveBeenCalledWith('x-polygon', 'visibility', 'none');
+    expect(mockMapGL.setLayoutProperty).not.toHaveBeenCalledWith('x-point', 'visibility', expect.anything());
+  });
+  it('Should not move layers while the style is loading', () => {
+    const layer = new _Layer.default();
+    layer.addLayer({
+      id: 'x-polygon'
+    });
+    layer.addTo(mockMap);
+    mockMapGL.getLayer.mockReturnValue(true);
+    mockMap.styleIsLoaded.mockReturnValue(false);
+    expect(() => layer.move()).not.toThrow();
+    expect(mockMapGL.moveLayer).not.toHaveBeenCalled();
+  });
+  it('Should only move sub-layers that actually exist', () => {
+    const layer = new _Layer.default();
+    layer.addLayer({
+      id: 'x-polygon'
+    });
+    layer.addLayer({
+      id: 'x-point'
+    });
+    layer.addTo(mockMap);
+    // createHighlightOverlay is mocked here and returns undefined by default
+    layer._overlayLayerIds = [];
+    mockMap.getBeforeLayerId.mockReturnValue('before-id');
+    mockMapGL.getLayer.mockImplementation(id => id === 'x-polygon');
+    layer.move();
+    expect(mockMapGL.moveLayer).toHaveBeenCalledWith('x-polygon', 'before-id');
+    expect(mockMapGL.moveLayer).not.toHaveBeenCalledWith('x-point', expect.anything());
   });
 });
