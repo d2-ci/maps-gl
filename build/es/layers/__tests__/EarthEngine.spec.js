@@ -194,6 +194,22 @@ describe('EarthEngine', () => {
     const features = layer.getFeatures();
     expect(features.some(f => f.geometry.type === 'Point')).toBe(false);
   });
+  it('Should not create layers twice when a newer addTo() call supersedes an in-flight one', async () => {
+    const layer = new EarthEngine(options);
+    const firstAdd = layer.addTo(mockMap);
+    const secondAdd = layer.addTo(mockMap);
+    await Promise.all([firstAdd, secondAdd]);
+
+    // 5, not 10 - a duplicate createLayers() call would double this
+    expect(layer.getLayers().length).toBe(5);
+  });
+  it('Should not add the layer back after being removed while an addTo() call is still in flight', async () => {
+    const layer = new EarthEngine(options);
+    const firstAdd = layer.addTo(mockMap);
+    layer.removeFrom(mockMap);
+    await firstAdd;
+    expect(layer.getLayers().length).toBe(0);
+  });
   describe('raster mask (filter/setVisibleIds)', () => {
     const featureIds = f => f.features.map(({
       properties
