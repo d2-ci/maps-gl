@@ -8,7 +8,9 @@ var _bbox = _interopRequireDefault(require("@turf/bbox"));
 var _maplibreGl = require("maplibre-gl");
 var _uuid = require("uuid");
 var _buffers = require("../utils/buffers.js");
+var _core = require("../utils/core.js");
 var _geometry = require("../utils/geometry.js");
+var _highlightOverlay = require("../utils/highlightOverlay.js");
 var _images = require("../utils/images.js");
 var _labels = require("../utils/labels.js");
 var _opacity = require("../utils/opacity.js");
@@ -18,6 +20,13 @@ function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t =
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+const buildVisibleIdsFilter = (ids, baseFilter) => {
+  if (!ids) {
+    return baseFilter ?? null;
+  }
+  const idsFilter = ['in', ['get', 'id'], ['literal', ids]];
+  return baseFilter ? ['all', baseFilter, idsFilter] : idsFilter;
+};
 class Layer extends _maplibreGl.Evented {
   constructor(options = {}) {
     super();
@@ -29,6 +38,13 @@ class Layer extends _maplibreGl.Evented {
     this._features = [];
     this._isVisible = true;
     this._interactiveIds = [];
+    this._visibleIdsFilterExemptIds = new Set();
+    this._overlayLayerIds = [];
+    this._hoverIds = [];
+    this._selectedIds = [];
+    this._highlightColor = undefined;
+    this._featuresIndexSource = null;
+    this._featuresById = null;
     this.options = options;
     if (options.data) {
       this.setFeatures(options.data);
@@ -38,7 +54,9 @@ class Layer extends _maplibreGl.Evented {
     const {
       opacity,
       onClick,
-      onRightClick
+      onRightClick,
+      onMouseEnter,
+      onMouseLeave
     } = this.options;
     this._map = map;
     const mapgl = map.getMapGL();
@@ -66,6 +84,18 @@ class Layer extends _maplibreGl.Evented {
         }
       });
     }
+    if (map.styleIsLoaded()) {
+      this._overlayLayerIds = (0, _highlightOverlay.createHighlightOverlay)(map, {
+        id: this.getId(),
+        glLayers: layers,
+        beforeId
+      });
+
+      // Replays a highlight/selection recorded before the overlay existed
+      if (this._hoverIds.length || this._selectedIds.length) {
+        this._syncOverlay();
+      }
+    }
     if (!this.isVisible()) {
       this.setVisibility(false);
     }
@@ -78,6 +108,12 @@ class Layer extends _maplibreGl.Evented {
     if (onRightClick) {
       this.on('contextmenu', onRightClick);
     }
+    if (onMouseEnter) {
+      this.on('mouseenter', onMouseEnter);
+    }
+    if (onMouseLeave) {
+      this.on('mouseleave', onMouseLeave);
+    }
     this.onAdd();
   }
   removeFrom(map) {
@@ -86,7 +122,9 @@ class Layer extends _maplibreGl.Evented {
     const layers = this.getLayers();
     const {
       onClick,
-      onRightClick
+      onRightClick,
+      onMouseEnter,
+      onMouseLeave
     } = this.options;
     this.onRemove();
     if (mapgl) {
@@ -102,13 +140,21 @@ class Layer extends _maplibreGl.Evented {
             mapgl.removeSource(id);
           }
         });
+        (0, _highlightOverlay.removeHighlightOverlay)(map, this.getId(), this._overlayLayerIds);
       }
+      this._overlayLayerIds = [];
     }
     if (onClick) {
       this.off('click', onClick);
     }
     if (onRightClick) {
       this.off('contextmenu', onRightClick);
+    }
+    if (onMouseEnter) {
+      this.off('mouseenter', onMouseEnter);
+    }
+    if (onMouseLeave) {
+      this.off('mouseleave', onMouseLeave);
     }
     this._map = null;
   }
@@ -142,7 +188,18 @@ class Layer extends _maplibreGl.Evented {
             mapgl.setLayoutProperty(layer.id, 'visibility', value);
           }
         });
+
+        // Hide the overlay's cloned layers too
+        this._overlayLayerIds.forEach(layerId => {
+          if (mapgl.getLayer(layerId)) {
+            mapgl.setLayoutProperty(layerId, 'visibility', value);
+          }
+        });
       }
+
+      // isInteractive() depends on isVisible(), so a visibility change
+      // outside addLayer/removeLayer must invalidate the cache too
+      this.getMap()?.invalidateInteractiveLayerIds?.();
     }
     this._isVisible = isVisible;
   }
@@ -180,7 +237,8 @@ class Layer extends _maplibreGl.Evented {
   addLayer(layer, layerOptions = {}) {
     const {
       isInteractive,
-      opacityFactor
+      opacityFactor,
+      excludeFromVisibleIdsFilter
     } = layerOptions;
     this._layers.push(layer);
     if (isInteractive) {
@@ -188,6 +246,14 @@ class Layer extends _maplibreGl.Evented {
     }
     if (opacityFactor) {
       this._opacityFactor = opacityFactor;
+    }
+
+    // e.g. EarthEngine's own mask layer, whose data is deliberately the
+    // complement of setVisibleIds' own notion of "visible" - applying
+    // that filter on top would zero it out, since none of its features
+    // would ever match an allow-list of the *visible* ids.
+    if (excludeFromVisibleIdsFilter) {
+      this._visibleIdsFilterExemptIds.add(layer.id);
     }
   }
   getLayers() {
@@ -208,6 +274,12 @@ class Layer extends _maplibreGl.Evented {
         mapgl.moveLayer(layer.id, beforeId);
       }
     });
+
+    // The highlight overlay must stay drawn above these base layers
+    // Having just moved the base layers, move the overlay too
+    this._overlayLayerIds.forEach(layerId => {
+      mapgl.moveLayer(layerId, beforeId);
+    });
   }
   getFeatures() {
     return this._features;
@@ -215,10 +287,18 @@ class Layer extends _maplibreGl.Evented {
 
   // Returns all features having a string or numeric id
   getFeaturesById(id) {
-    const features = typeof id === 'string' ? this._features.filter(f => f.properties.id === id) : this._features.filter(f => f.id === id);
-    return features.map(f => _objectSpread(_objectSpread({}, f), {}, {
+    if (this._featuresIndexSource !== this._features) {
+      this._featuresIndexSource = this._features;
+      this._featuresById = new Map();
+      this._features.forEach(f => {
+        this._featuresById.set(f.properties.id, f); // string uid
+        this._featuresById.set(f.id, f); // numeric id (unique, required by Feature State)
+      });
+    }
+    const feature = this._featuresById.get(id);
+    return feature ? [_objectSpread(_objectSpread({}, feature), {}, {
       source: this.getId()
-    }));
+    })] : [];
   }
 
   // Adds integer id for each feature (required by Feature State)
@@ -279,12 +359,63 @@ class Layer extends _maplibreGl.Evented {
     return mapgl.getZoom() >= mapgl.getMaxZoom();
   }
 
-  // Highlight a layer feature
-  highlight(id) {
+  // Hover and selection share one highlight color (last caller wins)
+
+  highlight(ids, color) {
     const map = this.getMap();
-    if (map) {
-      map.setHoverState(id ? this.getFeaturesById(id) : null);
+    if (!map) {
+      return;
     }
+    this._hoverIds = (0, _core.normalizeIds)(ids);
+    this._highlightColor = color;
+    this._syncOverlay();
+  }
+  select(ids, color) {
+    const map = this.getMap();
+    if (!map) {
+      return;
+    }
+    this._selectedIds = (0, _core.normalizeIds)(ids);
+    this._highlightColor = color;
+    this._syncOverlay();
+  }
+
+  // `ids` of null/undefined restores each layer's own filter unchanged
+  setVisibleIds(ids) {
+    const mapgl = this.getMapGL();
+    if (!mapgl) {
+      return;
+    }
+    this.getLayers().forEach(({
+      id,
+      filter: baseFilter
+    }) => {
+      if (this._visibleIdsFilterExemptIds.has(id)) {
+        return;
+      }
+      mapgl.setFilter(id, buildVisibleIdsFilter(ids, baseFilter));
+    });
+    const dropped = (0, _core.dropHiddenIds)(this._hoverIds, this._selectedIds, ids);
+    if (dropped) {
+      this._hoverIds = dropped.hoverIds;
+      this._selectedIds = dropped.selectedIds;
+      this._syncOverlay();
+    }
+  }
+
+  // Syncs the highlight overlay with the union of hovered/selected ids
+  _syncOverlay() {
+    const map = this.getMap();
+    if (!map) {
+      return;
+    }
+    const ids = [...new Set([...this._hoverIds, ...this._selectedIds])];
+    const features = ids.flatMap(id => this.getFeaturesById(id));
+    (0, _highlightOverlay.updateHighlightOverlay)(map, {
+      id: this.getId(),
+      features,
+      color: this._highlightColor
+    });
   }
 
   // Override if needed in subclass

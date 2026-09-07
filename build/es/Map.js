@@ -63,19 +63,11 @@ export class MapGL extends Evented {
         return;
       }
       const feature = this.getEventFeature(evt);
-      let layer;
-      if (feature) {
-        layer = this.getLayerFromId(feature.layer.id);
-        if (layer) {
-          layer.onMouseMove(evt, feature);
-        }
-      } else {
-        const target = evt && evt.originalEvent && evt.originalEvent.target;
-        if (!target || !target.closest || !OVERLAY_SELECTORS.some(sel => target.closest(sel))) {
-          this.hideLabel();
-        }
+      const hoverTarget = feature ? this._resolveHoverTarget(evt, feature) : null;
+      if (!feature) {
+        this._hideLabelUnlessOverOverlay(evt);
       }
-      this.setHoverState(layer && feature?.properties?.id ? layer.getFeaturesById(feature.properties.id) : null);
+      this._updateHoveredLayer(hoverTarget, feature);
       this.getMapGL().getCanvas().style.cursor = feature ? 'pointer' : '';
     });
     // Remove rendered class if rendering is happening
@@ -96,6 +88,11 @@ export class MapGL extends Evented {
         return;
       }
       this.hideLabel();
+      if (this._hoveredLayer) {
+        this._hoveredLayer.fire('mouseleave');
+        this._hoveredLayer = null;
+        this._hoveredFeatureId = null;
+      }
     });
     _defineProperty(this, "onError", evt => {
       // TODO: Use optional chaining when DHIS2 Maps 2.35 is not supported
@@ -129,6 +126,11 @@ export class MapGL extends Evented {
     this._glyphs = glyphs;
     this._renderTimeout = null;
     this._mouseMoveEnabled = true;
+    this._hoveredLayer = null;
+    this._hoveredFeatureId = null;
+    this._selectedFeatures = null;
+    this._hoverStateKey = null;
+    this._selectedStateKey = null;
 
     // Translate strings
     if (locale) {
@@ -144,7 +146,7 @@ export class MapGL extends Evented {
     mapgl.on('load', this.onLoad);
     mapgl.on('click', this.onClick);
     mapgl.on('contextmenu', this.onContextMenu);
-    mapgl.on('mousemove', this.onMouseMove.bind(this));
+    mapgl.on('mousemove', this.onMouseMove);
     mapgl.on('mouseout', this.onMouseOut);
     mapgl.on('error', this.onError);
     /* Data and dataloading events are an indication that
@@ -273,10 +275,43 @@ export class MapGL extends Evented {
   setMouseMoveEnabled(val) {
     this._mouseMoveEnabled = val;
   }
+  _resolveHoverTarget(evt, feature) {
+    const layer = this.getLayerFromId(feature.layer.id);
+    if (!layer) {
+      return null;
+    }
+    layer.onMouseMove(evt, feature);
+    return typeof layer.getSubLayerFromId === 'function' && layer.getSubLayerFromId(feature.layer.id) || layer;
+  }
+  _hideLabelUnlessOverOverlay(evt) {
+    const target = evt?.originalEvent?.target;
+    const isOverOverlay = target?.closest && OVERLAY_SELECTORS.some(sel => target.closest(sel));
+    if (!isOverOverlay) {
+      this.hideLabel();
+    }
+  }
+  _updateHoveredLayer(hoverTarget, feature) {
+    const featureId = feature?.properties?.id ?? null;
+    const nextHover = hoverTarget && featureId !== null ? hoverTarget : null;
+    if (nextHover === this._hoveredLayer && featureId === this._hoveredFeatureId) {
+      return;
+    }
+    if (this._hoveredLayer) {
+      this._hoveredLayer.fire('mouseleave');
+    }
+    if (nextHover) {
+      nextHover.fire('mouseenter', {
+        feature
+      });
+    }
+    this._hoveredLayer = nextHover;
+    this._hoveredFeatureId = nextHover ? featureId : null;
+  }
   // Set hover state for features
-  setHoverState(features) {
-    // Only set hover state when features are changed
-    if (getFeaturesString(features) !== getFeaturesString(this._hoverFeatures)) {
+  setHoverState(features, color) {
+    const key = `${getFeaturesString(features)}|${color ?? ''}`;
+    if (key !== this._hoverStateKey) {
+      this._hoverStateKey = key;
       if (this._hoverFeatures) {
         // Clear state for existing hover features
         this._hoverFeatures.forEach(feature => this.setFeatureState(feature, {
@@ -286,8 +321,34 @@ export class MapGL extends Evented {
       }
       if (Array.isArray(features)) {
         this._hoverFeatures = features;
-        features.forEach(feature => this.setFeatureState(feature, {
+        features.forEach(feature => this.setFeatureState(feature, color !== undefined ? {
+          hover: true,
+          highlightColor: color
+        } : {
           hover: true
+        }));
+      }
+    }
+  }
+
+  // Set selected state for features
+  setSelectedState(features, color) {
+    const key = `${getFeaturesString(features)}|${color ?? ''}`;
+    if (key !== this._selectedStateKey) {
+      this._selectedStateKey = key;
+      if (this._selectedFeatures) {
+        this._selectedFeatures.forEach(feature => this.setFeatureState(feature, {
+          selected: false
+        }));
+        this._selectedFeatures = null;
+      }
+      if (Array.isArray(features)) {
+        this._selectedFeatures = features;
+        features.forEach(feature => this.setFeatureState(feature, color !== undefined ? {
+          selected: true,
+          highlightColor: color
+        } : {
+          selected: true
         }));
       }
     }
@@ -306,6 +367,11 @@ export class MapGL extends Evented {
   // Returns the map zoom level
   getZoom() {
     return this.getMapGL().getZoom();
+  }
+
+  // Clears the cached interactive layer ids so they're recomputed on next use
+  invalidateInteractiveLayerIds() {
+    this._interactiveLayerIds = null;
   }
   getEventFeature(evt) {
     if (!this._interactiveLayerIds) {
@@ -423,11 +489,18 @@ export class MapGL extends Evented {
     } = this.getMapGL().project(lngLat);
     const position = [x, y];
     const feature = this.getEventFeature(evt);
+    // Lets consumers distinguish a plain click from a ctrl/cmd-click.
+    const {
+      ctrlKey = false,
+      metaKey = false
+    } = evt.originalEvent || {};
     return {
       type,
       coordinates,
       position,
-      feature
+      feature,
+      ctrlKey,
+      metaKey
     };
   }
   _setRenderTimeout() {

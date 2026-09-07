@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.setTemplate = exports.getFeaturesString = void 0;
+exports.setTemplate = exports.normalizeIds = exports.getFeaturesString = exports.dropHiddenIds = void 0;
 // Replaces {key} with data in a string template
 const setTemplate = (text, data) => text.replace(/\{ *([\w_-]+) *\}/g, (_, key) => data[key] ?? '');
 
@@ -13,4 +13,24 @@ const getFeaturesString = features => Array.isArray(features) ? features.sort((a
   id,
   source
 }) => `${id}-${source}`).join('-') : '';
+
+// Normalizes a scalar id, array of ids, or null/undefined into an array
 exports.getFeaturesString = getFeaturesString;
+const normalizeIds = ids => {
+  if (Array.isArray(ids)) {
+    return ids;
+  }
+  return ids ? [ids] : [];
+};
+exports.normalizeIds = normalizeIds;
+const dropHiddenIds = (hoverIds, selectedIds, visibleIds) => {
+  if (!visibleIds) {
+    return null;
+  }
+  const visible = new Set(visibleIds);
+  return {
+    hoverIds: hoverIds.filter(id => visible.has(id)),
+    selectedIds: selectedIds.filter(id => visible.has(id))
+  };
+};
+exports.dropHiddenIds = dropHiddenIds;

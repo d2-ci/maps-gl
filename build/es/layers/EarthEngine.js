@@ -10,6 +10,7 @@ import { defaultOptions, getWorkerOptions } from '../utils/earthengine.js';
 import { isPoint, featureCollection } from '../utils/geometry.js';
 import { polygonLayer, outlineLayer, pointLayer } from '../utils/layers.js';
 import { setPrecision } from '../utils/numbers.js';
+import { noDataColor } from '../utils/style.js';
 import Layer from './Layer.js';
 class EarthEngine extends Layer {
   constructor(_options) {
@@ -119,6 +120,10 @@ class EarthEngine extends Layer {
         type: 'geojson',
         data: featureCollection(this.getFilteredFeatures())
       });
+      this.setSource(`${id}-mask`, {
+        type: 'geojson',
+        data: featureCollection([])
+      });
     }
   }
 
@@ -133,6 +138,17 @@ class EarthEngine extends Layer {
       source: `${id}-raster`
     });
     if (this.options.data) {
+      this.addLayer({
+        id: `${id}-mask`,
+        type: 'fill',
+        source: `${id}-mask`,
+        paint: {
+          'fill-color': noDataColor,
+          'fill-opacity': 0.6
+        }
+      }, {
+        excludeFromVisibleIdsFilter: true
+      });
       this.addLayer(polygonLayer({
         id,
         source,
@@ -199,6 +215,32 @@ class EarthEngine extends Layer {
     if (source) {
       source.setData(featureCollection(this.getFilteredFeatures()));
     }
+    this._updateMask();
+  }
+  setVisibleIds(ids) {
+    super.setVisibleIds(ids);
+    this._visibleIds = ids;
+    this._updateMask();
+  }
+  _updateMask() {
+    const mapgl = this.getMapGL();
+    const maskSource = mapgl?.getSource(`${this.getId()}-mask`);
+    if (!maskSource) {
+      return;
+    }
+    const {
+      _filteredFeatureIds: filteredIds,
+      _visibleIds: visibleIds
+    } = this;
+    const filteredIdSet = Array.isArray(filteredIds) ? new Set(filteredIds) : null;
+    const visibleIdSet = Array.isArray(visibleIds) ? new Set(visibleIds) : null;
+    const hidden = this.getFeatures().filter(feature => {
+      const id = feature.properties.id;
+      const passesFilter = !filteredIdSet || filteredIdSet.has(id);
+      const passesVisible = !visibleIdSet || visibleIdSet.has(id);
+      return !(passesFilter && passesVisible);
+    });
+    maskSource.setData(featureCollection(hidden));
   }
 }
 export default EarthEngine;

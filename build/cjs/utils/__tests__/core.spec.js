@@ -13,4 +13,16 @@ describe('core utils', () => {
       noValue: 'no value'
     })).toBe('Population: no value');
   });
+  describe('dropHiddenIds', () => {
+    it('Should drop hover/selected ids that are no longer visible', () => {
+      expect((0, _core.dropHiddenIds)(['a', 'b'], ['b', 'c'], ['b'])).toEqual({
+        hoverIds: ['b'],
+        selectedIds: ['b']
+      });
+    });
+    it('Should return null when visibleIds is null/undefined, so nothing is dropped', () => {
+      expect((0, _core.dropHiddenIds)(['a'], ['b'], null)).toBeNull();
+      expect((0, _core.dropHiddenIds)(['a'], ['b'], undefined)).toBeNull();
+    });
+  });
 });

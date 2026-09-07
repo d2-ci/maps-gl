@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.noCluster = exports.isSymbol = exports.isPolygon = exports.isPointNoSymbol = exports.isPoint = exports.isLine = exports.isHover = exports.isClusterPolygon = exports.isClusterPoint = exports.isCluster = void 0;
+exports.noCluster = exports.isSymbol = exports.isSelected = exports.isPolygon = exports.isPointNoSymbol = exports.isPoint = exports.isLine = exports.isHover = exports.isClusterPolygon = exports.isClusterPoint = exports.isCluster = void 0;
 const getCluster = ['get', 'cluster'];
 const getIsPolygon = ['get', 'isPolygon'];
 const hasImage = ['has', 'iconUrl'];
@@ -17,3 +17,4 @@ const noCluster = exports.noCluster = ['!=', getCluster, true];
 const isClusterPoint = exports.isClusterPoint = ['all', isPoint, noCluster, ['!=', getIsPolygon, true]];
 const isClusterPolygon = exports.isClusterPolygon = ['all', noCluster, ['==', getIsPolygon, true]];
 const isHover = exports.isHover = ['boolean', ['feature-state', 'hover'], false];
+const isSelected = exports.isSelected = ['boolean', ['feature-state', 'selected'], false];

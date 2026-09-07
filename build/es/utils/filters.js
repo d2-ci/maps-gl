@@ -11,3 +11,4 @@ export const noCluster = ['!=', getCluster, true];
 export const isClusterPoint = ['all', isPoint, noCluster, ['!=', getIsPolygon, true]];
 export const isClusterPolygon = ['all', noCluster, ['==', getIsPolygon, true]];
 export const isHover = ['boolean', ['feature-state', 'hover'], false];
+export const isSelected = ['boolean', ['feature-state', 'selected'], false];

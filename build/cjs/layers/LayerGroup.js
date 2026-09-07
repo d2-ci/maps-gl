@@ -5,7 +5,10 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 var _maplibreGl = require("maplibre-gl");
+var _uuid = require("uuid");
+var _core = require("../utils/core.js");
 var _geometry = require("../utils/geometry.js");
+var _highlightOverlay = require("../utils/highlightOverlay.js");
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
@@ -17,10 +20,7 @@ class LayerGroup extends _maplibreGl.Evented {
         feature
       } = evt;
       if (feature) {
-        const {
-          id
-        } = feature.layer;
-        const layer = this._layers.find(l => l.hasLayerId(id));
+        const layer = this.getSubLayerFromId(feature.layer.id);
         if (layer) {
           layer.fire('click', evt);
         }
@@ -31,10 +31,7 @@ class LayerGroup extends _maplibreGl.Evented {
         feature
       } = evt;
       if (feature) {
-        const {
-          id
-        } = feature.layer;
-        const layer = this._layers.find(l => l.hasLayerId(id));
+        const layer = this.getSubLayerFromId(feature.layer.id);
         if (layer) {
           layer.fire('contextmenu', evt);
         }
@@ -42,19 +39,20 @@ class LayerGroup extends _maplibreGl.Evented {
     });
     _defineProperty(this, "onMouseMove", (evt, feature) => {
       if (feature) {
-        const {
-          id
-        } = feature.layer;
-        const layer = this._layers.find(l => l.hasLayerId(id));
+        const layer = this.getSubLayerFromId(feature.layer.id);
         if (layer) {
           layer.onMouseMove(evt, feature);
         }
       }
     });
+    this._id = (0, _uuid.v4)();
     this.options = options || {};
     this._layers = [];
     this._layerConfigs = [];
     this._isVisible = true;
+    this._hoverIds = [];
+    this._selectedIds = [];
+    this._highlightColor = undefined;
   }
   createLayer() {
     this._layerConfigs.forEach(config => this._layers.push(this._map.createLayer(config)));
@@ -62,17 +60,25 @@ class LayerGroup extends _maplibreGl.Evented {
       this.setOpacity(this.options.opacity);
     }
   }
-  addTo(map) {
+  async addTo(map) {
     this._map = map;
     if (!this._layers.length) {
       this.createLayer();
     }
-    this._layers.forEach(layer => layer.addTo(map));
     this.on('contextmenu', this.onContextMenu);
+
+    // Each sub-layer's overlay only exists once its own addTo() resolves
+    await Promise.all(this._layers.map(layer => layer.addTo(map)));
+    if (this._hoverIds.length || this._selectedIds.length) {
+      this._syncOverlay();
+    }
   }
   removeFrom(map) {
     this._layers.forEach(layer => layer.removeFrom(map));
     this.off('contextmenu', this.onContextMenu);
+  }
+  getId() {
+    return this._id;
   }
   addLayer(config) {
     this._layerConfigs.push(config);
@@ -98,6 +104,56 @@ class LayerGroup extends _maplibreGl.Evented {
   }
   getFeaturesById(id) {
     return this._layers.map(layer => layer.getFeaturesById(id)).flat();
+  }
+  getMap() {
+    return this._map;
+  }
+  getSubLayerFromId(id) {
+    return this._layers.find(layer => layer.hasLayerId(id));
+  }
+  highlight(ids, color) {
+    const map = this.getMap();
+    if (!map) {
+      return;
+    }
+    this._hoverIds = (0, _core.normalizeIds)(ids);
+    this._highlightColor = color;
+    this._syncOverlay();
+  }
+  select(ids, color) {
+    const map = this.getMap();
+    if (!map) {
+      return;
+    }
+    this._selectedIds = (0, _core.normalizeIds)(ids);
+    this._highlightColor = color;
+    this._syncOverlay();
+  }
+  setVisibleIds(ids) {
+    this._layers.forEach(layer => layer.setVisibleIds(ids));
+    const dropped = (0, _core.dropHiddenIds)(this._hoverIds, this._selectedIds, ids);
+    if (dropped) {
+      this._hoverIds = dropped.hoverIds;
+      this._selectedIds = dropped.selectedIds;
+      this._syncOverlay();
+    }
+  }
+
+  // Drives each sub-layer's own overlay directly
+  _syncOverlay() {
+    const map = this.getMap();
+    if (!map) {
+      return;
+    }
+    const ids = [...new Set([...this._hoverIds, ...this._selectedIds])];
+    this._layers.forEach(layer => {
+      const features = ids.flatMap(id => layer.getFeaturesById(id));
+      (0, _highlightOverlay.updateHighlightOverlay)(map, {
+        id: layer.getId(),
+        features,
+        color: this._highlightColor
+      });
+    });
   }
   setOpacity(opacity) {
     this._layers.forEach(layer => layer.setOpacity(opacity));
