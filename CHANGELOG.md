@@ -1,3 +1,47 @@
+## [4.4.3](https://github.com/dhis2/maps-gl/compare/v4.4.2...v4.4.3) (2026-09-03)
+
+
+### Bug Fixes
+
+* don't let orderOverlays() mask a style error or skip the cache reset ([#670](https://github.com/dhis2/maps-gl/issues/670)) ([8a05ef5](https://github.com/dhis2/maps-gl/commit/8a05ef539a0c33f39e5063ad398395a380906f67))
+
+## [4.4.2](https://github.com/dhis2/maps-gl/compare/v4.4.1...v4.4.2) (2026-09-03)
+
+
+### Bug Fixes
+
+* reconcile overlay stacking order after restoring them ([5cf1ba5](https://github.com/dhis2/maps-gl/commit/5cf1ba5ed8ff83d4c558d20cbb4270067a1eea8c))
+* refresh the interactive-layer cache after restoring overlays ([2bf893d](https://github.com/dhis2/maps-gl/commit/2bf893d3264afbc06fa476033d66186778b2b266))
+* wait for every overlay to actually finish being added or removed ([f7b2c2f](https://github.com/dhis2/maps-gl/commit/f7b2c2f7dd44b9db44e7278fddcceab940adbaed))
+
+## [4.4.1](https://github.com/dhis2/maps-gl/compare/v4.4.0...v4.4.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* eliminate crashes and stale state from rapid basemap switching ([#667](https://github.com/dhis2/maps-gl/issues/667)) ([33b4a10](https://github.com/dhis2/maps-gl/commit/33b4a102b729b15d6fa71abeea0596bfb58b3e0c))
+
+# [4.4.0](https://github.com/dhis2/maps-gl/compare/v4.3.1...v4.4.0) (2026-09-01)
+
+
+### Features
+
+* support opacity and font glyphs for vector style layers ([#666](https://github.com/dhis2/maps-gl/issues/666)) ([2ef3003](https://github.com/dhis2/maps-gl/commit/2ef3003497627c670a525296a36a07d4b272f708))
+
+## [4.3.1](https://github.com/dhis2/maps-gl/compare/v4.3.0...v4.3.1) (2026-07-06)
+
+
+### Bug Fixes
+
+* show labels for isolated points in cluster layers ([#654](https://github.com/dhis2/maps-gl/issues/654)) ([c74f073](https://github.com/dhis2/maps-gl/commit/c74f073ec7e7810193b7d5a100bd845b3bc57f90))
+
+# [4.3.0](https://github.com/dhis2/maps-gl/compare/v4.2.8...v4.3.0) (2026-06-29)
+
+
+### Features
+
+* add event tooltips and labels to cluster and spiderified events ([9ad2f27](https://github.com/dhis2/maps-gl/commit/9ad2f27ca9d12ee8540c72e86e4b52d92d1df6a8))
+
 ## [4.2.8](https://github.com/dhis2/maps-gl/compare/v4.2.7...v4.2.8) (2026-02-05)
 
 

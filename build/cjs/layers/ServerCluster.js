@@ -85,6 +85,15 @@ class ServerCluster extends _Cluster.default {
       const tiles = this.getVisibleTiles();
       if (tiles.join('-') !== this.currentTiles.join('-')) {
         this.currentTiles = tiles;
+
+        // Evict fully-loaded tiles that are no longer visible.
+        // Pending tiles ('pending' sentinel) are left intact so
+        // their in-flight callbacks can still resolve correctly.
+        for (const tileId in this.tileClusters) {
+          if (!tiles.includes(tileId) && Array.isArray(this.tileClusters[tileId])) {
+            delete this.tileClusters[tileId];
+          }
+        }
         const cachedTiles = tiles.filter(id => Array.isArray(this.tileClusters[id]));
         if (cachedTiles.length) {
           this.updateClusters(cachedTiles);
@@ -131,10 +140,7 @@ class ServerCluster extends _Cluster.default {
       const map = this._map.getMapGL();
       const bbox = map.getBounds().toArray().flat();
       const zoom = Math.floor(map.getZoom());
-      const merc = new _sphericalmercator.default({
-        size: this.options.tileSize
-      });
-      const min = merc.xyz(bbox, zoom);
+      const min = this._merc.xyz(bbox, zoom);
       const tiles = [];
       for (let x = min.minX; x <= min.maxX; x++) {
         for (let y = min.minY; y <= min.maxY; y++) {
@@ -145,10 +151,10 @@ class ServerCluster extends _Cluster.default {
     });
     // Returns sorted array of cluster ids
     _defineProperty(this, "getClusterIds", clusters => clusters.map(c => c.id).sort((a, b) => a - b).join());
-    const _merc = new _sphericalmercator.default({
+    this._merc = new _sphericalmercator.default({
       size: this.options.tileSize
     });
-    this.getTileBounds = (x, y, z) => _merc.bbox(x, y, z);
+    this.getTileBounds = (x, y, z) => this._merc.bbox(x, y, z);
   }
   createSource() {
     super.createSource({
@@ -175,6 +181,7 @@ class ServerCluster extends _Cluster.default {
     }), {
       isInteractive
     });
+    this.addLabelLayer();
 
     // Non-clustered polygons
     this.addLayer((0, _layers.polygonLayer)({

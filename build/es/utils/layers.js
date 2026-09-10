@@ -3,6 +3,7 @@ import { isPointNoSymbol, isPolygon, isLine, isCluster, isSymbol } from './filte
 import { textFont, textSize, textColor, textOpacity, circleRadius, circleStrokeColor, circleOpacity, lineStrokeColor, lineOpacity, fillOpacity, iconOpacity, noDataColor, strokeWidth } from './style.js';
 export const BASEMAP_POSITION = 0;
 export const OVERLAY_START_POSITION = 1;
+export const MAP_MAX_ZOOM = 18;
 
 // Layer with point features
 export const pointLayer = ({

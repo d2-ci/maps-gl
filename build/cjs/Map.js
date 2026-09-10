@@ -15,6 +15,7 @@ var _Label = _interopRequireDefault(require("./ui/Label.js"));
 var _Popup = _interopRequireDefault(require("./ui/Popup.js"));
 var _core = require("./utils/core.js");
 var _geometry = require("./utils/geometry.js");
+var _glyphs = require("./utils/glyphs.js");
 var _images = require("./utils/images.js");
 var _layers = require("./utils/layers.js");
 var _style = require("./utils/style.js");
@@ -26,6 +27,7 @@ function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" 
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 const renderedClass = 'dhis2-map-rendered';
 const RENDER_TIMEOUT_DURATION = 500;
+const OVERLAY_SELECTORS = ['.spider-leg-container', '.dhis2-donut-marker'];
 class MapGL extends _maplibreGl.Evented {
   // Returns true if the layer type is supported
   static hasLayerSupport(type) {
@@ -75,7 +77,10 @@ class MapGL extends _maplibreGl.Evented {
           layer.onMouseMove(evt, feature);
         }
       } else {
-        this.hideLabel();
+        const target = evt && evt.originalEvent && evt.originalEvent.target;
+        if (!target || !target.closest || !OVERLAY_SELECTORS.some(sel => target.closest(sel))) {
+          this.hideLabel();
+        }
       }
       this.setHoverState(layer && feature?.properties?.id ? layer.getFeaturesById(feature.properties.id) : null);
       this.getMapGL().getCanvas().style.cursor = feature ? 'pointer' : '';
@@ -92,7 +97,13 @@ class MapGL extends _maplibreGl.Evented {
       }
       this._setRenderTimeout();
     });
-    _defineProperty(this, "onMouseOut", () => this.hideLabel());
+    _defineProperty(this, "onMouseOut", evt => {
+      const related = evt && evt.originalEvent && evt.originalEvent.relatedTarget;
+      if (related && related.closest && OVERLAY_SELECTORS.some(sel => related.closest(sel))) {
+        return;
+      }
+      this.hideLabel();
+    });
     _defineProperty(this, "onError", evt => {
       // TODO: Use optional chaining when DHIS2 Maps 2.35 is not supported
       if (evt && evt.error && evt.error.message && console && console.error) {
@@ -112,13 +123,13 @@ class MapGL extends _maplibreGl.Evented {
       style: (0, _style.mapStyle)({
         glyphs
       }),
-      maxZoom: 18,
+      maxZoom: _layers.MAP_MAX_ZOOM,
       canvasContextAttributes: {
         preserveDrawingBuffer: true // TODO: required for map download, but reduced performance
       },
       attributionControl: false,
       locale: _controlsLocale.default,
-      transformRequest: _images.transformRequest,
+      transformRequest: (0, _images.composeTransformRequest)(_images.transformRequest, (0, _glyphs.createFontTransformRequest)(glyphs)),
       scrollZoom
     });
     this._mapgl = mapgl;
@@ -149,6 +160,7 @@ class MapGL extends _maplibreGl.Evented {
     mapgl.on('dataloading', this._clearRenderTimeout);
     this._layers = [];
     this._controls = {};
+    this._interactiveLayerIds = null;
     if (options.attributionControl !== false) {
       this.addControl({
         type: 'attribution'
@@ -178,6 +190,7 @@ class MapGL extends _maplibreGl.Evented {
   }
   async addLayer(layer) {
     this._layers.push(layer);
+    this._interactiveLayerIds = null;
     if (!layer.isOnMap()) {
       await layer.addTo(this);
       this.fire('layeradd', this._layers);
@@ -191,6 +204,7 @@ class MapGL extends _maplibreGl.Evented {
   }
   async removeLayer(layer) {
     this._layers = this._layers.filter(l => l !== layer);
+    this._interactiveLayerIds = null;
     await layer.removeFrom(this);
     this.fire('layerremove', this._layers);
   }
@@ -300,17 +314,13 @@ class MapGL extends _maplibreGl.Evented {
   getZoom() {
     return this.getMapGL().getZoom();
   }
-
-  // TODO: throttle?
   getEventFeature(evt) {
-    const layers = this.getLayers().filter(l => l.isInteractive()).map(l => l.getInteractiveIds()).reduce((out, ids) => [...out, ...ids], []);
-    let feature;
-    if (layers.length) {
-      feature = this._mapgl.queryRenderedFeatures(evt.point, {
-        layers: layers
-      })[0]; // [0] returns topmost
+    if (!this._interactiveLayerIds) {
+      this._interactiveLayerIds = this.getLayers().filter(l => l.isInteractive()).flatMap(l => l.getInteractiveIds());
     }
-    return feature;
+    return this._interactiveLayerIds.length ? this._mapgl.queryRenderedFeatures(evt.point, {
+      layers: this._interactiveLayerIds
+    })[0] : undefined;
   }
   getLayerFromId(id) {
     return this._layers.find(layer => layer.hasLayerId(id));
@@ -334,7 +344,7 @@ class MapGL extends _maplibreGl.Evented {
     if (control) {
       return control._controlContainer || control._container;
     }
-    return document.createElement('div'); // TODO
+    return document.createElement('div'); // TODO: silent failure — should return null and let caller handle missing control
   }
 
   // Set before layer id for vector style basemap for labels on top
@@ -344,7 +354,7 @@ class MapGL extends _maplibreGl.Evented {
 
   // Returns before layer id if exists among layers
   getBeforeLayerId() {
-    return this._beforeId && this.getMapGL().getStyle().layers.find(layer => layer.id === this._beforeId) ? this._beforeId : undefined;
+    return this._beforeId && this.styleIsLoaded() && this.getMapGL().getStyle().layers.find(layer => layer.id === this._beforeId) ? this._beforeId : undefined;
   }
   styleIsLoaded() {
     return !this._styleIsLoading;
@@ -366,11 +376,14 @@ class MapGL extends _maplibreGl.Evented {
       this._popup.remove();
     }
   }
-  showLabel(content, lnglat) {
+  showLabel(content, lnglat, {
+    isHTML = false
+  } = {}) {
     if (!this._label) {
       this._label = new _Label.default();
     }
-    this._label.setText(content).setLngLat(lnglat);
+    const label = isHTML ? this._label.setHTML(content) : this._label.setText(content);
+    label.setLngLat(lnglat);
     if (!this._label.isOpen()) {
       this._label.addTo(this._mapgl);
     }

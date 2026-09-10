@@ -7,6 +7,7 @@ exports.default = void 0;
 var _centerOfMass = _interopRequireDefault(require("@turf/center-of-mass"));
 var _filters = require("../utils/filters.js");
 var _geometry = require("../utils/geometry.js");
+var _labels = require("../utils/labels.js");
 var _layers = require("../utils/layers.js");
 var _style = require("../utils/style.js");
 var _Layer = _interopRequireDefault(require("./Layer.js"));
@@ -28,10 +29,14 @@ class Cluster extends _Layer.default {
         const source = mapgl.getSource(this.getId());
         try {
           const zoom = await source.getClusterExpansionZoom(clusterId);
-          mapgl.flyTo({
-            center,
-            zoom: zoom + 1
-          });
+          if (zoom > mapgl.getZoom()) {
+            mapgl.flyTo({
+              center,
+              zoom: zoom + 1
+            });
+          } else {
+            this.spiderfy(clusterId, center);
+          }
         } catch (err) {
           console.warn('Cluster zoom failed', err);
         }
@@ -54,7 +59,7 @@ class Cluster extends _Layer.default {
         return [];
       }
       try {
-        const features = await source.getClusterLeaves(clusterId);
+        const features = await source.getClusterLeaves(clusterId, Infinity, 0);
         return this.sortClusterFeatures(features);
       } catch (err) {
         console.error('Error fetching cluster leaves:', err);
@@ -113,7 +118,8 @@ class Cluster extends _Layer.default {
     const id = this.getId();
     this.setSource(id, _objectSpread({
       type: 'geojson',
-      clusterMaxZoom: 19,
+      // One above MAP_MAX_ZOOM so clusters still exist at map ceiling and can be spiderfied
+      clusterMaxZoom: _layers.MAP_MAX_ZOOM + 1,
       clusterRadius: 50
     }, props));
     this.setSource(`${id}-polygons`, {
@@ -140,6 +146,7 @@ class Cluster extends _Layer.default {
     }), {
       isInteractive
     });
+    this.addLabelLayer();
 
     // Non-clustered polygons
     this.addLayer((0, _layers.polygonLayer)({
@@ -154,6 +161,21 @@ class Cluster extends _Layer.default {
       color: strokeColor,
       source: `${id}-polygons`
     }));
+  }
+  addLabelLayer() {
+    const id = this.getId();
+    const {
+      label,
+      labelStyle,
+      radius
+    } = this.options;
+    if (label) {
+      this.addLayer((0, _labels.labelClusterLayer)(_objectSpread(_objectSpread({}, labelStyle), {}, {
+        id,
+        label,
+        radius
+      })));
+    }
   }
   setOpacity(opacity) {
     super.setOpacity(opacity);
@@ -190,12 +212,22 @@ class Cluster extends _Layer.default {
       fillColor,
       opacity
     } = this.options;
+    const {
+      hoverLabel,
+      label,
+      labelStyle
+    } = this.options;
     this.spider = new _Spider.default(mapgl, {
       onClick: this.onClick,
       radius,
       fillColor,
       opacity,
-      onClose: this.onSpiderClose
+      onClose: this.onSpiderClose,
+      hoverLabel,
+      showLabel: hoverLabel ? (content, lngLat) => this._map.showLabel(content, lngLat) : undefined,
+      hideLabel: hoverLabel ? () => this._map.hideLabel() : undefined,
+      label,
+      labelStyle
     });
     this.setOpacity(this.options.opacity);
   }

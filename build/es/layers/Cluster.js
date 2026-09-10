@@ -6,7 +6,8 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 import centerOfMass from '@turf/center-of-mass';
 import { isClusterPoint } from '../utils/filters.js';
 import { featureCollection } from '../utils/geometry.js';
-import { pointLayer, polygonLayer, outlineLayer } from '../utils/layers.js';
+import { labelClusterLayer } from '../utils/labels.js';
+import { pointLayer, polygonLayer, outlineLayer, MAP_MAX_ZOOM } from '../utils/layers.js';
 import { eventStrokeColor } from '../utils/style.js';
 import Layer from './Layer.js';
 import Spider from './Spider.js';
@@ -21,10 +22,14 @@ class Cluster extends Layer {
         const source = mapgl.getSource(this.getId());
         try {
           const zoom = await source.getClusterExpansionZoom(clusterId);
-          mapgl.flyTo({
-            center,
-            zoom: zoom + 1
-          });
+          if (zoom > mapgl.getZoom()) {
+            mapgl.flyTo({
+              center,
+              zoom: zoom + 1
+            });
+          } else {
+            this.spiderfy(clusterId, center);
+          }
         } catch (err) {
           console.warn('Cluster zoom failed', err);
         }
@@ -47,7 +52,7 @@ class Cluster extends Layer {
         return [];
       }
       try {
-        const features = await source.getClusterLeaves(clusterId);
+        const features = await source.getClusterLeaves(clusterId, Infinity, 0);
         return this.sortClusterFeatures(features);
       } catch (err) {
         console.error('Error fetching cluster leaves:', err);
@@ -106,7 +111,8 @@ class Cluster extends Layer {
     const id = this.getId();
     this.setSource(id, _objectSpread({
       type: 'geojson',
-      clusterMaxZoom: 19,
+      // One above MAP_MAX_ZOOM so clusters still exist at map ceiling and can be spiderfied
+      clusterMaxZoom: MAP_MAX_ZOOM + 1,
       clusterRadius: 50
     }, props));
     this.setSource(`${id}-polygons`, {
@@ -133,6 +139,7 @@ class Cluster extends Layer {
     }), {
       isInteractive
     });
+    this.addLabelLayer();
 
     // Non-clustered polygons
     this.addLayer(polygonLayer({
@@ -147,6 +154,21 @@ class Cluster extends Layer {
       color: strokeColor,
       source: `${id}-polygons`
     }));
+  }
+  addLabelLayer() {
+    const id = this.getId();
+    const {
+      label,
+      labelStyle,
+      radius
+    } = this.options;
+    if (label) {
+      this.addLayer(labelClusterLayer(_objectSpread(_objectSpread({}, labelStyle), {}, {
+        id,
+        label,
+        radius
+      })));
+    }
   }
   setOpacity(opacity) {
     super.setOpacity(opacity);
@@ -183,12 +205,22 @@ class Cluster extends Layer {
       fillColor,
       opacity
     } = this.options;
+    const {
+      hoverLabel,
+      label,
+      labelStyle
+    } = this.options;
     this.spider = new Spider(mapgl, {
       onClick: this.onClick,
       radius,
       fillColor,
       opacity,
-      onClose: this.onSpiderClose
+      onClose: this.onSpiderClose,
+      hoverLabel,
+      showLabel: hoverLabel ? (content, lngLat) => this._map.showLabel(content, lngLat) : undefined,
+      hideLabel: hoverLabel ? () => this._map.hideLabel() : undefined,
+      label,
+      labelStyle
     });
     this.setOpacity(this.options.opacity);
   }

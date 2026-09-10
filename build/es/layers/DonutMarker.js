@@ -6,7 +6,7 @@ import { Marker } from 'maplibre-gl';
 // Creates a donut marker component
 class DonutMarker extends Marker {
   constructor(segments, options = {}) {
-    const element = donutChart(segments);
+    const element = donutChart(segments, options.label);
     super({
       element
     });
@@ -28,10 +28,10 @@ class DonutMarker extends Marker {
 }
 
 // Returns a SVG donut chart
-export const donutChart = segments => {
+export const donutChart = (segments, label) => {
   const total = segments.reduce((total, s) => total + s.count, 0);
-  const fontSize = total >= 1000 ? 22 : total >= 100 ? 20 : total >= 10 ? 18 : 16;
-  const r = total >= 1000 ? 50 : total >= 100 ? 32 : total >= 10 ? 24 : 18;
+  const fontSize = total >= 1000 ? 18 : total >= 100 ? 17 : total >= 10 ? 16 : 15;
+  const r = total >= 1000 ? 32 : total >= 100 ? 26 : total >= 10 ? 18 : 15;
   const r0 = Math.round(r * 0.6);
   const w = r * 2;
   let offset = 0;
@@ -47,9 +47,10 @@ export const donutChart = segments => {
     offset += segment.count;
   });
   html += `<circle cx="${r}" cy="${r}" r="${r0}" fill="white" />`;
-  html += `<text dominant-baseline="central" transform="translate(${r}, ${r})">${total}</text></svg>`;
+  html += `<text dominant-baseline="central" transform="translate(${r}, ${r})">${label ?? total}</text></svg>`;
   const el = document.createElement('div');
   el.innerHTML = html;
+  el.firstChild.classList.add('dhis2-donut-marker');
   return el.firstChild;
 };
 

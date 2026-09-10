@@ -4,6 +4,7 @@ function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 import { bufferLayer, bufferOutlineLayer } from '../utils/buffers.js';
+import { labelLayer } from '../utils/labels.js';
 import { pointLayer, polygonLayer, outlineLayer } from '../utils/layers.js';
 import { eventStrokeColor } from '../utils/style.js';
 import Layer from './Layer.js';
@@ -20,7 +21,9 @@ class Events extends Layer {
       strokeColor = eventStrokeColor,
       radius,
       buffer,
-      bufferStyle
+      bufferStyle,
+      label,
+      labelStyle
     } = this.options;
     const isInteractive = true;
     if (buffer) {
@@ -49,6 +52,11 @@ class Events extends Layer {
       id,
       color: strokeColor
     }));
+    if (label) {
+      this.addLayer(labelLayer(_objectSpread({
+        id
+      }, labelStyle)));
+    }
   }
 }
 export default Events;

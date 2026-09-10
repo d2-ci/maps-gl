@@ -5,6 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 var _buffers = require("../utils/buffers.js");
+var _labels = require("../utils/labels.js");
 var _layers = require("../utils/layers.js");
 var _style = require("../utils/style.js");
 var _Layer = _interopRequireDefault(require("./Layer.js"));
@@ -27,7 +28,9 @@ class Events extends _Layer.default {
       strokeColor = _style.eventStrokeColor,
       radius,
       buffer,
-      bufferStyle
+      bufferStyle,
+      label,
+      labelStyle
     } = this.options;
     const isInteractive = true;
     if (buffer) {
@@ -56,6 +59,11 @@ class Events extends _Layer.default {
       id,
       color: strokeColor
     }));
+    if (label) {
+      this.addLayer((0, _labels.labelLayer)(_objectSpread({
+        id
+      }, labelStyle)));
+    }
   }
 }
 var _default = exports.default = Events;

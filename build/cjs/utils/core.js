@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.setTemplate = exports.getFeaturesString = void 0;
 // Replaces {key} with data in a string template
-const setTemplate = (text, data) => text.replace(/\{ *([\w_-]+) *\}/g, (str, key) => data[key]);
+const setTemplate = (text, data) => text.replace(/\{ *([\w_-]+) *\}/g, (_, key) => data[key] ?? '');
 
 // Returns a string representation of an array of features
 exports.setTemplate = setTemplate;

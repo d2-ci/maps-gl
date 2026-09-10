@@ -42,12 +42,6 @@ class ClientCluster extends Cluster {
         this.updatePolygons();
       }
     });
-    // Returns all features in a cluster
-    _defineProperty(this, "getClusterFeatures", clusterId => new Promise((resolve, reject) => {
-      const mapgl = this.getMapGL();
-      const source = mapgl.getSource(this.getId());
-      source.getClusterLeaves(clusterId, null, null, (error, features) => error ? reject(error) : resolve(features));
-    }));
   }
   createSource() {
     super.createSource({

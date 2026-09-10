@@ -3,12 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.symbolLayer = exports.polygonLayer = exports.pointLayer = exports.outlineLayer = exports.lineLayer = exports.heatLayer = exports.clusterLayer = exports.clusterCountLayer = exports.OVERLAY_START_POSITION = exports.BASEMAP_POSITION = void 0;
+exports.symbolLayer = exports.polygonLayer = exports.pointLayer = exports.outlineLayer = exports.lineLayer = exports.heatLayer = exports.clusterLayer = exports.clusterCountLayer = exports.OVERLAY_START_POSITION = exports.MAP_MAX_ZOOM = exports.BASEMAP_POSITION = void 0;
 var _expressions = require("./expressions.js");
 var _filters = require("./filters.js");
 var _style = require("./style.js");
 const BASEMAP_POSITION = exports.BASEMAP_POSITION = 0;
 const OVERLAY_START_POSITION = exports.OVERLAY_START_POSITION = 1;
+const MAP_MAX_ZOOM = exports.MAP_MAX_ZOOM = 18;
 
 // Layer with point features
 const pointLayer = ({

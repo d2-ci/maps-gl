@@ -10,7 +10,7 @@ import { bufferSource } from '../utils/buffers.js';
 import { featureCollection } from '../utils/geometry.js';
 import { addImages } from '../utils/images.js';
 import { labelSource } from '../utils/labels.js';
-import { setLayersOpacity } from '../utils/opacity.js';
+import { setLayersOpacity, clearLayerOpacityCache } from '../utils/opacity.js';
 class Layer extends Evented {
   constructor(options = {}) {
     super();
@@ -47,16 +47,18 @@ class Layer extends Evented {
         this.onError(error);
       }
     }
-    Object.keys(source).forEach(id => {
-      if (map.styleIsLoaded() && !mapgl.getSource(id)) {
-        mapgl.addSource(id, source[id]);
-      }
-    });
-    layers.forEach(layer => {
-      if (map.styleIsLoaded() && !mapgl.getLayer(layer.id)) {
-        mapgl.addLayer(layer, beforeId);
-      }
-    });
+    if (map.styleIsLoaded()) {
+      Object.keys(source).forEach(id => {
+        if (!mapgl.getSource(id)) {
+          mapgl.addSource(id, source[id]);
+        }
+      });
+      layers.forEach(layer => {
+        if (!mapgl.getLayer(layer.id)) {
+          mapgl.addLayer(layer, beforeId);
+        }
+      });
+    }
     if (!this.isVisible()) {
       this.setVisibility(false);
     }
@@ -81,16 +83,19 @@ class Layer extends Evented {
     } = this.options;
     this.onRemove();
     if (mapgl) {
-      layers.forEach(layer => {
-        if (mapgl.getLayer(layer.id)) {
-          mapgl.removeLayer(layer.id);
-        }
-      });
-      Object.keys(source).forEach(id => {
-        if (mapgl.getSource(id)) {
-          mapgl.removeSource(id);
-        }
-      });
+      clearLayerOpacityCache(mapgl, this.getId());
+      if (map.styleIsLoaded()) {
+        layers.forEach(layer => {
+          if (mapgl.getLayer(layer.id)) {
+            mapgl.removeLayer(layer.id);
+          }
+        });
+        Object.keys(source).forEach(id => {
+          if (mapgl.getSource(id)) {
+            mapgl.removeSource(id);
+          }
+        });
+      }
     }
     if (onClick) {
       this.off('click', onClick);
@@ -125,7 +130,11 @@ class Layer extends Evented {
       const value = isVisible ? 'visible' : 'none';
       const layers = this.getLayers();
       if (mapgl && layers) {
-        layers.forEach(layer => mapgl.setLayoutProperty(layer.id, 'visibility', value));
+        layers.forEach(layer => {
+          if (mapgl.getLayer(layer.id)) {
+            mapgl.setLayoutProperty(layer.id, 'visibility', value);
+          }
+        });
       }
     }
     this._isVisible = isVisible;
@@ -181,10 +190,16 @@ class Layer extends Evented {
     return this.getLayers().some(layer => layer.id === id);
   }
   move() {
+    const map = this.getMap();
+    if (!map?.styleIsLoaded()) {
+      return;
+    }
     const mapgl = this.getMapGL();
-    const beforeId = this._map.getBeforeLayerId();
+    const beforeId = map.getBeforeLayerId();
     this.getLayers().forEach(layer => {
-      mapgl.moveLayer(layer.id, beforeId);
+      if (mapgl.getLayer(layer.id)) {
+        mapgl.moveLayer(layer.id, beforeId);
+      }
     });
   }
   getFeatures() {
@@ -238,8 +253,9 @@ class Layer extends Evented {
   }
   setOpacity(opacity) {
     const mapgl = this.getMapGL();
+    const map = this.getMap();
     const opacityFactor = this._opacityFactor !== undefined ? this._opacityFactor : 1;
-    if (mapgl) {
+    if (mapgl && map?.styleIsLoaded()) {
       setLayersOpacity(mapgl, this.getId(), opacity * opacityFactor);
     }
     this.options.opacity = opacity;
@@ -253,7 +269,7 @@ class Layer extends Evented {
   }
   isMaxZoom() {
     const mapgl = this.getMapGL();
-    return mapgl.getZoom() === mapgl.getMaxZoom();
+    return mapgl.getZoom() >= mapgl.getMaxZoom();
   }
 
   // Highlight a layer feature
@@ -289,6 +305,10 @@ class Layer extends Evented {
       const {
         properties
       } = feature;
+      if (properties.cluster) {
+        this._map.hideLabel();
+        return;
+      }
       const content = (hoverLabel || label).replace(/\{ *([\w_-]+) *\}/g, (str, key) => properties[key] ?? (key === 'value' ? this.locale('Label.NoData') : ''));
       this._map.showLabel(content, evt.lngLat);
     } else {
