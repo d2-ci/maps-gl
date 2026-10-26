@@ -117,10 +117,9 @@ class MapGL extends _maplibreGl.Evented {
     const {
       locale,
       glyphs,
-      scrollZoom,
-      rtlTextPluginUrl
+      scrollZoom
     } = options;
-    (0, _rtlText.loadRTLTextPlugin)(rtlTextPluginUrl);
+    (0, _rtlText.loadRTLTextPlugin)();
     const mapgl = new _maplibreGl.Map({
       container: el,
       style: (0, _style.mapStyle)({

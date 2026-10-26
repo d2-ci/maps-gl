@@ -110,10 +110,9 @@ export class MapGL extends Evented {
     const {
       locale,
       glyphs,
-      scrollZoom,
-      rtlTextPluginUrl
+      scrollZoom
     } = options;
-    loadRTLTextPlugin(rtlTextPluginUrl);
+    loadRTLTextPlugin();
     const mapgl = new Map({
       container: el,
       style: mapStyle({
