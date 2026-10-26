@@ -11,6 +11,7 @@ const loadModules = () => {
   });
   return modules;
 };
+const flushPromises = () => new Promise(resolve => setTimeout(resolve));
 describe('loadRTLTextPlugin', () => {
   it('lazily sets the vendored plugin', () => {
     const {
@@ -37,11 +38,12 @@ describe('loadRTLTextPlugin', () => {
     const error = new Error('setRTLTextPlugin cannot be called twice');
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     setRTLTextPlugin.mockRejectedValueOnce(error);
-    await loadRTLTextPlugin();
+    loadRTLTextPlugin();
+    await flushPromises();
     expect(consoleError).toHaveBeenCalledWith('Failed to set RTL text plugin', error);
     consoleError.mockRestore();
   });
-  it('logs an error if MapLibre throws before returning a promise', async () => {
+  it('logs an error if MapLibre throws before returning a promise', () => {
     const {
       setRTLTextPlugin,
       loadRTLTextPlugin
@@ -51,7 +53,7 @@ describe('loadRTLTextPlugin', () => {
     setRTLTextPlugin.mockImplementationOnce(() => {
       throw error;
     });
-    await loadRTLTextPlugin();
+    loadRTLTextPlugin();
     expect(consoleError).toHaveBeenCalledWith('Failed to set RTL text plugin', error);
     consoleError.mockRestore();
   });

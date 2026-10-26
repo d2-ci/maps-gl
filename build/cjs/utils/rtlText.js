@@ -9,7 +9,8 @@ var _maplibreGl = require("maplibre-gl");
 // from @mapbox/mapbox-gl-rtl-text (see scripts/prepare-vendor-files.js)
 const RTL_TEXT_PLUGIN_URL = new URL('../vendor/mapbox-gl-rtl-text.js', import.meta.url).href;
 let requested = false;
-const loadRTLTextPlugin = async () => {
+const logError = error => console.error('Failed to set RTL text plugin', error);
+const loadRTLTextPlugin = () => {
   if (requested) {
     return;
   }
@@ -17,9 +18,9 @@ const loadRTLTextPlugin = async () => {
 
   // Only catches setup errors: MapLibre loads the plugin when first needed
   try {
-    await (0, _maplibreGl.setRTLTextPlugin)(RTL_TEXT_PLUGIN_URL, true);
+    (0, _maplibreGl.setRTLTextPlugin)(RTL_TEXT_PLUGIN_URL, true).catch(logError);
   } catch (error) {
-    console.error('Failed to set RTL text plugin', error);
+    logError(error);
   }
 };
 exports.loadRTLTextPlugin = loadRTLTextPlugin;
