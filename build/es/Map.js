@@ -192,7 +192,7 @@ export class MapGL extends Evented {
 
       // Layer is removed while being created
       if (!this.hasLayer(layer)) {
-        this.removeLayer(layer);
+        await this.removeLayer(layer);
       }
     }
     this.orderOverlays();
