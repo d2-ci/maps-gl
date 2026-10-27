@@ -151,7 +151,7 @@ class EarthEngine extends _Layer.default {
         source: `${id}-mask`,
         paint: {
           'fill-color': _style.noDataColor,
-          'fill-opacity': 0.6
+          'fill-opacity': _style.maskOpacity
         }
       }, {
         excludeFromVisibleIdsFilter: true

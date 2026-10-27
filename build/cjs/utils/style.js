@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.textSize = exports.textOpacity = exports.textFont = exports.textColor = exports.strokeWidth = exports.noDataColor = exports.mapStyle = exports.lineStrokeColor = exports.lineOpacity = exports.labelFontWeight = exports.labelFontStyle = exports.labelFontSize = exports.labelColor = exports.iconOpacity = exports.hoverStrokeMultiplier = exports.fillOpacity = exports.eventStrokeColor = exports.defaultGlyphs = exports.clusterCountColor = exports.circleStrokeColor = exports.circleRadius = exports.circleOpacity = void 0;
+exports.textSize = exports.textOpacity = exports.textFont = exports.textColor = exports.strokeWidth = exports.noDataColor = exports.maskOpacity = exports.mapStyle = exports.lineStrokeColor = exports.lineOpacity = exports.labelFontWeight = exports.labelFontStyle = exports.labelFontSize = exports.labelColor = exports.iconOpacity = exports.iconHaloOpacity = exports.hoverStrokeMultiplier = exports.fillOpacity = exports.eventStrokeColor = exports.defaultGlyphs = exports.clusterCountColor = exports.circleStrokeColor = exports.circleRadius = exports.circleOpacity = void 0;
 const textFont = exports.textFont = ['Open Sans Bold'];
 const textSize = exports.textSize = 16;
 const textColor = exports.textColor = '#FFFFFF';
@@ -19,7 +19,9 @@ const lineStrokeColor = exports.lineStrokeColor = '#333333';
 const lineOpacity = exports.lineOpacity = 1;
 const fillOpacity = exports.fillOpacity = 1;
 const iconOpacity = exports.iconOpacity = 1;
+const iconHaloOpacity = exports.iconHaloOpacity = 0.6;
 const noDataColor = exports.noDataColor = '#CCCCCC';
+const maskOpacity = exports.maskOpacity = 0.6;
 const strokeWidth = exports.strokeWidth = 1;
 const hoverStrokeMultiplier = exports.hoverStrokeMultiplier = 3;
 const eventStrokeColor = exports.eventStrokeColor = '#333333';

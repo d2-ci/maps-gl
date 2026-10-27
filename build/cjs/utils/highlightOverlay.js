@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.updateHighlightOverlay = exports.removeHighlightOverlay = exports.getOverlaySourceId = exports.createHighlightOverlay = void 0;
 var _expressions = require("./expressions.js");
 var _geometry = require("./geometry.js");
+var _style = require("./style.js");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
@@ -19,7 +20,6 @@ const CLONEABLE_TYPES = new Set(['circle', 'line']);
 // Instead we add a colored halo behind a plain clone of the icon
 const ICON_HALO_RADIUS = 14;
 const ICON_HALO_BLUR = 0.6;
-const ICON_HALO_OPACITY = 0.6;
 const iconHighlightHalo = layer => ({
   id: `${layer.id}-highlight-halo`,
   type: 'circle',
@@ -29,7 +29,7 @@ const iconHighlightHalo = layer => ({
     'circle-color': (0, _expressions.highlightColorExpr)('#333333'),
     'circle-radius': ICON_HALO_RADIUS,
     'circle-blur': ICON_HALO_BLUR,
-    'circle-opacity': ICON_HALO_OPACITY
+    'circle-opacity': _style.iconHaloOpacity
   }
 });
 
