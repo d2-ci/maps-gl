@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.setLayersOpacity = exports.clearLayerOpacityCache = void 0;
+var _style = require("./style.js");
 const properties = {
   raster: ['raster-opacity'],
   point: ['circle-opacity', 'circle-stroke-opacity'],
@@ -15,13 +16,20 @@ const properties = {
   label: ['text-opacity'],
   symbol: ['icon-opacity', 'text-opacity'],
   cluster: ['circle-opacity', 'circle-stroke-opacity'],
-  count: ['text-opacity']
+  count: ['text-opacity'],
+  halo: ['circle-opacity'],
+  mask: ['fill-opacity']
 };
 const opacityFactor = {
   buffer: 0.2,
-  'buffer-outline': 0.2
+  'buffer-outline': 0.2,
+  halo: _style.iconHaloOpacity,
+  mask: _style.maskOpacity
 };
 const getOpacity = (key, opacity) => opacity * (opacityFactor[key] || 1);
+
+// Highlight clones follow the opacity of the layer they were cloned from
+const getOpacityKey = layerId => layerId.replace(/-highlight(-icon)?$/, '').split('-').pop();
 
 // WeakMap so mapgl instances are not prevented from being GC'd
 const _subLayerCache = new WeakMap();
@@ -42,7 +50,7 @@ const clearLayerOpacityCache = (mapgl, id) => {
 exports.clearLayerOpacityCache = clearLayerOpacityCache;
 const setLayersOpacity = (mapgl, id, opacity) => {
   getSubLayerIds(mapgl, id).forEach(layerId => {
-    const key = layerId.split('-').pop();
+    const key = getOpacityKey(layerId);
     const value = getOpacity(key, opacity);
     properties[key]?.forEach(property => {
       mapgl.setPaintProperty(layerId, property, value);

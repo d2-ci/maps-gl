@@ -18,6 +18,7 @@ var _geometry = require("./utils/geometry.js");
 var _glyphs = require("./utils/glyphs.js");
 var _images = require("./utils/images.js");
 var _layers = require("./utils/layers.js");
+var _rtlText = require("./utils/rtlText.js");
 var _style = require("./utils/style.js");
 var _sync = _interopRequireDefault(require("./utils/sync.js"));
 require("./Map.css");
@@ -115,6 +116,7 @@ class MapGL extends _maplibreGl.Evented {
       glyphs,
       scrollZoom
     } = options;
+    (0, _rtlText.loadRTLTextPlugin)();
     const mapgl = new _maplibreGl.Map({
       container: el,
       style: (0, _style.mapStyle)({
@@ -199,7 +201,7 @@ class MapGL extends _maplibreGl.Evented {
 
       // Layer is removed while being created
       if (!this.hasLayer(layer)) {
-        this.removeLayer(layer);
+        await this.removeLayer(layer);
       }
     }
     this.orderOverlays();

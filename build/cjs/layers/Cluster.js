@@ -216,7 +216,8 @@ class Cluster extends _Layer.default {
     if (!source) {
       return;
     }
-    const features = ids ? this.getFeatures().filter(f => ids.includes(f.properties.id)) : this.getFeatures();
+    const visibleIds = ids ? new Set(ids) : null;
+    const features = visibleIds ? this.getFeatures().filter(f => visibleIds.has(f.properties.id)) : this.getFeatures();
     source.setData((0, _geometry.featureCollection)(features));
     if (this._hasPolygons) {
       mapgl.off('idle', this.updatePolygons);
