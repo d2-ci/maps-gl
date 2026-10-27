@@ -93,6 +93,7 @@ export class MapGL extends Evented {
         this._hoveredLayer.fire('mouseleave');
         this._hoveredLayer = null;
         this._hoveredFeatureId = null;
+        this._updateHoverHighlight(null);
       }
     });
     _defineProperty(this, "onError", evt => {
@@ -130,6 +131,7 @@ export class MapGL extends Evented {
     this._mouseMoveEnabled = true;
     this._hoveredLayer = null;
     this._hoveredFeatureId = null;
+    this._hoverHighlightLayer = null;
     this._selectedFeatures = null;
     this._hoverStateKey = null;
     this._selectedStateKey = null;
@@ -308,6 +310,20 @@ export class MapGL extends Evented {
     }
     this._hoveredLayer = nextHover;
     this._hoveredFeatureId = nextHover ? featureId : null;
+    this._updateHoverHighlight(nextHover, feature);
+  }
+
+  // Highlights the hovered feature unless its layer handles mouseenter itself
+  _updateHoverHighlight(hoverTarget, feature) {
+    // The top-level layer, so a group highlights the id in all its sub-layers
+    const layer = hoverTarget && !hoverTarget.listens('mouseenter') ? this.getLayerFromId(feature.layer.id) : null;
+    if (this._hoverHighlightLayer && this._hoverHighlightLayer !== layer) {
+      this._hoverHighlightLayer.highlight(null);
+    }
+    if (layer) {
+      layer.highlight(feature.properties.id);
+    }
+    this._hoverHighlightLayer = layer;
   }
   // Set hover state for features
   setHoverState(features, color) {
