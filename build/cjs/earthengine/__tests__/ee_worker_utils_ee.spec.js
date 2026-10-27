@@ -1,9 +1,9 @@
 "use strict";
 
-var _ee_api_js_worker = _interopRequireDefault(require("../ee_api_js_worker.js"));
+var _ee_api_js_worker = _interopRequireDefault(require("../../vendor/ee_api_js_worker.js"));
 var _ee_worker_utils = require("../ee_worker_utils.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-jest.mock('../ee_api_js_worker.js');
+jest.mock('../../vendor/ee_api_js_worker.js', () => jest.requireActual('../__mocks__/ee_api_js_worker.js'));
 describe('EE-dependent functions (mocked)', () => {
   beforeEach(() => {
     jest.clearAllMocks();

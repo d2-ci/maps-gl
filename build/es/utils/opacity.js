@@ -1,3 +1,4 @@
+import { iconHaloOpacity, maskOpacity } from './style.js';
 const properties = {
   raster: ['raster-opacity'],
   point: ['circle-opacity', 'circle-stroke-opacity'],
@@ -9,13 +10,20 @@ const properties = {
   label: ['text-opacity'],
   symbol: ['icon-opacity', 'text-opacity'],
   cluster: ['circle-opacity', 'circle-stroke-opacity'],
-  count: ['text-opacity']
+  count: ['text-opacity'],
+  halo: ['circle-opacity'],
+  mask: ['fill-opacity']
 };
 const opacityFactor = {
   buffer: 0.2,
-  'buffer-outline': 0.2
+  'buffer-outline': 0.2,
+  halo: iconHaloOpacity,
+  mask: maskOpacity
 };
 const getOpacity = (key, opacity) => opacity * (opacityFactor[key] || 1);
+
+// Highlight clones follow the opacity of the layer they were cloned from
+const getOpacityKey = layerId => layerId.replace(/-highlight(-icon)?$/, '').split('-').pop();
 
 // WeakMap so mapgl instances are not prevented from being GC'd
 const _subLayerCache = new WeakMap();
@@ -35,7 +43,7 @@ export const clearLayerOpacityCache = (mapgl, id) => {
 };
 export const setLayersOpacity = (mapgl, id, opacity) => {
   getSubLayerIds(mapgl, id).forEach(layerId => {
-    const key = layerId.split('-').pop();
+    const key = getOpacityKey(layerId);
     const value = getOpacity(key, opacity);
     properties[key]?.forEach(property => {
       mapgl.setPaintProperty(layerId, property, value);
