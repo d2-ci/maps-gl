@@ -34,11 +34,9 @@ const idFilter = ids => {
       others.push(id);
     }
   });
-  const filters = [strings.length && matchId(strings), integers.length && matchId(integers), others.length && ['in', ['get', 'id'], ['literal', others]]].filter(Boolean);
-  if (filters.length < 2) {
-    return filters[0] ?? false;
-  }
-  return ['any', ...filters];
+
+  // An empty ['any'] keeps no feature
+  return ['any', ...[strings.length && matchId(strings), integers.length && matchId(integers), others.length && ['in', ['get', 'id'], ['literal', others]]].filter(Boolean)];
 };
 exports.idFilter = idFilter;
 const isHover = exports.isHover = ['boolean', ['feature-state', 'hover'], false];
