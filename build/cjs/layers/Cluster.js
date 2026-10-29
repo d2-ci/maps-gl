@@ -101,7 +101,7 @@ class Cluster extends _Layer.default {
       this._polygonsOnMap = [];
 
       // Translate from polygon to point before clustering
-      // This means highlight()/select() on a polygon feature here has no visible effect
+      // so highlight()/select() has no visible effect on polygons
       this._features = this._features.map(f => {
         if (f.geometry.type === 'Polygon') {
           this._polygons[f.id] = f;
@@ -208,8 +208,7 @@ class Cluster extends _Layer.default {
     return this.getMapGL().querySourceFeatures(this.getId());
   }
 
-  // Cluster circles have no per-feature id to filter on, so we re-send the
-  // filtered features as source data instead, letting clustering recompute
+  // Clusters can't be filtered by id, so the visible features are re-sent and re-clustered
   setVisibleIds(ids) {
     const mapgl = this.getMapGL();
     const source = mapgl?.getSource(this.getId());

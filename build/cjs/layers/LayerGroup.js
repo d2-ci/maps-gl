@@ -76,6 +76,7 @@ class LayerGroup extends _maplibreGl.Evented {
   removeFrom(map) {
     this._layers.forEach(layer => layer.removeFrom(map));
     this.off('contextmenu', this.onContextMenu);
+    this._map = null;
   }
   getId() {
     return this._id;
@@ -112,19 +113,11 @@ class LayerGroup extends _maplibreGl.Evented {
     return this._layers.find(layer => layer.hasLayerId(id));
   }
   highlight(ids, color) {
-    const map = this.getMap();
-    if (!map) {
-      return;
-    }
     this._hoverIds = (0, _core.normalizeIds)(ids);
     this._highlightColor = color;
     this._syncOverlay();
   }
   select(ids, color) {
-    const map = this.getMap();
-    if (!map) {
-      return;
-    }
     this._selectedIds = (0, _core.normalizeIds)(ids);
     this._highlightColor = color;
     this._syncOverlay();
@@ -139,7 +132,7 @@ class LayerGroup extends _maplibreGl.Evented {
     }
   }
 
-  // Drives each sub-layer's own overlay directly
+  // A group overlay would reuse its sub-layers' overlay layer ids, so it fills theirs
   _syncOverlay() {
     const map = this.getMap();
     if (!map) {
@@ -167,6 +160,11 @@ class LayerGroup extends _maplibreGl.Evented {
   }
   move() {
     this._layers.forEach(layer => layer.move());
+  }
+
+  // The app handles hover for the whole group as soon as it does for one sub-layer
+  handlesMouseEnter() {
+    return this._layers.some(layer => layer.handlesMouseEnter());
   }
   hasLayerId(id) {
     return this._layers.some(layer => layer.getLayers().some(layer => layer.id === id));
