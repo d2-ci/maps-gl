@@ -3,6 +3,8 @@
 var _filters = require("../../utils/filters.js");
 var _ServerCluster = _interopRequireDefault(require("../ServerCluster.js"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+/* global mockMap, mockMapGL */
+
 const findLabelLayer = cluster => cluster.getLayers().find(layer => layer.id === `${cluster.getId()}-label`);
 describe('ServerCluster', () => {
   it('Should not add a label layer when label is not set', () => {
@@ -29,5 +31,16 @@ describe('ServerCluster', () => {
     const layer = findLabelLayer(cluster);
     expect(layer.layout['text-size']).toBe(14);
     expect(layer.paint['text-color']).toBe('#fff');
+  });
+  it('Should keep its server clusters on setVisibleIds(), since it holds no features to filter', () => {
+    const cluster = new _ServerCluster.default({});
+    const source = {
+      setData: jest.fn()
+    };
+    mockMapGL.getSource.mockReturnValue(source);
+    cluster._map = mockMap;
+    cluster.setVisibleIds(null);
+    cluster.setVisibleIds(['a']);
+    expect(source.setData).not.toHaveBeenCalled();
   });
 });

@@ -1,3 +1,4 @@
+/* global mockMap, mockMapGL */
 import { isClusterPoint } from '../../utils/filters.js';
 import ServerCluster from '../ServerCluster.js';
 const findLabelLayer = cluster => cluster.getLayers().find(layer => layer.id === `${cluster.getId()}-label`);
@@ -26,5 +27,16 @@ describe('ServerCluster', () => {
     const layer = findLabelLayer(cluster);
     expect(layer.layout['text-size']).toBe(14);
     expect(layer.paint['text-color']).toBe('#fff');
+  });
+  it('Should keep its server clusters on setVisibleIds(), since it holds no features to filter', () => {
+    const cluster = new ServerCluster({});
+    const source = {
+      setData: jest.fn()
+    };
+    mockMapGL.getSource.mockReturnValue(source);
+    cluster._map = mockMap;
+    cluster.setVisibleIds(null);
+    cluster.setVisibleIds(['a']);
+    expect(source.setData).not.toHaveBeenCalled();
   });
 });

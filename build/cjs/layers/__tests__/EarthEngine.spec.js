@@ -272,6 +272,45 @@ describe('EarthEngine', () => {
       layer.setVisibleIds(null);
       expect(featureIds(maskSource.setData.mock.lastCall[0])).toEqual([]);
     });
+    it('does not re-send the mask when the hidden org units are unchanged, as their boundaries are heavy', async () => {
+      const {
+        layer,
+        maskSource
+      } = await addLayerWithMaskSource();
+      layer.filter(['O6uvpzGd5pu']);
+      maskSource.setData.mockClear();
+      layer.filter(['O6uvpzGd5pu']);
+      layer.setVisibleIds(null);
+      expect(maskSource.setData).not.toHaveBeenCalled();
+    });
+    it('rebuilds the mask when the layer is added again, e.g. after a basemap switch', async () => {
+      const {
+        layer,
+        maskSource
+      } = await addLayerWithMaskSource();
+      layer.filter(['O6uvpzGd5pu']);
+      layer.removeFrom(mockMap);
+      maskSource.setData.mockClear();
+      await layer.addTo(mockMap);
+      expect(featureIds(maskSource.setData.mock.lastCall[0]).sort()).toEqual(['DiszpKrYNg8', 'fdc6uOvgoji'].sort());
+    });
+    it('masks what filter() excluded while the layer was still loading', async () => {
+      const layer = new _EarthEngine.default(options);
+      const maskId = `${layer.getId()}-mask`;
+      const maskSource = {
+        setData: jest.fn()
+      };
+      let isMaskAdded = false;
+      mockMapGL.addSource.mockImplementation(id => {
+        isMaskAdded = isMaskAdded || id === maskId;
+      });
+      mockMapGL.getSource.mockImplementation(id => id === maskId && isMaskAdded ? maskSource : undefined);
+      const adding = layer.addTo(mockMap);
+      layer.filter(['O6uvpzGd5pu']);
+      await adding;
+      mockMapGL.addSource.mockReset();
+      expect(featureIds(maskSource.setData.mock.lastCall[0]).sort()).toEqual(['DiszpKrYNg8', 'fdc6uOvgoji'].sort());
+    });
     it('does not throw when the mask source is not available', async () => {
       const layer = new _EarthEngine.default(_objectSpread(_objectSpread({}, options), {}, {
         data: null

@@ -139,9 +139,6 @@ class MapGL extends _maplibreGl.Evented {
     this._hoveredLayer = null;
     this._hoveredFeatureId = null;
     this._hoverHighlightLayer = null;
-    this._selectedFeatures = null;
-    this._hoverStateKey = null;
-    this._selectedStateKey = null;
 
     // Translate strings
     if (locale) {
@@ -323,7 +320,8 @@ class MapGL extends _maplibreGl.Evented {
   // Highlights the hovered feature unless its layer handles mouseenter itself
   _updateHoverHighlight(hoverTarget, feature) {
     // The top-level layer, so a group highlights the id in all its sub-layers
-    const layer = hoverTarget && !hoverTarget.listens('mouseenter') ? this.getLayerFromId(feature.layer.id) : null;
+    const hoveredLayer = hoverTarget && this.getLayerFromId(feature.layer.id);
+    const layer = hoveredLayer && !hoveredLayer.handlesMouseEnter() ? hoveredLayer : null;
     if (this._hoverHighlightLayer && this._hoverHighlightLayer !== layer) {
       this._hoverHighlightLayer.highlight(null);
     }
@@ -333,10 +331,9 @@ class MapGL extends _maplibreGl.Evented {
     this._hoverHighlightLayer = layer;
   }
   // Set hover state for features
-  setHoverState(features, color) {
-    const key = `${(0, _core.getFeaturesString)(features)}|${color ?? ''}`;
-    if (key !== this._hoverStateKey) {
-      this._hoverStateKey = key;
+  setHoverState(features) {
+    // Only set hover state when features are changed
+    if ((0, _core.getFeaturesString)(features) !== (0, _core.getFeaturesString)(this._hoverFeatures)) {
       if (this._hoverFeatures) {
         // Clear state for existing hover features
         this._hoverFeatures.forEach(feature => this.setFeatureState(feature, {
@@ -346,34 +343,8 @@ class MapGL extends _maplibreGl.Evented {
       }
       if (Array.isArray(features)) {
         this._hoverFeatures = features;
-        features.forEach(feature => this.setFeatureState(feature, color !== undefined ? {
-          hover: true,
-          highlightColor: color
-        } : {
+        features.forEach(feature => this.setFeatureState(feature, {
           hover: true
-        }));
-      }
-    }
-  }
-
-  // Set selected state for features
-  setSelectedState(features, color) {
-    const key = `${(0, _core.getFeaturesString)(features)}|${color ?? ''}`;
-    if (key !== this._selectedStateKey) {
-      this._selectedStateKey = key;
-      if (this._selectedFeatures) {
-        this._selectedFeatures.forEach(feature => this.setFeatureState(feature, {
-          selected: false
-        }));
-        this._selectedFeatures = null;
-      }
-      if (Array.isArray(features)) {
-        this._selectedFeatures = features;
-        features.forEach(feature => this.setFeatureState(feature, color !== undefined ? {
-          selected: true,
-          highlightColor: color
-        } : {
-          selected: true
         }));
       }
     }
@@ -393,8 +364,6 @@ class MapGL extends _maplibreGl.Evented {
   getZoom() {
     return this.getMapGL().getZoom();
   }
-
-  // Clears the cached interactive layer ids so they're recomputed on next use
   invalidateInteractiveLayerIds() {
     this._interactiveLayerIds = null;
   }
@@ -438,7 +407,7 @@ class MapGL extends _maplibreGl.Evented {
 
   // Returns before layer id if exists among layers
   getBeforeLayerId() {
-    return this._beforeId && this.styleIsLoaded() && this.getMapGL().getStyle().layers.find(layer => layer.id === this._beforeId) ? this._beforeId : undefined;
+    return this._beforeId && this.styleIsLoaded() && this.getMapGL().getLayer(this._beforeId) ? this._beforeId : undefined;
   }
   styleIsLoaded() {
     return !this._styleIsLoading;

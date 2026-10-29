@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-var _expressions = require("../utils/expressions.js");
 var _filters = require("../utils/filters.js");
 var _labels = require("../utils/labels.js");
 var _style = require("../utils/style.js");
@@ -50,10 +49,10 @@ class Boundary extends _Layer.default {
       type: 'line',
       source: id,
       paint: {
-        'line-color': (0, _expressions.highlightColorExpr)(['get', 'color']),
-        'line-width': ['case', ['any', _filters.isHover, _filters.isSelected], ['+', ['get', 'width'], 2], ['get', 'width']]
+        'line-color': ['get', 'color'],
+        'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], ['+', ['get', 'width'], 2], ['get', 'width']]
       },
-      filter: ['==', '$type', 'Polygon']
+      filter: _filters.isPolygon
     }, {
       isInteractive
     });
@@ -66,10 +65,10 @@ class Boundary extends _Layer.default {
       paint: {
         'circle-color': 'transparent',
         'circle-radius': ['get', 'radius'],
-        'circle-stroke-color': (0, _expressions.highlightColorExpr)(['get', 'color']),
-        'circle-stroke-width': ['case', ['any', _filters.isHover, _filters.isSelected], ['+', ['get', 'width'], 2], ['get', 'width']]
+        'circle-stroke-color': ['get', 'color'],
+        'circle-stroke-width': ['case', ['boolean', ['feature-state', 'hover'], false], ['+', ['get', 'width'], 2], ['get', 'width']]
       },
-      filter: ['==', '$type', 'Point']
+      filter: _filters.isPoint
     }, {
       isInteractive
     });
