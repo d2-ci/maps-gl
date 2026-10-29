@@ -53,10 +53,16 @@ class LayerGroup extends _maplibreGl.Evented {
     this._hoverIds = [];
     this._selectedIds = [];
     this._visibleIds = null;
+    this._visibleIdSet = null;
     this._highlightColor = undefined;
   }
   createLayer() {
     this._layerConfigs.forEach(config => this._layers.push(this._map.createLayer(config)));
+
+    // Sub-layers created after setVisibleIds() start with its ids
+    if (this._visibleIds) {
+      this._layers.forEach(layer => layer.setVisibleIds(this._visibleIds));
+    }
     if (this.options.opacity) {
       this.setOpacity(this.options.opacity);
     }
@@ -77,6 +83,7 @@ class LayerGroup extends _maplibreGl.Evented {
   removeFrom(map) {
     this._layers.forEach(layer => layer.removeFrom(map));
     this.off('contextmenu', this.onContextMenu);
+    this._map = null;
   }
   getId() {
     return this._id;
@@ -113,36 +120,32 @@ class LayerGroup extends _maplibreGl.Evented {
     return this._layers.find(layer => layer.hasLayerId(id));
   }
   highlight(ids, color) {
-    const map = this.getMap();
-    if (!map) {
-      return;
-    }
     this._hoverIds = (0, _core.normalizeIds)(ids);
     this._highlightColor = color;
     this._syncOverlay();
   }
   select(ids, color) {
-    const map = this.getMap();
-    if (!map) {
-      return;
-    }
     this._selectedIds = (0, _core.normalizeIds)(ids);
     this._highlightColor = color;
     this._syncOverlay();
   }
   setVisibleIds(ids) {
+    if ((0, _core.isSameIds)(ids, this._visibleIds)) {
+      return;
+    }
     this._layers.forEach(layer => layer.setVisibleIds(ids));
     this._visibleIds = ids;
+    this._visibleIdSet = ids ? new Set(ids) : null;
     this._syncOverlay();
   }
 
-  // Drives each sub-layer's own overlay directly
+  // A group overlay would reuse its sub-layers' overlay layer ids, so it fills theirs
   _syncOverlay() {
     const map = this.getMap();
     if (!map) {
       return;
     }
-    const ids = (0, _core.filterVisibleIds)([...new Set([...this._hoverIds, ...this._selectedIds])], this._visibleIds);
+    const ids = (0, _core.filterVisibleIds)([...new Set([...this._hoverIds, ...this._selectedIds])], this._visibleIdSet);
     this._layers.forEach(layer => {
       const features = ids.flatMap(id => layer.getFeaturesById(id));
       (0, _highlightOverlay.updateHighlightOverlay)(map, {
@@ -164,6 +167,11 @@ class LayerGroup extends _maplibreGl.Evented {
   }
   move() {
     this._layers.forEach(layer => layer.move());
+  }
+
+  // The app handles hover for the whole group as soon as it does for one sub-layer
+  handlesMouseEnter() {
+    return this._layers.some(layer => layer.handlesMouseEnter());
   }
   hasLayerId(id) {
     return this._layers.some(layer => layer.getLayers().some(layer => layer.id === id));

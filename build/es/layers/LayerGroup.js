@@ -3,7 +3,7 @@ function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" 
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 import { Evented } from 'maplibre-gl';
 import { v4 as uuidv4 } from 'uuid';
-import { filterVisibleIds, normalizeIds } from '../utils/core.js';
+import { filterVisibleIds, isSameIds, normalizeIds } from '../utils/core.js';
 import { getBoundsFromLayers } from '../utils/geometry.js';
 import { updateHighlightOverlay } from '../utils/highlightOverlay.js';
 class LayerGroup extends Evented {
@@ -47,10 +47,16 @@ class LayerGroup extends Evented {
     this._hoverIds = [];
     this._selectedIds = [];
     this._visibleIds = null;
+    this._visibleIdSet = null;
     this._highlightColor = undefined;
   }
   createLayer() {
     this._layerConfigs.forEach(config => this._layers.push(this._map.createLayer(config)));
+
+    // Sub-layers created after setVisibleIds() start with its ids
+    if (this._visibleIds) {
+      this._layers.forEach(layer => layer.setVisibleIds(this._visibleIds));
+    }
     if (this.options.opacity) {
       this.setOpacity(this.options.opacity);
     }
@@ -71,6 +77,7 @@ class LayerGroup extends Evented {
   removeFrom(map) {
     this._layers.forEach(layer => layer.removeFrom(map));
     this.off('contextmenu', this.onContextMenu);
+    this._map = null;
   }
   getId() {
     return this._id;
@@ -107,36 +114,32 @@ class LayerGroup extends Evented {
     return this._layers.find(layer => layer.hasLayerId(id));
   }
   highlight(ids, color) {
-    const map = this.getMap();
-    if (!map) {
-      return;
-    }
     this._hoverIds = normalizeIds(ids);
     this._highlightColor = color;
     this._syncOverlay();
   }
   select(ids, color) {
-    const map = this.getMap();
-    if (!map) {
-      return;
-    }
     this._selectedIds = normalizeIds(ids);
     this._highlightColor = color;
     this._syncOverlay();
   }
   setVisibleIds(ids) {
+    if (isSameIds(ids, this._visibleIds)) {
+      return;
+    }
     this._layers.forEach(layer => layer.setVisibleIds(ids));
     this._visibleIds = ids;
+    this._visibleIdSet = ids ? new Set(ids) : null;
     this._syncOverlay();
   }
 
-  // Drives each sub-layer's own overlay directly
+  // A group overlay would reuse its sub-layers' overlay layer ids, so it fills theirs
   _syncOverlay() {
     const map = this.getMap();
     if (!map) {
       return;
     }
-    const ids = filterVisibleIds([...new Set([...this._hoverIds, ...this._selectedIds])], this._visibleIds);
+    const ids = filterVisibleIds([...new Set([...this._hoverIds, ...this._selectedIds])], this._visibleIdSet);
     this._layers.forEach(layer => {
       const features = ids.flatMap(id => layer.getFeaturesById(id));
       updateHighlightOverlay(map, {
@@ -158,6 +161,11 @@ class LayerGroup extends Evented {
   }
   move() {
     this._layers.forEach(layer => layer.move());
+  }
+
+  // The app handles hover for the whole group as soon as it does for one sub-layer
+  handlesMouseEnter() {
+    return this._layers.some(layer => layer.handlesMouseEnter());
   }
   hasLayerId(id) {
     return this._layers.some(layer => layer.getLayers().some(layer => layer.id === id));

@@ -71,9 +71,7 @@ describe('Cluster', () => {
   describe('setVisibleIds', () => {
     beforeEach(() => {
       jest.resetAllMocks();
-      // addTo() below triggers onAdd(), which always calls setOpacity();
-      // that reads the map style, so it must be stubbed even though this
-      // test isn't about opacity.
+      // addTo() sets the opacity, which reads the map style
       mockMapGL.getStyle.mockReturnValue({
         layers: []
       });
@@ -97,7 +95,28 @@ describe('Cluster', () => {
         })]
       });
     });
-    it('Should restore the full feature set when ids is cleared', () => {
+    it('Should re-send only the visible features once added again, e.g. after a basemap switch', () => {
+      const cluster = new _Cluster.default({
+        data
+      });
+      const source = {
+        setData: jest.fn()
+      };
+      mockMapGL.getSource.mockReturnValue(source);
+      cluster.setVisibleIds(['b']);
+      expect(source.setData).not.toHaveBeenCalled();
+      mockMap.styleIsLoaded.mockReturnValue(true);
+      cluster.addTo(mockMap);
+      expect(source.setData).toHaveBeenCalledWith({
+        type: 'FeatureCollection',
+        features: [expect.objectContaining({
+          properties: {
+            id: 'b'
+          }
+        })]
+      });
+    });
+    it('Should not re-send and re-cluster every feature for unchanged ids, e.g. null right after the layer is created', () => {
       const cluster = new _Cluster.default({
         data
       });
@@ -107,7 +126,20 @@ describe('Cluster', () => {
       mockMapGL.getSource.mockReturnValue(source);
       cluster.addTo(mockMap);
       cluster.setVisibleIds(null);
-      expect(source.setData).toHaveBeenCalledWith({
+      expect(source.setData).not.toHaveBeenCalled();
+    });
+    it('Should restore the full feature set when ids is cleared', () => {
+      const cluster = new _Cluster.default({
+        data
+      });
+      const source = {
+        setData: jest.fn()
+      };
+      mockMapGL.getSource.mockReturnValue(source);
+      cluster.addTo(mockMap);
+      cluster.setVisibleIds(['b']);
+      cluster.setVisibleIds(null);
+      expect(source.setData).toHaveBeenLastCalledWith({
         type: 'FeatureCollection',
         features: cluster.getFeatures()
       });
@@ -174,7 +206,7 @@ describe('Cluster', () => {
       });
       cluster.addTo(mockMap);
       cluster.setVisibleIds(['p']);
-      cluster.setVisibleIds(['p']);
+      cluster.setVisibleIds(null);
       expect(mockMapGL.off).toHaveBeenCalledWith('idle', cluster.updatePolygons);
       expect(mockMapGL.once).toHaveBeenCalledTimes(2);
     });

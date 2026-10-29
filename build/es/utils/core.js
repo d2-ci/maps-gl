@@ -6,20 +6,20 @@ export const getFeaturesString = features => Array.isArray(features) ? features.
   id,
   source
 }) => `${id}-${source}`).join('-') : '';
-
-// Normalizes a scalar id, array of ids, or null/undefined into an array
 export const normalizeIds = ids => {
   if (Array.isArray(ids)) {
     return ids;
   }
-  return ids ? [ids] : [];
+  return ids === undefined || ids === null ? [] : [ids];
 };
 
-// null/undefined visibleIds means no restriction
-export const filterVisibleIds = (ids, visibleIds) => {
-  if (!visibleIds) {
-    return ids;
+// null and undefined both mean no ids
+export const isSameIds = (ids, otherIds) => {
+  if (!ids || !otherIds) {
+    return !ids && !otherIds;
   }
-  const visible = new Set(visibleIds);
-  return ids.filter(id => visible.has(id));
+  return ids.length === otherIds.length && ids.every((id, index) => id === otherIds[index]);
 };
+
+// null/undefined visibleIdSet means no restriction
+export const filterVisibleIds = (ids, visibleIdSet) => visibleIdSet ? ids.filter(id => visibleIdSet.has(id)) : ids;

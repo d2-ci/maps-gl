@@ -1,3 +1,8 @@
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /* global mockMap, mockMapGL */
 import { updateHighlightOverlay } from '../../utils/highlightOverlay.js';
 import LayerGroup from '../LayerGroup.js';
@@ -24,11 +29,21 @@ const createMockSubLayer = (id, featureId) => ({
   move: jest.fn(),
   onMouseMove: jest.fn(),
   fire: jest.fn(),
-  setVisibleIds: jest.fn()
+  setVisibleIds: jest.fn(),
+  handlesMouseEnter: jest.fn(() => false)
 });
 describe('LayerGroup', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+  });
+  it('should handle mouseenter as soon as one sub-layer does, e.g. the bubbles of a bubble map but not its boundaries', () => {
+    const group = new LayerGroup();
+    const boundaries = createMockSubLayer('boundaries', 1);
+    const bubbles = createMockSubLayer('bubbles', 1);
+    group._layers = [boundaries, bubbles];
+    expect(group.handlesMouseEnter()).toBe(false);
+    bubbles.handlesMouseEnter.mockReturnValue(true);
+    expect(group.handlesMouseEnter()).toBe(true);
   });
   it('should resolve a sub-layer by its GL layer id', () => {
     const group = new LayerGroup();
@@ -39,8 +54,6 @@ describe('LayerGroup', () => {
     expect(group.getSubLayerFromId('missing')).toBeUndefined();
   });
   it("should update each sub-layer's own highlight overlay directly, not a second group-level one", () => {
-    // A group-level overlay would derive the same layer ids as each
-    // sub-layer's own overlay (added in their addTo()), colliding.
     const group = new LayerGroup();
     const layerA = createMockSubLayer('layer-a', 1);
     const layerB = createMockSubLayer('layer-b', 2);
@@ -65,7 +78,6 @@ describe('LayerGroup', () => {
       color: undefined
     });
     expect(mockMap.setHoverState).not.toHaveBeenCalled();
-    expect(mockMap.setSelectedState).not.toHaveBeenCalled();
   });
   it("should clear each sub-layer's overlay for an empty array or null", () => {
     const group = new LayerGroup();
@@ -116,13 +128,9 @@ describe('LayerGroup', () => {
       color: undefined
     });
     expect(mockMap.setHoverState).not.toHaveBeenCalled();
-    expect(mockMap.setSelectedState).not.toHaveBeenCalled();
   });
   it('should not conflate two sub-layers whose features happen to share the same numeric id', () => {
-    // Each sub-layer independently auto-assigns ids starting at 1, so
-    // id collisions across sub-layers are expected — scoping the lookup
-    // to each sub-layer (rather than the group's aggregated
-    // getFeaturesById) keeps them from bleeding into each other.
+    // Sub-layers number their features from 1, so ids repeat across sub-layers
     const group = new LayerGroup();
     const layerA = createMockSubLayer('layer-a', 1);
     const layerB = createMockSubLayer('layer-b', 1);
@@ -154,8 +162,54 @@ describe('LayerGroup', () => {
     group.highlight([1], '#FFC800');
     updateHighlightOverlay.mockClear();
 
-    // Simulate the group being re-added
-    // The previously recorded hover id/color must be flushed into each sub-layer's freshly (re)created overlay
+    // Re-adding recreates each sub-layer's overlay
+    await group.addTo(mockMap);
+    expect(updateHighlightOverlay).toHaveBeenCalledWith(mockMap, {
+      id: 'layer-a',
+      features: [{
+        id: 1,
+        source: 'layer-a'
+      }],
+      color: '#FFC800'
+    });
+  });
+  it('should not pass unchanged visible ids on to its sub-layers', () => {
+    const group = new LayerGroup();
+    const layerA = createMockSubLayer('layer-a', 1);
+    group._layers = [layerA];
+    group.setVisibleIds(['a']);
+    group.setVisibleIds(['a']);
+    expect(layerA.setVisibleIds).toHaveBeenCalledTimes(1);
+  });
+  it('should pass visible ids set before its first add to the sub-layers it then creates', async () => {
+    const subLayer = createMockSubLayer('layer-a', 1);
+    const map = _objectSpread(_objectSpread({}, mockMap), {}, {
+      createLayer: () => subLayer
+    });
+    const group = new LayerGroup();
+    group.addLayer({
+      type: 'boundary'
+    });
+    group.setVisibleIds(['a']);
+    await group.addTo(map);
+    expect(subLayer.setVisibleIds).toHaveBeenCalledWith(['a']);
+  });
+  it('should stop drawing on its map once removed, which may be destroyed by then', () => {
+    const group = new LayerGroup();
+    group._layers = [createMockSubLayer('layer-a', 1)];
+    group._map = mockMap;
+    group.removeFrom(mockMap);
+    group.highlight([1]);
+    expect(group.getMap()).toBeNull();
+    expect(updateHighlightOverlay).not.toHaveBeenCalled();
+  });
+  it('should keep a highlight and selection made while off the map, e.g. during a basemap switch, and draw them once added', async () => {
+    const group = new LayerGroup();
+    const layerA = createMockSubLayer('layer-a', 1);
+    group._layers = [layerA];
+    group.highlight([1], '#FFC800');
+    group.select([1], '#FFC800');
+    expect(updateHighlightOverlay).not.toHaveBeenCalled();
     await group.addTo(mockMap);
     expect(updateHighlightOverlay).toHaveBeenCalledWith(mockMap, {
       id: 'layer-a',

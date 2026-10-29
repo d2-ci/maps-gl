@@ -9,6 +9,7 @@ var _maplibreGl = require("maplibre-gl");
 var _uuid = require("uuid");
 var _buffers = require("../utils/buffers.js");
 var _core = require("../utils/core.js");
+var _filters = require("../utils/filters.js");
 var _geometry = require("../utils/geometry.js");
 var _highlightOverlay = require("../utils/highlightOverlay.js");
 var _images = require("../utils/images.js");
@@ -24,7 +25,7 @@ const buildVisibleIdsFilter = (ids, baseFilter) => {
   if (!ids) {
     return baseFilter ?? null;
   }
-  const idsFilter = ['in', ['get', 'id'], ['literal', ids]];
+  const idsFilter = (0, _filters.idFilter)(ids);
   return baseFilter ? ['all', baseFilter, idsFilter] : idsFilter;
 };
 class Layer extends _maplibreGl.Evented {
@@ -43,8 +44,10 @@ class Layer extends _maplibreGl.Evented {
     this._hoverIds = [];
     this._selectedIds = [];
     this._visibleIds = null;
+    this._visibleIdSet = null;
     this._highlightColor = undefined;
     this._featuresIndexSource = null;
+    this._featuresByUid = null;
     this._featuresById = null;
     this.options = options;
     if (options.data) {
@@ -84,6 +87,11 @@ class Layer extends _maplibreGl.Evented {
           mapgl.addLayer(layer, beforeId);
         }
       });
+
+      // Layers come back with their own filter, e.g. after a basemap switch
+      if (this._visibleIds) {
+        this._applyVisibleIds();
+      }
     }
     if (map.styleIsLoaded()) {
       this._overlayLayerIds = (0, _highlightOverlay.createHighlightOverlay)(map, {
@@ -189,8 +197,6 @@ class Layer extends _maplibreGl.Evented {
             mapgl.setLayoutProperty(layer.id, 'visibility', value);
           }
         });
-
-        // Hide the overlay's cloned layers too
         this._overlayLayerIds.forEach(layerId => {
           if (mapgl.getLayer(layerId)) {
             mapgl.setLayoutProperty(layerId, 'visibility', value);
@@ -198,8 +204,7 @@ class Layer extends _maplibreGl.Evented {
         });
       }
 
-      // isInteractive() depends on isVisible(), so a visibility change
-      // outside addLayer/removeLayer must invalidate the cache too
+      // isInteractive() depends on visibility, so the map's cached interactive ids go stale
       this.getMap()?.invalidateInteractiveLayerIds?.();
     }
     this._isVisible = isVisible;
@@ -249,10 +254,7 @@ class Layer extends _maplibreGl.Evented {
       this._opacityFactor = opacityFactor;
     }
 
-    // e.g. EarthEngine's own mask layer, whose data is deliberately the
-    // complement of setVisibleIds' own notion of "visible" - applying
-    // that filter on top would zero it out, since none of its features
-    // would ever match an allow-list of the *visible* ids.
+    // e.g. a mask holding the hidden features, which a visible-ids filter would empty
     if (excludeFromVisibleIdsFilter) {
       this._visibleIdsFilterExemptIds.add(layer.id);
     }
@@ -262,6 +264,9 @@ class Layer extends _maplibreGl.Evented {
   }
   hasLayerId(id) {
     return this.getLayers().some(layer => layer.id === id);
+  }
+  handlesMouseEnter() {
+    return Boolean(this.listens('mouseenter'));
   }
   move() {
     const map = this.getMap();
@@ -276,8 +281,7 @@ class Layer extends _maplibreGl.Evented {
       }
     });
 
-    // The highlight overlay must stay drawn above these base layers
-    // Having just moved the base layers, move the overlay too
+    // Keeps the highlight overlay above the base layers
     this._overlayLayerIds.forEach(layerId => {
       mapgl.moveLayer(layerId, beforeId);
     });
@@ -286,20 +290,25 @@ class Layer extends _maplibreGl.Evented {
     return this._features;
   }
 
-  // Returns all features having a string or numeric id
+  // Returns the features with this uid, or else the feature with this numeric id
   getFeaturesById(id) {
     if (this._featuresIndexSource !== this._features) {
       this._featuresIndexSource = this._features;
+      this._featuresByUid = new Map();
       this._featuresById = new Map();
       this._features.forEach(f => {
-        this._featuresById.set(f.properties.id, f); // string uid
-        this._featuresById.set(f.id, f); // numeric id (unique, required by Feature State)
+        const uid = f.properties.id;
+        if (!this._featuresByUid.has(uid)) {
+          this._featuresByUid.set(uid, []);
+        }
+        this._featuresByUid.get(uid).push(f);
+        this._featuresById.set(f.id, f);
       });
     }
-    const feature = this._featuresById.get(id);
-    return feature ? [_objectSpread(_objectSpread({}, feature), {}, {
+    const features = this._featuresByUid.get(id) ?? [this._featuresById.get(id)];
+    return features.filter(Boolean).map(feature => _objectSpread(_objectSpread({}, feature), {}, {
       source: this.getId()
-    })] : [];
+    }));
   }
 
   // Adds integer id for each feature (required by Feature State)
@@ -363,26 +372,29 @@ class Layer extends _maplibreGl.Evented {
   // Hover and selection share one highlight color (last caller wins)
 
   highlight(ids, color) {
-    const map = this.getMap();
-    if (!map) {
-      return;
-    }
     this._hoverIds = (0, _core.normalizeIds)(ids);
     this._highlightColor = color;
     this._syncOverlay();
   }
   select(ids, color) {
-    const map = this.getMap();
-    if (!map) {
-      return;
-    }
     this._selectedIds = (0, _core.normalizeIds)(ids);
     this._highlightColor = color;
     this._syncOverlay();
   }
 
-  // `ids` of null/undefined restores each layer's own filter unchanged
+  // null/undefined ids restore each layer's own filter
   setVisibleIds(ids) {
+    if ((0, _core.isSameIds)(ids, this._visibleIds)) {
+      return;
+    }
+    this._visibleIds = ids;
+    this._visibleIdSet = ids ? new Set(ids) : null;
+    this._applyVisibleIds();
+    this._syncOverlay();
+  }
+
+  // Override if the layer can't be filtered by id
+  _applyVisibleIds() {
     const mapgl = this.getMapGL();
     if (!mapgl) {
       return;
@@ -391,13 +403,11 @@ class Layer extends _maplibreGl.Evented {
       id,
       filter: baseFilter
     }) => {
-      if (this._visibleIdsFilterExemptIds.has(id)) {
+      if (this._visibleIdsFilterExemptIds.has(id) || !mapgl.getLayer(id)) {
         return;
       }
-      mapgl.setFilter(id, buildVisibleIdsFilter(ids, baseFilter));
+      mapgl.setFilter(id, buildVisibleIdsFilter(this._visibleIds, baseFilter));
     });
-    this._visibleIds = ids;
-    this._syncOverlay();
   }
 
   // Syncs the highlight overlay with the currently visible hovered/selected ids
@@ -406,7 +416,7 @@ class Layer extends _maplibreGl.Evented {
     if (!map) {
       return;
     }
-    const ids = (0, _core.filterVisibleIds)([...new Set([...this._hoverIds, ...this._selectedIds])], this._visibleIds);
+    const ids = (0, _core.filterVisibleIds)([...new Set([...this._hoverIds, ...this._selectedIds])], this._visibleIdSet);
     const features = ids.flatMap(id => this.getFeaturesById(id));
     (0, _highlightOverlay.updateHighlightOverlay)(map, {
       id: this.getId(),

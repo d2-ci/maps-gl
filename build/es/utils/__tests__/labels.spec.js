@@ -114,6 +114,18 @@ describe('labels', () => {
     }, isBoundary);
     expect(JSON.stringify(received, null, 2)).toEqual(JSON.stringify(expected, null, 2));
   });
+  it('Should keep the feature id, so a visible-ids filter keeps the labels of visible features', () => {
+    const received = labelSource([{
+      geometry: geometryPoint,
+      properties: {
+        id: 'O6uvpzGd5pu',
+        name: 'Bo'
+      }
+    }], {
+      fontSize
+    });
+    expect(received.data.features[0].properties.id).toBe('O6uvpzGd5pu');
+  });
   it('Should set opacity for for label layer', () => {
     expect(labelLayer({
       id,

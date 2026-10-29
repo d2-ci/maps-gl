@@ -40,6 +40,7 @@ class EarthEngine extends _Layer.default {
             this.createLayers();
             super.addTo(map);
             this.onLoad();
+            this._updateMask();
             this._isLoading = false;
             const {
               preload,
@@ -131,6 +132,7 @@ class EarthEngine extends _Layer.default {
         type: 'geojson',
         data: (0, _geometry.featureCollection)([])
       });
+      this._maskIds = [];
     }
   }
 
@@ -224,8 +226,8 @@ class EarthEngine extends _Layer.default {
     }
     this._updateMask();
   }
-  setVisibleIds(ids) {
-    super.setVisibleIds(ids);
+  _applyVisibleIds() {
+    super._applyVisibleIds();
     this._updateMask();
   }
   _updateMask() {
@@ -234,18 +236,23 @@ class EarthEngine extends _Layer.default {
     if (!maskSource) {
       return;
     }
-    const {
-      _filteredFeatureIds: filteredIds,
-      _visibleIds: visibleIds
-    } = this;
+    const filteredIds = this._filteredFeatureIds;
     const filteredIdSet = Array.isArray(filteredIds) ? new Set(filteredIds) : null;
-    const visibleIdSet = Array.isArray(visibleIds) ? new Set(visibleIds) : null;
+    const visibleIdSet = this._visibleIdSet;
     const hidden = this.getFeatures().filter(feature => {
       const id = feature.properties.id;
       const passesFilter = !filteredIdSet || filteredIdSet.has(id);
       const passesVisible = !visibleIdSet || visibleIdSet.has(id);
       return !(passesFilter && passesVisible);
     });
+    const hiddenIds = hidden.map(feature => feature.id);
+    const isUnchanged = hiddenIds.length === this._maskIds?.length && hiddenIds.every((id, index) => id === this._maskIds[index]);
+
+    // Org unit boundaries are heavy to send to the map again
+    if (isUnchanged) {
+      return;
+    }
+    this._maskIds = hiddenIds;
     maskSource.setData((0, _geometry.featureCollection)(hidden));
   }
 }

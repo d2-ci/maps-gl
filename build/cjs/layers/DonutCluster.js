@@ -192,12 +192,21 @@ class DonutCluster extends _Cluster.default {
       mapgl.off('move', this.updateClusters);
       mapgl.off('moveend', this.updateClusters);
     }
+    this.removeClusters();
+  }
+  removeClusters() {
     for (const id in this.clustersOnScreen) {
       this.clusters[id]?._listenerAc?.abort();
       this.clustersOnScreen[id].remove();
     }
     this.clustersOnScreen = {};
     this.clusters = {};
+  }
+
+  // Cluster ids pass to other clusters with new data, so markers are rebuilt
+  _applyVisibleIds() {
+    this.removeClusters();
+    super._applyVisibleIds();
   }
   setOpacity(opacity) {
     super.setOpacity(opacity);

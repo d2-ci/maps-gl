@@ -1,4 +1,4 @@
-import { colorExpr, widthExpr, radiusExpr, clusterRadiusExpr, highlightColorExpr } from './expressions.js';
+import { colorExpr, widthExpr, radiusExpr, clusterRadiusExpr } from './expressions.js';
 import { isPointNoSymbol, isPolygon, isLine, isCluster, isSymbol } from './filters.js';
 import { textFont, textSize, textColor, textOpacity, circleRadius, circleStrokeColor, circleOpacity, lineStrokeColor, lineOpacity, fillOpacity, iconOpacity, noDataColor, strokeWidth } from './style.js';
 export const BASEMAP_POSITION = 0;
@@ -24,7 +24,7 @@ export const pointLayer = ({
     'circle-radius': radiusExpr(radius || circleRadius),
     'circle-opacity': opacity ?? circleOpacity,
     'circle-stroke-width': widthExpr(width),
-    'circle-stroke-color': highlightColorExpr(strokeColor || circleStrokeColor),
+    'circle-stroke-color': strokeColor || circleStrokeColor,
     'circle-stroke-opacity': opacity ?? circleOpacity
   },
   filter: filter || isPointNoSymbol
@@ -43,7 +43,7 @@ export const lineLayer = ({
   type: 'line',
   source: source || id,
   paint: {
-    'line-color': highlightColorExpr(color || lineStrokeColor),
+    'line-color': color || lineStrokeColor,
     'line-width': widthExpr(width),
     'line-opacity': opacity ?? lineOpacity
   },
@@ -86,7 +86,7 @@ export const outlineLayer = ({
   type: 'line',
   source: source || id,
   paint: {
-    'line-color': highlightColorExpr(color || lineStrokeColor),
+    'line-color': color || lineStrokeColor,
     'line-width': widthExpr(width),
     'line-opacity': opacity ?? lineOpacity
   },
@@ -131,7 +131,7 @@ export const clusterLayer = ({
     'circle-color': color,
     'circle-radius': clusterRadiusExpr,
     'circle-opacity': opacity ?? circleOpacity,
-    'circle-stroke-color': highlightColorExpr(strokeColor),
+    'circle-stroke-color': strokeColor,
     'circle-stroke-width': strokeWidth,
     'circle-stroke-opacity': opacity ?? circleOpacity
   }

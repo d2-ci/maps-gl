@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.setTemplate = exports.normalizeIds = exports.getFeaturesString = exports.filterVisibleIds = void 0;
+exports.setTemplate = exports.normalizeIds = exports.isSameIds = exports.getFeaturesString = exports.filterVisibleIds = void 0;
 // Replaces {key} with data in a string template
 const setTemplate = (text, data) => text.replace(/\{ *([\w_-]+) *\}/g, (_, key) => data[key] ?? '');
 
@@ -13,23 +13,24 @@ const getFeaturesString = features => Array.isArray(features) ? features.sort((a
   id,
   source
 }) => `${id}-${source}`).join('-') : '';
-
-// Normalizes a scalar id, array of ids, or null/undefined into an array
 exports.getFeaturesString = getFeaturesString;
 const normalizeIds = ids => {
   if (Array.isArray(ids)) {
     return ids;
   }
-  return ids ? [ids] : [];
+  return ids === undefined || ids === null ? [] : [ids];
 };
 
-// null/undefined visibleIds means no restriction
+// null and undefined both mean no ids
 exports.normalizeIds = normalizeIds;
-const filterVisibleIds = (ids, visibleIds) => {
-  if (!visibleIds) {
-    return ids;
+const isSameIds = (ids, otherIds) => {
+  if (!ids || !otherIds) {
+    return !ids && !otherIds;
   }
-  const visible = new Set(visibleIds);
-  return ids.filter(id => visible.has(id));
+  return ids.length === otherIds.length && ids.every((id, index) => id === otherIds[index]);
 };
+
+// null/undefined visibleIdSet means no restriction
+exports.isSameIds = isSameIds;
+const filterVisibleIds = (ids, visibleIdSet) => visibleIdSet ? ids.filter(id => visibleIdSet.has(id)) : ids;
 exports.filterVisibleIds = filterVisibleIds;
