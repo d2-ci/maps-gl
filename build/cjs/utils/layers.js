@@ -30,7 +30,7 @@ const pointLayer = ({
     'circle-radius': (0, _expressions.radiusExpr)(radius || _style.circleRadius),
     'circle-opacity': opacity ?? _style.circleOpacity,
     'circle-stroke-width': (0, _expressions.widthExpr)(width),
-    'circle-stroke-color': (0, _expressions.highlightColorExpr)(strokeColor || _style.circleStrokeColor),
+    'circle-stroke-color': strokeColor || _style.circleStrokeColor,
     'circle-stroke-opacity': opacity ?? _style.circleOpacity
   },
   filter: filter || _filters.isPointNoSymbol
@@ -50,7 +50,7 @@ const lineLayer = ({
   type: 'line',
   source: source || id,
   paint: {
-    'line-color': (0, _expressions.highlightColorExpr)(color || _style.lineStrokeColor),
+    'line-color': color || _style.lineStrokeColor,
     'line-width': (0, _expressions.widthExpr)(width),
     'line-opacity': opacity ?? _style.lineOpacity
   },
@@ -95,7 +95,7 @@ const outlineLayer = ({
   type: 'line',
   source: source || id,
   paint: {
-    'line-color': (0, _expressions.highlightColorExpr)(color || _style.lineStrokeColor),
+    'line-color': color || _style.lineStrokeColor,
     'line-width': (0, _expressions.widthExpr)(width),
     'line-opacity': opacity ?? _style.lineOpacity
   },
@@ -142,7 +142,7 @@ const clusterLayer = ({
     'circle-color': color,
     'circle-radius': _expressions.clusterRadiusExpr,
     'circle-opacity': opacity ?? _style.circleOpacity,
-    'circle-stroke-color': (0, _expressions.highlightColorExpr)(strokeColor),
+    'circle-stroke-color': strokeColor,
     'circle-stroke-width': _style.strokeWidth,
     'circle-stroke-opacity': opacity ?? _style.circleOpacity
   }

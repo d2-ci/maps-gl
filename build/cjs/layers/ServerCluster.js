@@ -243,6 +243,9 @@ class ServerCluster extends _Cluster.default {
       mapgl.off('moveend', this.onMoveEnd);
     }
   }
+
+  // Server clusters arrive as tiles, with no features here to filter
+  setVisibleIds() {}
   zoomToBounds(bounds) {
     if (bounds) {
       let zoomBounds;

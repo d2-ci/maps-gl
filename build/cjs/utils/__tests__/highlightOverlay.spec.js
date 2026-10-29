@@ -1,29 +1,34 @@
 "use strict";
 
 var _highlightOverlay = require("../highlightOverlay.js");
-function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 const createMockMapgl = ({
   existingSourceId,
   existingLayerId
 } = {}) => {
   // getSource(id) must return the same instance every call, like real maplibre-gl.
-  const source = existingSourceId ? {
-    setData: jest.fn()
-  } : null;
+  const sources = new Map();
+  const createSource = id => sources.set(id, {
+    setData: jest.fn(),
+    updateData: jest.fn()
+  });
+  if (existingSourceId) {
+    createSource(existingSourceId);
+  }
   return {
-    addSource: jest.fn(),
+    addSource: jest.fn(createSource),
     addLayer: jest.fn(),
     removeLayer: jest.fn(),
     removeSource: jest.fn(),
-    setFeatureState: jest.fn(),
-    getSource: jest.fn(id => id === existingSourceId ? source : undefined),
+    setPaintProperty: jest.fn(),
+    getSource: jest.fn(id => sources.get(id)),
     getLayer: jest.fn(id => id === existingLayerId)
   };
 };
+const feature = id => ({
+  id,
+  type: 'Feature',
+  properties: {}
+});
 const createMockMap = mapgl => ({
   getMapGL: () => mapgl
 });
@@ -88,7 +93,6 @@ describe('highlightOverlay', () => {
       beforeId: undefined
     });
     expect(overlayIds).toEqual(['layer-1-symbol-highlight-halo', 'layer-1-symbol-highlight-icon']);
-    // Halo added first, so the icon clone renders on top of it.
     expect(mapgl.addLayer).toHaveBeenNthCalledWith(1, expect.objectContaining({
       id: 'layer-1-symbol-highlight-halo',
       type: 'circle',
@@ -157,7 +161,7 @@ describe('highlightOverlay', () => {
     expect(overlayIds).toEqual([]);
     expect(mapgl.addLayer).not.toHaveBeenCalled();
   });
-  it('does not re-add a source/layer that already exists', () => {
+  it('empties an existing source instead of adding it again, since its features are no longer tracked', () => {
     const mapgl = createMockMapgl({
       existingSourceId: (0, _highlightOverlay.getOverlaySourceId)('layer-1'),
       existingLayerId: 'layer-1-point-highlight'
@@ -174,74 +178,138 @@ describe('highlightOverlay', () => {
     });
     expect(mapgl.addSource).not.toHaveBeenCalled();
     expect(mapgl.addLayer).not.toHaveBeenCalled();
-  });
-  it('updates the overlay source data and marks features hover+selected with the given color', () => {
-    const mapgl = createMockMapgl({
-      existingSourceId: (0, _highlightOverlay.getOverlaySourceId)('layer-1')
+    expect(mapgl.getSource((0, _highlightOverlay.getOverlaySourceId)('layer-1')).setData).toHaveBeenCalledWith({
+      type: 'FeatureCollection',
+      features: []
     });
+  });
+  it('draws the hovered look in the clones, so overlay features need no feature-state', () => {
+    const mapgl = createMockMapgl();
     const map = createMockMap(mapgl);
+    const isHover = ['boolean', ['feature-state', 'hover'], false];
+    (0, _highlightOverlay.createHighlightOverlay)(map, {
+      id: 'layer-1',
+      glLayers: [{
+        id: 'layer-1-point',
+        type: 'circle',
+        paint: {
+          'circle-stroke-width': ['case', isHover, 3, 1]
+        }
+      }],
+      beforeId: undefined
+    });
+    expect(mapgl.addLayer.mock.calls[0][0].paint).toEqual({
+      'circle-stroke-width': ['case', ['boolean', true, false], 3, 1]
+    });
+  });
+  it('adds features with their own ids through updateData', () => {
+    const mapgl = createMockMapgl();
+    const map = createMockMap(mapgl);
+    (0, _highlightOverlay.createHighlightOverlay)(map, {
+      id: 'layer-1',
+      glLayers: []
+    });
     const source = mapgl.getSource((0, _highlightOverlay.getOverlaySourceId)('layer-1'));
-    const feature = {
-      id: 7,
-      type: 'Feature',
-      properties: {}
-    };
     (0, _highlightOverlay.updateHighlightOverlay)(map, {
       id: 'layer-1',
-      features: [feature],
-      color: '#FFC800'
+      features: [feature(7)]
     });
-    expect(source.setData).toHaveBeenCalledWith({
-      type: 'FeatureCollection',
-      features: [_objectSpread(_objectSpread({}, feature), {}, {
-        id: 1
-      })]
+    expect(source.updateData).toHaveBeenCalledWith({
+      add: [feature(7)],
+      remove: []
     });
-    expect(mapgl.setFeatureState).toHaveBeenCalledWith({
-      source: (0, _highlightOverlay.getOverlaySourceId)('layer-1'),
-      id: 1
-    }, {
-      hover: true,
-      selected: true,
-      highlightColor: '#FFC800'
+    expect(source.setData).not.toHaveBeenCalled();
+  });
+  it('sends only the features added or removed since the last update', () => {
+    const mapgl = createMockMapgl();
+    const map = createMockMap(mapgl);
+    (0, _highlightOverlay.createHighlightOverlay)(map, {
+      id: 'layer-1',
+      glLayers: []
+    });
+    const source = mapgl.getSource((0, _highlightOverlay.getOverlaySourceId)('layer-1'));
+    (0, _highlightOverlay.updateHighlightOverlay)(map, {
+      id: 'layer-1',
+      features: [feature(1), feature(2)]
+    });
+    (0, _highlightOverlay.updateHighlightOverlay)(map, {
+      id: 'layer-1',
+      features: [feature(2), feature(3)]
+    });
+    expect(source.updateData).toHaveBeenLastCalledWith({
+      add: [feature(3)],
+      remove: [1]
     });
   });
-  it('re-keys features with source-local ids to avoid cross-sub-layer id collisions', () => {
-    const mapgl = createMockMapgl({
-      existingSourceId: (0, _highlightOverlay.getOverlaySourceId)('group-1')
-    });
+  it('sends nothing when the features and color are unchanged', () => {
+    const mapgl = createMockMapgl();
     const map = createMockMap(mapgl);
-
-    // Two features from different sub-layers happen to share id=1
-    const boundaryFeature = {
-      id: 1,
-      type: 'Feature',
-      properties: {}
+    (0, _highlightOverlay.createHighlightOverlay)(map, {
+      id: 'layer-1',
+      glLayers: [{
+        id: 'layer-1-line',
+        type: 'line',
+        paint: {}
+      }]
+    });
+    const source = mapgl.getSource((0, _highlightOverlay.getOverlaySourceId)('layer-1'));
+    const update = {
+      id: 'layer-1',
+      features: [feature(1)],
+      color: '#FFC800'
     };
-    const bubbleFeature = {
-      id: 1,
-      type: 'Feature',
-      properties: {}
-    };
+    (0, _highlightOverlay.updateHighlightOverlay)(map, update);
+    (0, _highlightOverlay.updateHighlightOverlay)(map, update);
+    expect(source.updateData).toHaveBeenCalledTimes(1);
+    expect(mapgl.setPaintProperty).toHaveBeenCalledTimes(1);
+  });
+  it('applies the highlight color to every clone, and restores their own color when it is cleared', () => {
+    const mapgl = createMockMapgl();
+    const map = createMockMap(mapgl);
+    (0, _highlightOverlay.createHighlightOverlay)(map, {
+      id: 'layer-1',
+      glLayers: [{
+        id: 'layer-1-point',
+        type: 'circle',
+        paint: {
+          'circle-stroke-color': '#333333'
+        }
+      }, {
+        id: 'layer-1-line',
+        type: 'line',
+        paint: {
+          'line-color': ['get', 'color']
+        }
+      }, {
+        id: 'layer-1-symbol',
+        type: 'symbol',
+        layout: {
+          'icon-image': ['get', 'iconUrl']
+        }
+      }]
+    });
     (0, _highlightOverlay.updateHighlightOverlay)(map, {
-      id: 'group-1',
-      features: [boundaryFeature, bubbleFeature],
+      id: 'layer-1',
+      features: [],
       color: '#FFC800'
     });
-    const source = mapgl.getSource((0, _highlightOverlay.getOverlaySourceId)('group-1'));
-    const written = source.setData.mock.calls[0][0].features;
-    expect(written.map(f => f.id)).toEqual([1, 2]);
-    expect(mapgl.setFeatureState).toHaveBeenCalledTimes(2);
+    expect(mapgl.setPaintProperty.mock.calls).toEqual([['layer-1-point-highlight', 'circle-stroke-color', '#FFC800'], ['layer-1-line-highlight', 'line-color', '#FFC800'], ['layer-1-symbol-highlight-halo', 'circle-color', '#FFC800']]);
+    mapgl.setPaintProperty.mockClear();
+    (0, _highlightOverlay.updateHighlightOverlay)(map, {
+      id: 'layer-1',
+      features: []
+    });
+    expect(mapgl.setPaintProperty.mock.calls).toEqual([['layer-1-point-highlight', 'circle-stroke-color', '#333333'], ['layer-1-line-highlight', 'line-color', ['get', 'color']], ['layer-1-symbol-highlight-halo', 'circle-color', '#333333']]);
   });
   it('no-ops when the overlay source does not exist yet', () => {
     const mapgl = createMockMapgl();
     const map = createMockMap(mapgl);
     expect(() => (0, _highlightOverlay.updateHighlightOverlay)(map, {
       id: 'missing',
-      features: [],
+      features: [feature(1)],
       color: '#FFC800'
     })).not.toThrow();
-    expect(mapgl.setFeatureState).not.toHaveBeenCalled();
+    expect(mapgl.setPaintProperty).not.toHaveBeenCalled();
   });
   it('removes overlay layers and source', () => {
     const mapgl = createMockMapgl({

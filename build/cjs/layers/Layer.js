@@ -9,6 +9,7 @@ var _maplibreGl = require("maplibre-gl");
 var _uuid = require("uuid");
 var _buffers = require("../utils/buffers.js");
 var _core = require("../utils/core.js");
+var _filters = require("../utils/filters.js");
 var _geometry = require("../utils/geometry.js");
 var _highlightOverlay = require("../utils/highlightOverlay.js");
 var _images = require("../utils/images.js");
@@ -24,7 +25,7 @@ const buildVisibleIdsFilter = (ids, baseFilter) => {
   if (!ids) {
     return baseFilter ?? null;
   }
-  const idsFilter = ['in', ['get', 'id'], ['literal', ids]];
+  const idsFilter = (0, _filters.idFilter)(ids);
   return baseFilter ? ['all', baseFilter, idsFilter] : idsFilter;
 };
 class Layer extends _maplibreGl.Evented {
@@ -185,8 +186,6 @@ class Layer extends _maplibreGl.Evented {
             mapgl.setLayoutProperty(layer.id, 'visibility', value);
           }
         });
-
-        // Hide the overlay's cloned layers too
         this._overlayLayerIds.forEach(layerId => {
           if (mapgl.getLayer(layerId)) {
             mapgl.setLayoutProperty(layerId, 'visibility', value);
@@ -194,8 +193,7 @@ class Layer extends _maplibreGl.Evented {
         });
       }
 
-      // isInteractive() depends on isVisible(), so a visibility change
-      // outside addLayer/removeLayer must invalidate the cache too
+      // isInteractive() depends on visibility, so the map's cached interactive ids go stale
       this.getMap()?.invalidateInteractiveLayerIds?.();
     }
     this._isVisible = isVisible;
@@ -250,6 +248,9 @@ class Layer extends _maplibreGl.Evented {
   hasLayerId(id) {
     return this.getLayers().some(layer => layer.id === id);
   }
+  handlesMouseEnter() {
+    return Boolean(this.listens('mouseenter'));
+  }
   move() {
     const map = this.getMap();
     if (!map?.styleIsLoaded()) {
@@ -263,8 +264,7 @@ class Layer extends _maplibreGl.Evented {
       }
     });
 
-    // The highlight overlay must stay drawn above these base layers
-    // Having just moved the base layers, move the overlay too
+    // Keeps the highlight overlay above the base layers
     this._overlayLayerIds.forEach(layerId => {
       mapgl.moveLayer(layerId, beforeId);
     });
@@ -342,25 +342,17 @@ class Layer extends _maplibreGl.Evented {
   // Hover and selection share one highlight color (last caller wins)
 
   highlight(ids, color) {
-    const map = this.getMap();
-    if (!map) {
-      return;
-    }
     this._hoverIds = (0, _core.normalizeIds)(ids);
     this._highlightColor = color;
     this._syncOverlay();
   }
   select(ids, color) {
-    const map = this.getMap();
-    if (!map) {
-      return;
-    }
     this._selectedIds = (0, _core.normalizeIds)(ids);
     this._highlightColor = color;
     this._syncOverlay();
   }
 
-  // `ids` of null/undefined restores each layer's own filter unchanged
+  // null/undefined ids restore each layer's own filter
   setVisibleIds(ids) {
     const mapgl = this.getMapGL();
     if (!mapgl) {

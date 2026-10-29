@@ -1,4 +1,3 @@
-import { highlightColorExpr } from '../expressions.js';
 import { pointLayer, lineLayer, polygonLayer, outlineLayer, symbolLayer, clusterLayer, clusterCountLayer } from '../layers.js';
 import { textOpacity, circleOpacity, lineOpacity, fillOpacity, iconOpacity } from '../style.js';
 const id = 'abc';
@@ -61,12 +60,5 @@ describe('layers', () => {
     expect(clusterCountLayer({
       id
     }).paint['text-opacity']).toBe(textOpacity);
-  });
-  it('Should recolor the cluster bubble stroke on hover/selection, like the other layer builders', () => {
-    const strokeColor = '#333333';
-    expect(clusterLayer({
-      id,
-      strokeColor
-    }).paint['circle-stroke-color']).toEqual(highlightColorExpr(strokeColor));
   });
 });
