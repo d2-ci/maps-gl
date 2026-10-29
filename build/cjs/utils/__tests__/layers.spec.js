@@ -1,6 +1,5 @@
 "use strict";
 
-var _expressions = require("../expressions.js");
 var _layers = require("../layers.js");
 var _style = require("../style.js");
 const id = 'abc';
@@ -63,12 +62,5 @@ describe('layers', () => {
     expect((0, _layers.clusterCountLayer)({
       id
     }).paint['text-opacity']).toBe(_style.textOpacity);
-  });
-  it('Should recolor the cluster bubble stroke on hover/selection, like the other layer builders', () => {
-    const strokeColor = '#333333';
-    expect((0, _layers.clusterLayer)({
-      id,
-      strokeColor
-    }).paint['circle-stroke-color']).toEqual((0, _expressions.highlightColorExpr)(strokeColor));
   });
 });

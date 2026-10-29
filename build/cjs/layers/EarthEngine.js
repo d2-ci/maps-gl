@@ -40,6 +40,7 @@ class EarthEngine extends _Layer.default {
             this.createLayers();
             super.addTo(map);
             this.onLoad();
+            this._updateMask();
             this._isLoading = false;
             const {
               preload,
@@ -131,6 +132,7 @@ class EarthEngine extends _Layer.default {
         type: 'geojson',
         data: (0, _geometry.featureCollection)([])
       });
+      this._maskIds = [];
     }
   }
 
@@ -247,6 +249,14 @@ class EarthEngine extends _Layer.default {
       const passesVisible = !visibleIdSet || visibleIdSet.has(id);
       return !(passesFilter && passesVisible);
     });
+    const hiddenIds = hidden.map(feature => feature.id);
+    const isUnchanged = hiddenIds.length === this._maskIds?.length && hiddenIds.every((id, index) => id === this._maskIds[index]);
+
+    // Org unit boundaries are heavy to send to the map again
+    if (isUnchanged) {
+      return;
+    }
+    this._maskIds = hiddenIds;
     maskSource.setData((0, _geometry.featureCollection)(hidden));
   }
 }
